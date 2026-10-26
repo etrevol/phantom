@@ -91,7 +91,8 @@ launch='export OMP_NUM_THREADS='$threads'
       || { echo FAILED > status; exit 1; }
   fi
   echo RUNNING > status
-  if ./phantom ppitorus.in > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
+  if ./phantom ppitorus.in > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi
+  OPENBLAS_NUM_THREADS=1 '"$root"'/scripts/ppi/vis/gallery.sh . > figs.log 2>&1'
 if [[ $fg == yes ]]; then
   bash -c "$launch"
   echo "$(cat status): $dir"
