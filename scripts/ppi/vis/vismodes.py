@@ -139,6 +139,9 @@ def main(argv=None):
         fit = best_window(t, am, a0, min_span=a.min_span, floor=a.floor,
                           stride=max(1, len(t) // 300))
         tr = th.get(m)
+        # a rate that moves by more than 5% on halving the grid is not a prediction
+        if tr and not (tr["rate_orbit"] > 0 and tr["rel_change"] < 0.05):
+            tr = None
         patt = (pattern_speed(ev["time"], ev[f"phi{m}"], m,
                               tuple(w * p_orb for w in fit["window"]))
                 if m <= 4 and np.isfinite(fit["rate"]) else np.nan)
