@@ -1,0 +1,199 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[margin=1.8cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+\newcommand{\dd}{\mathrm{d}}
+\newcommand{\pd}{\partial}
+\newcommand{\vr}{\mathbf{r}}
+\newcommand{\vv}{\mathbf{v}}
+
+\title{Papaloizou--Pringle torus in Phantom (SPH)\\[2pt]\large Formulary}
+\date{}
+\begin{document}
+\maketitle
+\vspace{-3.5em}
+
+%==========================================================================
+\section{Units: from the Athena++ torus to $G=M=R_0=1$}
+
+Athena++ (athena-collab): $L_0=\chi r_g$, $v_0=c_{s0}$, $t_0=L_0/c_{s0}$,
+$r_g=2GM/c^2$, $c_{s0}^2=\gamma k_BT_0/(\mu m_p)$, gravity $\tilde\Phi=-\beta/\tilde r$,
+$\beta=c^2/(2\chi c_{s0}^2)$.
+Phantom: same $L_0$, mass unit $M=M_{\rm bh}$, $G=1$:
+\begin{align*}
+GM&=\frac{c^2r_g}{2}=\frac{c^2L_0}{2\chi},&
+t_u&=\sqrt{\frac{L_0^3}{GM}}=\frac{L_0\sqrt{2\chi}}{c},&
+\frac{t_0}{t_u}&=\frac{c}{c_{s0}\sqrt{2\chi}}=\sqrt\beta .
+\end{align*}
+\begin{equation}
+t_{\rm ph}=\sqrt\beta\,t_{\rm ath},\qquad v_{\rm ph}=v_{\rm ath}/\sqrt\beta,\qquad
+\rho_{\rm ph}=\rho_{\rm ath}\,\frac{\rho_0L_0^3}{M_{\rm bh}},\qquad
+P_{\rm orb}=2\pi\sqrt{\frac{R_0^3}{\beta}}\Big|_{\rm ath}=2\pi R_0^{3/2}\Big|_{\rm ph}.
+\end{equation}
+$T_0$ and $\mu$ drop out: they fix $t_0$, which the torus never sees. With
+$M_{\rm bh}=4.5\times10^7M_\odot$, $\chi=500$: $L_0=6.645\times10^{15}$\,cm,
+$t_u=7.01\times10^6$\,s, $P_{\rm orb}=1.40$\,yr. The torus is not self-gravitating, so
+$\rho_0=10^{-13}$\,g\,cm$^{-3}$ sets only the mass scale.
+
+%==========================================================================
+\section{Equilibrium}
+
+Steady, axisymmetric, $\vv=R\Omega(R)\,\hat{\boldsymbol\phi}$, $p=K\rho^{1+1/n}$,
+$n=1/(\gamma-1)$, point mass $\Phi=-GM/r$, $r=\sqrt{R^2+z^2}$ (PP84 \S2):
+\begin{align*}
+\frac{1}{\rho}\nabla p&=-\nabla\Phi+\Omega^2R\,\hat{\mathbf R},&
+\frac{1}{\rho}\nabla p&=\nabla\Big[(n+1)\frac{p}{\rho}\Big],&
+\Omega^2R&=\frac{\ell^2}{R^3}=-\frac{\dd}{\dd R}\Big(\frac{\ell^2}{2R^2}\Big)\quad(\ell=\text{const}),
+\end{align*}
+\begin{equation*}
+(n+1)\frac{p}{\rho}=\frac{GM}{r}-\frac{\ell^2}{2R^2}-C .
+\end{equation*}
+$\nabla p=0$ at $(R_0,0)$ gives $\ell^2=GMR_0$; write $C=GMC'/R_0$:
+\begin{equation}
+\frac{p}{\rho}=\frac{GM}{(n+1)R_0}\,f,\qquad
+f(R,z)=\frac{R_0}{r}-\frac12\Big(\frac{R_0}{R}\Big)^2-C',\qquad f_c=f(R_0,0)=\tfrac12-C'.
+\end{equation}
+$p/\rho=K\rho^{1/n}\propto f$, normalised to $\rho_c$ at $(R_0,0)$:
+\begin{equation}
+\rho=\rho_c\Big(\frac{f}{f_c}\Big)^{n}\Theta(f),\qquad
+u=\frac{p}{(\gamma-1)\rho}=\frac{n\,GM}{(n+1)R_0}f,\qquad
+v_\phi=\frac{\sqrt{GMR_0}}{R},\qquad
+c_s^2=\gamma\frac{p}{\rho}.
+\end{equation}
+Surface $f=0$. In the mid-plane, with $x=R_0/R$: $x^2-2x+2C'=0$,
+\begin{equation}
+R_{\rm in,out}=\frac{R_0}{1\pm\sqrt{1-2C'}},\qquad
+z_s(R)=\sqrt{s^2-R^2},\ \ s=\Big(\frac{R_0}{2R^2}+\frac{C'}{R_0}\Big)^{-1},\qquad
+\frac{c_s}{v_\phi}\Big|_{R_0}=\sqrt{(\gamma-1)f_c}.
+\end{equation}
+$z=0$ gives $f(R)$ of the 2D Athena++ runs: the cylinder there is this torus' mid-plane
+continued uniformly in $z$, with gravity $-\beta/R^2$ in $R$ only.
+Parameters: athena $C'=0.2$, $\gamma=1.3$: $R_{\rm in}=0.5635$, $R_{\rm out}=4.4365$,
+$z_{\rm top}=2.564$, $c_s/v_\phi=0.300$. PP84 models ($n=3$, $d=1/2C'$):
+$C'=0.495,\,0.444,\,0.25$.
+
+%==========================================================================
+\section{SPH (Phantom)}
+
+Density, smoothing length and momentum (cubic $M_4$, $h_{\rm fact}=1.2$):
+\begin{align}
+\rho_a&=\sum_b m\,W(|\vr_a-\vr_b|,h_a),\qquad h_a=h_{\rm fact}\Big(\frac{m}{\rho_a}\Big)^{1/3},\\
+\frac{\dd\vv_a}{\dd t}&=-\sum_b m\Big[\frac{P_a}{\Omega_a\rho_a^2}\nabla_aW_{ab}(h_a)
++\frac{P_b}{\Omega_b\rho_b^2}\nabla_aW_{ab}(h_b)\Big]+\mathbf a^{\rm AV}_a
+-\frac{GM\,\vr_a}{r_a^3},\\
+\frac{\dd u_a}{\dd t}&=\frac{P_a}{\Omega_a\rho_a^2}\sum_bm\,\vv_{ab}\cdot\nabla_aW_{ab}(h_a)+\Lambda^{\rm AV}_a,
+\qquad P_a=(\gamma-1)\rho_au_a ,
+\end{align}
+$\Omega_a=1-\pd h_a/\pd\rho_a\sum_bm\,\pd W_{ab}/\pd h_a$. Shock viscosity with signal
+speed $v_{\rm sig}=\alpha c_s+\beta|\vv_{ab}\cdot\hat\vr_{ab}|$ and the Cullen--Dehnen
+switch $\alpha\in[0,1]$; it is the only dissipation (no physical viscosity), and acts as a
+shear viscosity of order $\alpha_{\rm SS}\sim0.1\,\alpha\,h/H$. Particles inside
+$r_{\rm acc}=0.35$ (athena's $x_{1,\min}$) are accreted. No ambient medium: the surface is free.
+
+%==========================================================================
+\section{Particle lattice}
+
+Mass $m=\rho_c V/N$, $V=\int(f/f_c)^n\,\dd V$. Isotropic spacing $d=(m/\rho)^{1/3}$.
+
+\emph{Columns.} $\lambda(R)=1/d(R,0)$, $N_{\rm col}=\mathrm{round}\int_{R_{\rm in}}^{R_{\rm out}}\lambda\,\dd R$;
+column edges at equal steps of $\Lambda(R)=\int_{R_{\rm in}}^R\lambda\,\dd R'$, centre $R_c$, width $\Delta R$.
+
+\emph{Rings.} Half-column mass $M_z(z)=2\pi R_c\Delta R\,\rho_c\int_0^z(f/f_c)^n\dd z'$.
+A ring at height $z$ holds
+\begin{equation}
+N_\phi=n_s\max\Big(1,\mathrm{round}\frac{2\pi R_c}{n_s\,d(R_c,z)}\Big),\qquad
+z_k=M_z^{-1}\big(M_{\rm lo}+\tfrac12N_\phi m\big),\qquad M_{\rm lo}\leftarrow M_{\rm lo}+N_\phi m,
+\end{equation}
+mirrored to $-z_k$; the mid-plane ring takes $\tfrac12N_\phi m$ from each half. The mass
+of every ring matches the analytic column, so rounding $N_\phi$ stretches the ring in
+$z$ (by at most $n_s/2N_\phi$) instead of misweighting it.
+$\phi_j=(j-1+\tfrac12 s)\,2\pi/N_\phi$, $s\in\{0,1\}$ alternating.
+
+\emph{Symmetry.} For one ring, $\sum_{j=1}^{N_\phi}e^{-im\phi_j}=e^{-im\phi_1}\frac{1-e^{-2\pi im}}{1-e^{-2\pi im/N_\phi}}=0$
+unless $N_\phi\,|\,m$. Every $N_\phi$ is a multiple of $n_s$, so $A_m=0$ for $n_s\nmid m$,
+to round-off ($5\times10^{-17}$ measured). With Phantom's $\pi=3.1415926536$ the ring
+spans $2\pi(1+7\times10^{-12})$ and the open gap gives $3\times10^{-12}$ in every $m$:
+the setup uses $\pi=4\arctan1$.
+
+%==========================================================================
+\section{Seed (as athena-vv)}
+
+\begin{equation}
+\delta v_R=A\,c_s\,\frac{f}{f_c}\,S(\phi),\qquad
+S=\begin{cases}\sin m\phi&\text{single}\\
+m^{-1/2}\sum_{k=1}^m\sin(k\phi+\pi\xi_k)&\text{multi}\\
+\xi_a\in[-1,1)\ \text{per particle}&\text{noise}\end{cases}
+\end{equation}
+$\delta\rho=\delta p=0$; the envelope $f/f_c$ vanishes at the surface.
+
+%==========================================================================
+\section{Diagnostics}
+
+Annuli $k$ of width $\Delta R$ on $[R_{\rm lo},R_{\rm hi}]$, cloud-in-cell weights $w_{ak}$:
+\begin{equation}
+\Sigma_m(R_k)=\frac{m}{2\pi R_k\Delta R}\sum_a w_{ak}\,e^{-im\phi_a},\qquad
+A_m=\Big[\sum_k|\Sigma_m(R_k)|^2R_k\Delta R\Big]^{1/2},
+\end{equation}
+Fourier first, radius second (radial lobes cannot cancel); $F_m$ the same with weights
+$w_{ak}v_{R,a}$. Linear regime: $A_m/A_0<0.02$. Pattern speed $-\dot\psi_m/m$,
+$\psi_m=\arg\Sigma_m(R_0)$. Shot noise of a disordered set: $A_m/A_0\sim(n_{\rm bin}/N)^{1/2}$.
+
+Maps (scatter interpolation): $\rho(\vr)=\sum_bmW(|\vr-\vr_b|,h_b)$,
+$\langle q\rangle=\sum_b(m/\rho_b)q_bW_b/\sum_b(m/\rho_b)W_b$; azimuthal mean
+$\langle\rho\rangle_\phi(R,z)=\sum_b\frac{m}{2\pi R}W_{2D}(|(R,z)-(R_b,z_b)|,h_b)$ (ring
+projection, $h\ll R$).
+
+%==========================================================================
+\section{Linear theory (PP84 \S3--4)}
+
+Linearise about $\vv_0=R\Omega\hat{\boldsymbol\phi}$, perturbations $\propto e^{i(m\phi+\sigma t)}$,
+$\bar\sigma=\sigma+m\Omega$, $p'/p=\gamma\rho'/\rho$, $W=p'/(\rho\bar\sigma)$. For
+$\ell=$ const the epicyclic frequency $\kappa^2=R^{-3}\dd(R^4\Omega^2)/\dd R=0$, and
+\begin{equation}
+\frac1R\frac{\pd}{\pd R}\Big(\rho R\frac{\pd W}{\pd R}\Big)+\frac{\pd}{\pd z}\Big(\rho\frac{\pd W}{\pd z}\Big)
+-\frac{m^2}{R^2}\rho W=-\bar\sigma^2\frac{\rho^2}{\gamma p}W,
+\end{equation}
+i.e.\ $\sigma^2\mathsf AW+\sigma\mathsf BW+\mathsf CW=0$ with $\mathsf A=\rho^2/\gamma p$,
+$\mathsf B=2m\Omega\mathsf A$, $\mathsf C=\mathcal L+m^2\Omega^2\mathsf A$. Linearised:
+\begin{equation}
+\begin{pmatrix}-\mathsf B&-\mathsf C\\ \mathsf I&0\end{pmatrix}x=\sigma
+\begin{pmatrix}\mathsf A&0\\0&\mathsf I\end{pmatrix}x,\qquad x=(\sigma W,W),
+\end{equation}
+growth $-\mathrm{Im}\,\sigma$, pattern $-\mathrm{Re}\,\sigma/m$, e-folds per orbit
+$2\pi(-\mathrm{Im}\,\sigma)/\Omega_0$. Conservative cell-centred $(R,z)$ grid, $z\ge0$ with
+$\pd_zW=0$ at $z=0$ (even modes); faces into cells with $\rho=0$ carry no flux, which is
+PP84's regularity condition at the surface. Dropping $\pd_z$ gives the 2D cylinder.
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+& \multicolumn{2}{c}{growth time $[\Omega_0^{-1}]$} \\
+model, $m$ & this solver & PP84 A / B \\
+\midrule
+1 ($C'=0.495$), 2 & 8.48 & 8.0 / 8.5 \\
+1, 4 & 4.70 & 3.9 / 4.7 \\
+1, 6 & 3.88 & 2.9 / 4.0 \\
+2 ($C'=0.444$), 2 & 4.57 & 4.0 / 4.6 \\
+3 ($C'=0.25$), 2 & 9.32$^\ast$ & 8.5 / 10.7 \\
+\bottomrule
+\end{tabular}
+\quad
+\begin{tabular}{lcc}
+\toprule
+athena torus & \multicolumn{2}{c}{e-folds / orbit} \\
+$m$ & 3D torus & 2D cylinder \\
+\midrule
+1 & 0.798 & 1.086 \\
+2 & 0.662 & 0.976 \\
+3 & -- & 0.759 \\
+4 & -- & 0.587 \\
+\bottomrule
+\end{tabular}
+\end{center}
+$^\ast$ $40\times20$ grid, 10\% from $20\times10$. 3D: $160\times80$, converged to
+$<0.3\%$; $m\ge3$ in 3D not yet converged. 2D: 400 cells, identical to athena-vv's
+\texttt{ppi.py} at $\gamma=4/3$.
+
+\end{document}
