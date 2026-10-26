@@ -35,15 +35,18 @@ module setup
 !   - pert_kind        : *none | single | multi | noise*
 !   - pert_m           : *azimuthal mode (single) or highest mode (multi)*
 !   - pert_seed        : *random seed (multi, noise, random)*
+!   - relax            : *relax before spinning up (needs r_center = 1)*
+!   - n_relax          : *relaxation time [orbits at r_center]*
+!   - damp_relax       : *velocity damping rate [code units]*
 !   - r_acc            : *accretion radius of the central mass [L_0]*
 !   - r_center         : *radius of the density maximum [L_0]*
 !   - rho_0            : *density at the maximum [g/cm^3]*
 !
-! :Dependencies: eos, externalforces, infile_utils, io, io_control,
+! :Dependencies: damping, eos, externalforces, infile_utils, io, io_control,
 !   options, part, random, timestep, units
 !
  implicit none
- public :: setpart
+ public :: setpart,spin_up
 
  private
 
@@ -61,23 +64,30 @@ module setup
  character(len=20) :: lattice = 'rings', pert_kind = 'none'
  real    :: pert_amp = 0.
  integer :: pert_m = 2, pert_seed = 1
+ logical :: relax = .true.
+ real    :: n_relax = 2., damp_relax = 0.3
  real    :: n_orbits = 40.
  integer :: n_analysis_orbit = 20, n_dumps_orbit = 2
 
- real :: polyn, f_c, rho_c, r_in, r_out, z_top, pmass
+ real :: polyn, f_c, rho_c, r_in, r_out, z_top, pmass, p_orb
  integer :: iseed
 
 contains
 
+! With relax, stage 1 of two: the torus at rest in the effective potential
+! -G M/r + l^2/(2 R^2) of iexternalforce = 5, velocities damped, so the particles
+! settle into the SPH equilibrium rather than the analytic one; spin_up (called by
+! moddump_ppitorus) then gives them v_phi = l/R and the seed. Without relax the
+! torus starts spinning on the analytic profile.
 subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
                    gamma,hfact,time,fileprefix)
  use units,          only:set_units,umass,udist,utime,unit_density
  use part,           only:igas
  use options,        only:iexternalforce
- use externalforces, only:mass1,accradius1,iext_star
- use timestep,       only:tmax,dtmax
- use io_control,     only:nout,nfulldump
- use eos,            only:ieos
+ use externalforces, only:iext_torus
+ use damping,        only:idamp,damp
+ use timestep,       only:tmax
+ use eos,            only:ieos,gmw
  use infile_utils,   only:get_options
  use io,             only:master,fatal
  integer,           intent(in)  :: id
@@ -91,7 +101,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  character(len=20), intent(in)  :: fileprefix
  integer :: ierr,i
  real(kind=8) :: r_g
- real :: m_torus,p_orb,m_placed
+ real :: m_torus,m_placed
 
  call get_options(trim(fileprefix)//'.setup',id==master,ierr,&
                   read_setupfile,write_setupfile)
@@ -104,10 +114,8 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  hfact = 1.2
  polyk = 0.
  ieos  = 2
- polyn = 1./(gamma - 1.)
- f_c   = 0.5 - C_prime
- r_in  = r_center/(1. + sqrt(1. - 2.*C_prime))
- r_out = r_center/(1. - sqrt(1. - 2.*C_prime))
+ gmw   = 0.6     ! as athena-collab; enters only phantom's temperature output
+ call derive_shape()
  z_top = surface_height_max()
  rho_c = real(rho_0/unit_density)
  m_torus = rho_c*torus_volume()
@@ -133,18 +141,19 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
 
  iseed = -abs(pert_seed) - 1
  do i=1,npart
-    call set_velocity_and_energy(xyzh(1:3,i),vxyzu(:,i),gamma)
+    call set_velocity_and_energy(xyzh(1:3,i),vxyzu(:,i),gamma,spin=.not.relax, &
+                                 set_u=.true.)
  enddo
 
- iexternalforce = iext_star
- mass1      = 1.
- accradius1 = r_acc
-
- p_orb     = 2.*pi*r_center**1.5
- tmax      = n_orbits*p_orb
- dtmax     = p_orb/n_analysis_orbit
- nout      = n_analysis_orbit/n_dumps_orbit
- nfulldump = 1
+ call set_run_options()
+ if (relax) then
+    ! the potential of iext_torus is written for G M = 1, R_torus = 1
+    if (abs(r_center - 1.) > epsilon(1.)) call fatal('setup','relax needs r_center = 1')
+    iexternalforce = iext_torus
+    idamp = 1
+    damp  = damp_relax
+    tmax  = n_relax*p_orb
+ endif
 
  if (id==master) then
     print "(/,a)",' Papaloizou-Pringle torus'
@@ -156,8 +165,11 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
           '  lattice = ',trim(lattice),'  nsym = ',nsym
     print "(a,es12.5,a,es12.5,a)",'  L_0 = ',udist,' cm   t_unit = ',utime,' s'
     print "(a,es12.5,a,es12.5,a)",'  M_unit = ',umass,' g   rho_c = ',rho_c,' code'
-    print "(a,f10.6,a,f8.2,a)",'  P_orb = ',p_orb,'   tmax = ',n_orbits,' orbits'
-    if (trim(pert_kind) /= 'none') then
+    print "(a,f10.6,a,f8.2,a)",'  P_orb = ',p_orb,'   tmax = ',tmax/p_orb,' orbits'
+    if (relax) then
+       print "(a,f6.2,a,f6.3)",'  stage 1: relaxation at rest for',n_relax, &
+             ' orbits, damp = ',damp_relax
+    elseif (trim(pert_kind) /= 'none') then
        print "(a,a,a,es10.3,a,i3)",'  seed: ',trim(pert_kind),'  amp = ',pert_amp,'  m = ',pert_m
     else
        print "(a)",'  seed: none'
@@ -165,6 +177,61 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  endif
 
 end subroutine setpart
+
+! Stage 2: rotation l/R and the seed on the relaxed particles, point mass on,
+! damping off. u is kept: it is the relaxed equilibrium, not the analytic one.
+subroutine spin_up(npart,xyzh,vxyzu,setupfile)
+ use eos,     only:gamma
+ use damping, only:idamp,damp
+ use io,      only:fatal
+ integer,          intent(in)    :: npart
+ real,             intent(in)    :: xyzh(:,:)
+ real,             intent(inout) :: vxyzu(:,:)
+ character(len=*), intent(in)    :: setupfile
+ integer :: i,ierr
+
+ call read_setupfile(setupfile,ierr)
+ if (ierr /= 0) call fatal('spin_up','cannot read '//trim(setupfile))
+ call derive_shape()
+ iseed = -abs(pert_seed) - 1
+ do i=1,npart
+    if (xyzh(4,i) <= 0.) cycle
+    call set_velocity_and_energy(xyzh(1:3,i),vxyzu(:,i),gamma,spin=.true.,set_u=.false.)
+ enddo
+ call set_run_options()
+ idamp = 0
+ damp  = 0.
+ print "(a,i10,a,a,a,es10.3,a,i3)",' spin_up: ',npart,' particles, seed ', &
+       trim(pert_kind),' amp = ',pert_amp,' m = ',pert_m
+
+end subroutine spin_up
+
+subroutine derive_shape()
+
+ polyn = 1./(gamma_torus - 1.)
+ f_c   = 0.5 - C_prime
+ r_in  = r_center/(1. + sqrt(1. - 2.*C_prime))
+ r_out = r_center/(1. - sqrt(1. - 2.*C_prime))
+ p_orb = 2.*pi*r_center**1.5
+
+end subroutine derive_shape
+
+! production run: fixed point mass, cadence of analysis and dumps
+subroutine set_run_options()
+ use options,        only:iexternalforce
+ use externalforces, only:mass1,accradius1,iext_star
+ use timestep,       only:tmax,dtmax
+ use io_control,     only:nout,nfulldump
+
+ iexternalforce = iext_star
+ mass1      = 1.
+ accradius1 = r_acc
+ tmax       = n_orbits*p_orb
+ dtmax      = p_orb/n_analysis_orbit
+ nout       = n_analysis_orbit/n_dumps_orbit
+ nfulldump  = 1
+
+end subroutine set_run_options
 
 ! f(R,z) of PP84 eq. (2.9) in units G M = 1: (n+1) p/rho = f/r_center
 real function fshape(r,z)
@@ -401,10 +468,11 @@ end subroutine set_random
 ! l = sqrt(G M r_center) = const, u = n p/rho, and the v_R seed of athena-vv:
 ! pert_amp * c_s * (f/f_c) * shape(phi). shape is what acc_disk_visc_vv.cpp
 ! computes, peak 1 and rms 1/sqrt(2), not the unit rms its comment claims.
-subroutine set_velocity_and_energy(xyz,vxyzu,gamma)
+subroutine set_velocity_and_energy(xyz,vxyzu,gamma,spin,set_u)
  use random, only:ran2
  real,    intent(in)    :: xyz(3),gamma
  real,    intent(inout) :: vxyzu(:)
+ logical, intent(in)    :: spin,set_u
  real, save :: phase(64)
  logical, save :: first = .true.
  real :: r,phi,f,vphi,dvr,cs,shape
@@ -439,10 +507,14 @@ subroutine set_velocity_and_energy(xyz,vxyzu,gamma)
  end select
  dvr = pert_amp*cs*(f/f_c)*shape
 
- vxyzu(1) = -vphi*sin(phi) + dvr*cos(phi)
- vxyzu(2) =  vphi*cos(phi) + dvr*sin(phi)
+ if (spin) then
+    vxyzu(1) = -vphi*sin(phi) + dvr*cos(phi)
+    vxyzu(2) =  vphi*cos(phi) + dvr*sin(phi)
+ else
+    vxyzu(1:2) = 0.
+ endif
  vxyzu(3) = 0.
- if (size(vxyzu) >= 4) vxyzu(4) = polyn*f/((polyn + 1.)*r_center)
+ if (set_u .and. size(vxyzu) >= 4) vxyzu(4) = polyn*f/((polyn + 1.)*r_center)
 
 end subroutine set_velocity_and_energy
 
@@ -472,6 +544,10 @@ subroutine write_setupfile(filename)
  call write_inopt(pert_amp,'pert_amp','delta v_R in units of the local c_s',iunit)
  call write_inopt(pert_m,'pert_m','azimuthal mode (single) or highest mode (multi)',iunit)
  call write_inopt(pert_seed,'pert_seed','random seed (multi, noise, random)',iunit)
+ write(iunit,"(/,a)") '# relaxation (stage 1, at rest in the effective potential)'
+ call write_inopt(relax,'relax','relax before spinning up (needs r_center = 1)',iunit)
+ call write_inopt(n_relax,'n_relax','relaxation time [orbits at r_center]',iunit)
+ call write_inopt(damp_relax,'damp_relax','velocity damping rate [code units]',iunit)
  write(iunit,"(/,a)") '# run'
  call write_inopt(n_orbits,'n_orbits','run length [orbits at r_center]',iunit)
  call write_inopt(n_analysis_orbit,'n_analysis_orbit','analysis calls per orbit',iunit)
@@ -506,6 +582,9 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(pert_amp,'pert_amp',db,min=0.,errcount=nerr)
  call read_inopt(pert_m,'pert_m',db,min=0,errcount=nerr)
  call read_inopt(pert_seed,'pert_seed',db,errcount=nerr)
+ call read_inopt(relax,'relax',db,errcount=nerr)
+ call read_inopt(n_relax,'n_relax',db,min=0.,errcount=nerr)
+ call read_inopt(damp_relax,'damp_relax',db,min=0.,errcount=nerr)
  call read_inopt(n_orbits,'n_orbits',db,min=0.,errcount=nerr)
  call read_inopt(n_analysis_orbit,'n_analysis_orbit',db,min=1,errcount=nerr)
  call read_inopt(n_dumps_orbit,'n_dumps_orbit',db,min=1,errcount=nerr)

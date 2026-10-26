@@ -361,6 +361,7 @@ ifeq ($(SETUP), ppitorus)
 #   Papaloizou-Pringle torus with live mode diagnostics
     SETUPFILE= setup_ppitorus.f90
     ANALYSIS= analysis_ppitorus.f90
+    MODFILE= setup_ppitorus.f90 moddump_ppitorus.f90
     LIVE_ANALYSIS=yes
     KNOWN_SETUP=yes
 endif
