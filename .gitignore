@@ -37,3 +37,7 @@ build/test000
 *.ilm
 *.stb
 eos_lom.dat
+# PPI torus project: run output and local materials
+/results/
+/materials/
+__pycache__/
