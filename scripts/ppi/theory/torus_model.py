@@ -164,6 +164,9 @@ RUN_SETUP = dict(
     pert_amp=0.0,         # delta v_R in units of the local c_s
     pert_m=2,             # mode (single) or highest mode (multi)
     pert_seed=1,
+    relax=True,           # stage 1 at rest in the effective potential, then spin up
+    n_relax=2.0,          # relaxation time [orbits]
+    damp_relax=0.3,       # velocity damping rate [code units]
     r_acc=0.35,           # accretion radius of the central mass [L_0]
     n_orbits=40.0,
     n_analysis_orbit=20,  # live analysis calls per orbit (sets dtmax)
@@ -191,6 +194,8 @@ def setup_lines(model, run):
     """The .setup file, keyword for keyword what setup_ppitorus.f90 reads."""
     if run["n_analysis_orbit"] % run["n_dumps_orbit"]:
         raise ValueError("n_dumps_orbit must divide n_analysis_orbit")
+    if run["relax"] and model.r_center != 1.0:
+        raise ValueError("relax needs r_center = 1 (iexternalforce = 5 is written for it)")
     if run["r_acc"] >= model.r_in:
         raise ValueError(f"r_acc = {run['r_acc']} must lie inside r_in = {model.r_in:.4f}")
     rows = [
@@ -212,6 +217,10 @@ def setup_lines(model, run):
         ("pert_amp", run["pert_amp"], "delta v_R in units of the local c_s"),
         ("pert_m", int(run["pert_m"]), "azimuthal mode (single) or highest mode (multi)"),
         ("pert_seed", int(run["pert_seed"]), "random seed (multi, noise, random)"),
+        ("# relaxation (stage 1, at rest in the effective potential)", None, None),
+        ("relax", "T" if run["relax"] else "F", "relax before spinning up (needs r_center = 1)"),
+        ("n_relax", run["n_relax"], "relaxation time [orbits at r_center]"),
+        ("damp_relax", run["damp_relax"], "velocity damping rate [code units]"),
         ("# run", None, None),
         ("n_orbits", run["n_orbits"], "run length [orbits at r_center]"),
         ("n_analysis_orbit", int(run["n_analysis_orbit"]), "analysis calls per orbit"),
@@ -252,6 +261,10 @@ def main(argv=None):
     ap.add_argument("--preset", default=RUN_SETUP["preset"], choices=sorted(PRESETS))
     for key, val in RUN_SETUP.items():
         if key == "preset":
+            continue
+        if isinstance(val, bool):
+            ap.add_argument("--" + key.replace("_", "-"), dest=key, default=val,
+                            action=argparse.BooleanOptionalAction)
             continue
         typ = float if isinstance(val, float) or key == "np" else type(val)
         ap.add_argument("--" + key.replace("_", "-"), dest=key, type=typ, default=val)

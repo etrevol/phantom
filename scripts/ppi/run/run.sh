@@ -6,7 +6,9 @@
 #
 # Everything after -- goes to scripts/ppi/theory/torus_model.py (see its --help).
 # The run lands in results/<kind>/<YYYYMMDD-HHMMSS>-<name>/ with its own binaries, the
-# .setup and .in, provenance.json, run.log and a status file (RUNNING, COMPLETED, FAILED).
+# .setup and .in, provenance.json, run.log and a status file (RELAXING, RUNNING,
+# COMPLETED, FAILED). With relax = T (the default) stage 1 runs in relax/, and
+# phantommoddump spins the last relaxed dump up into the run directory at t = 0.
 set -euo pipefail
 
 name=run
@@ -45,17 +47,26 @@ fi
 # Phantom's Makefile cleans by itself when SETUP or a preprocessor flag changes.
 export SYSTEM=${SYSTEM:-gfortran}
 ( cd "$root" && make SETUP=ppitorus IND_TIMESTEPS=$ind >/dev/null \
-  && make SETUP=ppitorus IND_TIMESTEPS=$ind setup >/dev/null ) \
+  && make SETUP=ppitorus IND_TIMESTEPS=$ind setup >/dev/null \
+  && make SETUP=ppitorus IND_TIMESTEPS=$ind moddump >/dev/null ) \
   || { echo "build failed: cd $root && make SETUP=ppitorus IND_TIMESTEPS=$ind" >&2; exit 1; }
 
 mkdir -p "$dir"
-cp "$root/bin/phantom" "$root/bin/phantomsetup" "$dir/"
+cp "$root/bin/phantom" "$root/bin/phantomsetup" "$root/bin/phantommoddump" "$dir/"
 cd "$dir"
 python3 "$root/scripts/ppi/theory/torus_model.py" -o ppitorus.setup "${setup_args[@]}" > model.txt
 np_target=$(awk '$1=="np"{print $3}' ppitorus.setup)
+relax=$(awk '$1=="relax"{print $3}' ppitorus.setup)
 maxp=${maxp:-$(( np_target * 12 / 10 + 1000 ))}
-./phantomsetup ppitorus --maxp="$maxp" > setup.log 2>&1 \
-  || { echo FAILED > status; tail -20 setup.log; exit 1; }
+if [[ $relax == T ]]; then
+  mkdir -p relax
+  cp ppitorus.setup relax/
+  ( cd relax && ../phantomsetup ppitorus --maxp="$maxp" ) > setup.log 2>&1 \
+    || { echo FAILED > status; tail -20 setup.log; exit 1; }
+else
+  ./phantomsetup ppitorus --maxp="$maxp" > setup.log 2>&1 \
+    || { echo FAILED > status; tail -20 setup.log; exit 1; }
+fi
 
 sha=$(git -C "$root" rev-parse --short HEAD)
 dirty=$(git -C "$root" status --porcelain -- src build scripts/ppi | wc -l)
@@ -71,7 +82,15 @@ cat > provenance.json <<EOF
 }
 EOF
 
-launch='export OMP_NUM_THREADS='$threads'; echo RUNNING > status;
+launch='export OMP_NUM_THREADS='$threads'
+  if [[ -d relax ]]; then
+    echo RELAXING > status
+    ( cd relax && ../phantom ppitorus.in > run.log 2>&1 ) || { echo FAILED > status; exit 1; }
+    last=$(ls relax/ppitorus_[0-9][0-9][0-9][0-9][0-9] | tail -1)
+    ./phantommoddump "$last" ppitorus_00000 0.0 --maxp='$maxp' > moddump.log 2>&1 \
+      || { echo FAILED > status; exit 1; }
+  fi
+  echo RUNNING > status
   if ./phantom ppitorus.in > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
 if [[ $fg == yes ]]; then
   bash -c "$launch"
