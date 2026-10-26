@@ -88,7 +88,7 @@ Density, smoothing length and momentum (cubic $M_4$, $h_{\rm fact}=1.2$):
 \end{align}
 $\Omega_a=1-\pd h_a/\pd\rho_a\sum_bm\,\pd W_{ab}/\pd h_a$. Shock viscosity with signal
 speed $v_{\rm sig}=\alpha c_s+\beta|\vv_{ab}\cdot\hat\vr_{ab}|$ and the Cullen--Dehnen
-switch $\alpha\in[0,1]$; it is the only dissipation (no physical viscosity), and acts as a
+switch $\alpha\in[0,1]$, $\alpha_u=0$ (\S5); it is the only dissipation (no physical viscosity), and acts as a
 shear viscosity of order $\alpha_{\rm SS}\sim0.1\,\alpha\,h/H$. Particles inside
 $r_{\rm acc}=0.35$ (athena's $x_{1,\min}$) are accreted. No ambient medium: the surface is free.
 
@@ -116,6 +116,32 @@ unless $N_\phi\,|\,m$. Every $N_\phi$ is a multiple of $n_s$, so $A_m=0$ for $n_
 to round-off ($5\times10^{-17}$ measured). With Phantom's $\pi=3.1415926536$ the ring
 spans $2\pi(1+7\times10^{-12})$ and the open gap gives $3\times10^{-12}$ in every $m$:
 the setup uses $\pi=4\arctan1$.
+
+%==========================================================================
+\section{Relaxation and spin-up}
+
+For $\ell=$ const the centrifugal term is a potential force,
+$\Omega^2R=\ell^2/R^3=-\pd_R(\ell^2/2R^2)$, so the rotating torus is the static gas of
+\begin{equation}
+\Phi_{\rm eff}=-\frac{GM}{r}+\frac{\ell^2}{2R^2},\qquad
+-\nabla\Phi_{\rm eff}=-\frac{GM\,\vr}{r^3}+\frac{\ell^2}{R^3}\hat{\mathbf R},\qquad
+\frac1\rho\nabla p=-\nabla\Phi_{\rm eff}
+\end{equation}
+(Phantom's \texttt{iexternalforce = 5}, written for $GM=R_0=\ell=1$).
+Stage 1: $\vv=0$, $\dd\vv_a/\dd t=\dots-\nabla\Phi_{\rm eff}-\gamma_d\vv_a$ ($\gamma_d=0.3$,
+2 orbits): the particles settle into the discrete SPH equilibrium, which differs from the
+analytic one near the surfaces. No shear, so the $n_s$-fold symmetry survives
+($A_m/A_0\sim10^{-10}$ for $m<4$ after 2 orbits).
+Stage 2: $v_\phi=\ell/R$ on the relaxed positions replaces the effective centrifugal force
+by the real one, $\ell^2/R^3$, so every particle keeps its force balance; then the seed,
+the point mass, $\gamma_d=0$, $t=0$.
+
+\emph{No artificial conductivity} ($\alpha_u=0$). Its signal speed
+$v^u_{\rm sig}=(|P_a-P_b|/\bar\rho_{ab})^{1/2}$ is non-zero between neighbours of any
+stratified equilibrium, $|P_a-P_b|\sim\rho g h$, so it carries heat down the gradient of
+$u\propto f$: relaxing at rest with $\alpha_u=1$, $\rho_{\max}$ rose 32\% in 6 orbits and
+the envelope blew past $R_{\rm out}$; with $\alpha_u=0$, $E_{\rm kin}/E_{\rm th}\to10^{-5}$
+and $\rho_{\max}$ holds to 0.3\%. The torus is homentropic: there is no contact to smooth.
 
 %==========================================================================
 \section{Seed (as athena-vv)}
