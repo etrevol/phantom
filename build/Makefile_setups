@@ -357,6 +357,14 @@ ifeq ($(SETUP), torus)
     KNOWN_SETUP=yes
 endif
 
+ifeq ($(SETUP), ppitorus)
+#   Papaloizou-Pringle torus with live mode diagnostics
+    SETUPFILE= setup_ppitorus.f90
+    ANALYSIS= analysis_ppitorus.f90
+    LIVE_ANALYSIS=yes
+    KNOWN_SETUP=yes
+endif
+
 ifeq ($(SETUP), galcen)
 #   galactic centre
     SETUPFILE= setup_galcen_stars.f90
