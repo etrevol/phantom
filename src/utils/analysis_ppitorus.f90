@@ -119,7 +119,10 @@ end function kernel_norm_2d
 
 ! A_m = [sum_k |Sigma_m(R_k)|^2 R_k dR]^(1/2) with Sigma_m the m-th azimuthal
 ! coefficient of the surface density in annulus k; Fourier first, radius second,
-! as vvlib/ppi.py does, so radial lobes of opposite sign cannot cancel.
+! as vvlib/ppi.py does, so radial lobes of opposite sign cannot cancel. Particles
+! are shared between the two nearest annuli (cloud in cell): with hard bins the
+! copies of a ring cross an edge on different steps, and the incomplete ring
+! puts a flat spectrum into every m.
 subroutine write_modes(filename,xyzh,vxyzu,pmass,npart,time)
  character(len=*), intent(in) :: filename
  real,             intent(in) :: xyzh(:,:),vxyzu(:,:),pmass,time
@@ -127,8 +130,9 @@ subroutine write_modes(filename,xyzh,vxyzu,pmass,npart,time)
  complex(kind=8) :: cs(0:mmax,nbin),cf(0:mmax,nbin),e1,em
  real(kind=8) :: amp(0:mmax),ampf(0:mmax),phase(4),w,rb,dr
  real(kind=8) :: mtot,lz,xcm,ycm,r,vr
- integer :: i,k,m,nalive,iu,kc
+ integer :: i,k,m,nalive,iu,kc,kb
  logical :: exists
+ real(kind=8) :: s,wk(2)
 
  cs = (0.d0,0.d0)
  cf = (0.d0,0.d0)
@@ -137,7 +141,7 @@ subroutine write_modes(filename,xyzh,vxyzu,pmass,npart,time)
  xcm = 0.d0
  ycm = 0.d0
  nalive = 0
- dr = (r_out - r_in)/nbin
+ dr = (r_hi - r_lo)/nbin
  do i=1,npart
     if (xyzh(4,i) <= 0.) cycle
     nalive = nalive + 1
@@ -145,14 +149,20 @@ subroutine write_modes(filename,xyzh,vxyzu,pmass,npart,time)
     xcm = xcm + xyzh(1,i)
     ycm = ycm + xyzh(2,i)
     r = sqrt(xyzh(1,i)**2 + xyzh(2,i)**2)
-    k = int((r - r_in)/dr) + 1
-    if (k < 1 .or. k > nbin) cycle
+    s = (r - r_lo)/dr + 0.5d0
+    k = floor(s)
+    if (k < 0 .or. k > nbin) cycle
+    wk(2) = s - k
+    wk(1) = 1.d0 - wk(2)
     vr = (xyzh(1,i)*vxyzu(1,i) + xyzh(2,i)*vxyzu(2,i))/r
     e1 = cmplx(xyzh(1,i)/r,-xyzh(2,i)/r,kind=8)
     em = (1.d0,0.d0)
     do m=0,mmax
-       cs(m,k) = cs(m,k) + em
-       cf(m,k) = cf(m,k) + vr*em
+       do kb=1,2
+          if (k + kb - 1 < 1 .or. k + kb - 1 > nbin) cycle
+          cs(m,k+kb-1) = cs(m,k+kb-1) + wk(kb)*em
+          cf(m,k+kb-1) = cf(m,k+kb-1) + wk(kb)*vr*em
+       enddo
        em = em*e1
     enddo
  enddo
@@ -166,14 +176,14 @@ subroutine write_modes(filename,xyzh,vxyzu,pmass,npart,time)
  amp  = 0.d0
  ampf = 0.d0
  do k=1,nbin
-    rb = r_in + (k - 0.5d0)*dr
+    rb = r_lo + (k - 0.5d0)*dr
     w  = pmass/(2.d0*pi*rb*dr)
     amp(:)  = amp(:)  + abs(w*cs(:,k))**2*rb*dr
     ampf(:) = ampf(:) + abs(w*cf(:,k))**2*rb*dr
  enddo
  amp  = sqrt(amp)
  ampf = sqrt(ampf)
- kc = min(nbin,max(1,int((r_center - r_in)/dr) + 1))
+ kc = min(nbin,max(1,int((r_center - r_lo)/dr) + 1))
  do m=1,4
     phase(m) = atan2(aimag(cs(m,kc)),real(cs(m,kc)))
  enddo
