@@ -43,7 +43,7 @@ module setup
 !   - rho_0            : *density at the maximum [g/cm^3]*
 !
 ! :Dependencies: damping, eos, externalforces, infile_utils, io, io_control,
-!   options, part, random, timestep, units
+!   options, part, random, shock_capturing, timestep, units
 !
  implicit none
  public :: setpart,spin_up
@@ -218,10 +218,11 @@ end subroutine derive_shape
 
 ! production run: fixed point mass, cadence of analysis and dumps
 subroutine set_run_options()
- use options,        only:iexternalforce
- use externalforces, only:mass1,accradius1,iext_star
- use timestep,       only:tmax,dtmax
- use io_control,     only:nout,nfulldump
+ use options,         only:iexternalforce
+ use externalforces,  only:mass1,accradius1,iext_star
+ use timestep,        only:tmax,dtmax
+ use io_control,      only:nout,nfulldump
+ use shock_capturing, only:alphau
 
  iexternalforce = iext_star
  mass1      = 1.
@@ -230,6 +231,11 @@ subroutine set_run_options()
  dtmax      = p_orb/n_analysis_orbit
  nout       = n_analysis_orbit/n_dumps_orbit
  nfulldump  = 1
+ ! Artificial conductivity sees the pressure jump between neighbours in a stratified
+ ! equilibrium and carries heat from the core to the envelope: at alphau = 1 the
+ ! relaxing torus contracted 32% in rho_max in 6 orbits while its envelope blew out.
+ ! The torus is homentropic, so there is no contact for it to smooth.
+ alphau     = 0.
 
 end subroutine set_run_options
 
