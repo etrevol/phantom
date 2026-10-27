@@ -2,7 +2,7 @@
 # Standard figures of one run: history, modes against theory, mid-plane at the last
 # frame (plain and deviation), meridional cuts. Movies are separate (vis2d.py --animate).
 #
-#   scripts/ppi/vis/gallery.sh RUN_DIR
+#   projects/ppi/scripts/vis/gallery.sh RUN_DIR
 set -uo pipefail
 here=$(cd "$(dirname "$0")" && pwd)
 run=${1:-.}

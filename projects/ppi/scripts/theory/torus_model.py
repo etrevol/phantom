@@ -3,8 +3,8 @@
 
 Running this file writes the .setup that `phantomsetup` reads:
 
-    python3 scripts/ppi/theory/torus_model.py                       # RUN_SETUP below
-    python3 scripts/ppi/theory/torus_model.py --preset pp84-2 --np 3e5 -o run.setup
+    python3 projects/ppi/scripts/theory/torus_model.py                       # RUN_SETUP below
+    python3 projects/ppi/scripts/theory/torus_model.py --preset pp84-2 --np 3e5 -o run.setup
 
 The physics lives in the TorusModel field defaults and in PRESETS, nowhere else.
 RUN_SETUP holds run mechanics only. Anything that needs the model imports this module.

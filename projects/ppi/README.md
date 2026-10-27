@@ -1,4 +1,8 @@
-# Papaloizou-Pringle torus (SETUP=ppitorus)
+# Papaloizou-Pringle torus (SETUP=ppitorus) - FROZEN
+
+**Frozen on 2026-10-26** after the 1e5 tests (git tag `ppi/frozen-2026-10-26`). Light run
+output is kept in `results/ppi/tests/`; where it stopped and what to do next is in the
+local notes.
 
 The constant specific angular momentum torus of Papaloizou & Pringle (1984, MNRAS 208,
 721) around a fixed point mass, in 3D SPH, with and without a controlled seed for the
@@ -9,17 +13,16 @@ PP84's Models 1-3. Derivations: [`formulary/formulary-en.pdf`](formulary/formula
 ## Quick start
 
 ```bash
-scripts/ppi/run/run.sh --name unseeded -- --np 1e5 --n-orbits 12
-scripts/ppi/run/run.sh --name m2 -- --np 1e5 --pert-kind single --pert-m 2 --pert-amp 1e-2
-cd results/runs/<date>-m2
-python3 ../../../scripts/ppi/vis/vismodes.py      # A_m/A_0 against linear theory
-python3 ../../../scripts/ppi/vis/vis2d.py         # polar maps, deviation, meridional
-python3 ../../../scripts/ppi/vis/vis2d.py --animate --anim deviation
-python3 ../../../scripts/ppi/vis/vishst.py
+projects/ppi/scripts/run/run.sh --name unseeded -- --np 1e5 --n-orbits 12
+projects/ppi/scripts/run/run.sh --name m2 -- --np 1e5 --pert-kind single --pert-m 2 --pert-amp 1e-2
+python3 projects/ppi/scripts/vis/vismodes.py --run results/ppi/runs/<date>-m2   # A_m/A_0 vs theory
+python3 projects/ppi/scripts/vis/vis2d.py --run results/ppi/runs/<date>-m2      # polar, meridional
+python3 projects/ppi/scripts/vis/vis2d.py --run results/ppi/runs/<date>-m2 --animate
+python3 projects/ppi/scripts/vis/vishst.py --run results/ppi/runs/<date>-m2
 ```
 
-`scripts/ppi/theory/torus_model.py --help` lists every setup option; `--preset pp84-2`
-switches to PP84's Model 2. `scripts/ppi/theory/ppi3d.py` gives the linear growth rates
+`projects/ppi/scripts/theory/torus_model.py --help` lists every setup option; `--preset pp84-2`
+switches to PP84's Model 2. `projects/ppi/scripts/theory/ppi3d.py` gives the linear growth rates
 (`--pp84` reproduces their Table 1, `--dim 2` the cylinder of the Athena++ runs).
 
 ## Variants
@@ -46,4 +49,4 @@ not a dump is written:
   the azimuthal mean rho(R, z).
 
 Full dumps are written `n_dumps_orbit` times per orbit and read with splash or
-`scripts/ppi/vis/ppi_data.py`.
+`projects/common/phantom_io.py`.

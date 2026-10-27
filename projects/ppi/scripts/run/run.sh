@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 # Build, set up and launch one PPI torus run.
 #
-#   scripts/ppi/run/run.sh --name unseeded -- --np 1e5 --n-orbits 40
-#   scripts/ppi/run/run.sh --name m2 --kind tests --fg -- --pert-kind single --pert-amp 1e-3
+#   projects/ppi/scripts/run/run.sh --name unseeded -- --np 1e5 --n-orbits 40
+#   projects/ppi/scripts/run/run.sh --name m2 --kind tests --fg -- --pert-kind single --pert-amp 1e-3
 #
-# Everything after -- goes to scripts/ppi/theory/torus_model.py (see its --help).
-# The run lands in results/<kind>/<YYYYMMDD-HHMMSS>-<name>/ with its own binaries, the
+# Everything after -- goes to projects/ppi/scripts/theory/torus_model.py (see its --help).
+# The run lands in results/ppi/<kind>/<YYYYMMDD-HHMMSS>-<name>/ with its own binaries, the
 # .setup and .in, provenance.json, run.log and a status file (RELAXING, RUNNING,
 # COMPLETED, FAILED). With relax = T (the default) stage 1 runs in relax/, and
 # phantommoddump spins the last relaxed dump up into the run directory at t = 0.
@@ -35,11 +35,11 @@ done
 root=$(cd "$(dirname "$0")" && while [[ ! -f build/Makefile_setups && $PWD != / ]]; do cd ..; done; pwd)
 [[ -f $root/build/Makefile_setups ]] || { echo "phantom root not found" >&2; exit 1; }
 
-dir=$root/results/$kind/$(date +%Y%m%d-%H%M%S)-$name
+dir=$root/results/ppi/$kind/$(date +%Y%m%d-%H%M%S)-$name
 setup_args=("$@")
 
 if [[ $dry == yes ]]; then
-  python3 "$root/scripts/ppi/theory/torus_model.py" -o /dev/null "${setup_args[@]}"
+  python3 "$root/projects/ppi/scripts/theory/torus_model.py" -o /dev/null "${setup_args[@]}"
   echo "would run in $dir (ind=$ind, threads=$threads)"
   exit 0
 fi
@@ -54,7 +54,7 @@ export SYSTEM=${SYSTEM:-gfortran}
 mkdir -p "$dir"
 cp "$root/bin/phantom" "$root/bin/phantomsetup" "$root/bin/phantommoddump" "$dir/"
 cd "$dir"
-python3 "$root/scripts/ppi/theory/torus_model.py" -o ppitorus.setup "${setup_args[@]}" > model.txt
+python3 "$root/projects/ppi/scripts/theory/torus_model.py" -o ppitorus.setup "${setup_args[@]}" > model.txt
 np_target=$(awk '$1=="np"{print $3}' ppitorus.setup)
 relax=$(awk '$1=="relax"{print $3}' ppitorus.setup)
 maxp=${maxp:-$(( np_target * 12 / 10 + 1000 ))}
@@ -69,7 +69,7 @@ else
 fi
 
 sha=$(git -C "$root" rev-parse --short HEAD)
-dirty=$(git -C "$root" status --porcelain -- src build scripts/ppi | wc -l)
+dirty=$(git -C "$root" status --porcelain -- src build projects/ppi | wc -l)
 cat > provenance.json <<EOF
 {
   "created": "$(date -Iseconds)",
@@ -92,7 +92,7 @@ launch='export OMP_NUM_THREADS='$threads'
   fi
   echo RUNNING > status
   if ./phantom ppitorus.in > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi
-  OPENBLAS_NUM_THREADS=1 '"$root"'/scripts/ppi/vis/gallery.sh . > figs.log 2>&1'
+  OPENBLAS_NUM_THREADS=1 '"$root"'/projects/ppi/scripts/vis/gallery.sh . > figs.log 2>&1'
 if [[ $fg == yes ]]; then
   bash -c "$launch"
   echo "$(cat status): $dir"

@@ -16,7 +16,7 @@ module analysis
 ! mass flux, m = 0..mmax, and the phase of m = 1..4 at r_center. Appends to
 ! <prefix>_ppimaps.bin one frame per call: SPH-interpolated mid-plane maps
 ! (rho, p, v_R, v_phi) on an (R, phi) grid, rho in the y = 0 plane, and the
-! azimuthally averaged rho(R, z). Layout: scripts/ppi/vis/ppi_data.py.
+! azimuthally averaged rho(R, z). Layout: projects/ppi/scripts/vis/ppi_data.py.
 !
 ! :References:
 !   - Papaloizou & Pringle (1984), MNRAS 208, 721
