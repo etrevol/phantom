@@ -1,0 +1,80 @@
+#!/usr/bin/env bash
+# Build, set up and launch one m1torus run.
+#
+#   projects/m1torus/scripts/run/run.sh --name canon --campaign A -- np=131072 n_orbits=300
+#   projects/m1torus/scripts/run/run.sh --name n16k --kind tests --fg -- np=16384 n_orbits=5
+#
+# key=value pairs after -- replace entries of the .setup that phantomsetup writes with its
+# defaults (the paper's canonical run 0.5-60-0.3); phantom .in options go after --in, e.g.
+# --in tree_accuracy=0.3. The run lands in results/m1torus/<campaign>/<kind>/<stamp>-<name>/
+# with its own binaries, inputs, provenance.json, run.log and a status file.
+set -euo pipefail
+
+name=run
+campaign=A
+kind=runs
+threads=8          # 8 physical cores; 16 hyperthreads are no faster
+fg=no
+in_opts=()
+while [[ $# -gt 0 ]]; do
+  case $1 in
+    --name) name=$2; shift 2 ;;
+    --campaign) campaign=$2; shift 2 ;;
+    --kind) kind=$2; shift 2 ;;
+    --threads) threads=$2; shift 2 ;;
+    --fg) fg=yes; shift ;;
+    --in) in_opts+=("$2"); shift 2 ;;
+    --) shift; break ;;
+    *) echo "unknown option $1" >&2; exit 2 ;;
+  esac
+done
+setup_opts=("$@")
+
+root=$(cd "$(dirname "$0")" && while [[ ! -f build/Makefile_setups && $PWD != / ]]; do cd ..; done; pwd)
+[[ -f $root/build/Makefile_setups ]] || { echo "phantom root not found" >&2; exit 1; }
+dir=$root/results/m1torus/$campaign/$kind/$(date +%Y%m%d-%H%M%S)-$name
+
+export SYSTEM=${SYSTEM:-gfortran}
+( cd "$root" && make SETUP=m1torus >/dev/null && make SETUP=m1torus setup >/dev/null ) \
+  || { echo "build failed: cd $root && make SETUP=m1torus" >&2; exit 1; }
+
+mkdir -p "$dir"
+cp "$root/bin/phantom" "$root/bin/phantomsetup" "$dir/"
+cd "$dir"
+
+# replace key = value in an input file; a key that is not there is an error, since
+# phantom would ignore it silently
+set_opt() {
+  local file=$1 key=${2%%=*} val=${2#*=}
+  grep -qE "^ *$key *=" "$file" || { echo "no option '$key' in $file" >&2; exit 1; }
+  sed -i -E "s|^( *$key *= *)[^!]*(!.*)?$|\1$val   \2|" "$file"
+}
+
+./phantomsetup m1torus > /dev/null 2>&1 || true        # writes the default .setup
+for kv in "${setup_opts[@]}"; do set_opt m1torus.setup "$kv"; done
+np=$(awk '$1=="np"{print $3}' m1torus.setup)
+./phantomsetup m1torus --maxp=$(( np + 1000 )) > setup.log 2>&1 \
+  || { echo FAILED > status; tail -20 setup.log; exit 1; }
+for kv in "${in_opts[@]}"; do set_opt m1torus.in "$kv"; done
+
+cat > provenance.json <<EOF
+{
+  "created": "$(date -Iseconds)",
+  "git": "$(git -C "$root" rev-parse --short HEAD)",
+  "dirty_files": $(git -C "$root" status --porcelain -- src build projects/m1torus | wc -l),
+  "make": "make SETUP=m1torus SYSTEM=$SYSTEM",
+  "threads": $threads,
+  "setup_opts": "${setup_opts[*]:-}",
+  "in_opts": "${in_opts[*]:-}"
+}
+EOF
+
+launch='export OMP_NUM_THREADS='$threads'; echo RUNNING > status
+  if ./phantom m1torus.in > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
+if [[ $fg == yes ]]; then
+  bash -c "$launch"
+  echo "$(cat status): $dir"
+else
+  setsid nohup bash -c "$launch" > /dev/null 2>&1 &
+  echo "launched: $dir"
+fi
