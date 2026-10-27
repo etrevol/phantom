@@ -38,6 +38,10 @@ athena-collab only the branch `artem-develop` counts as checked.
 
 ### Differences from the paper that must be measured, not assumed
 
+- Central mass: phantom softens the particle-sink force over max(eps_c, h_i) with the
+  particle's adaptive h_i, which does not conserve energy; we run it unsoftened
+  (eps_c = 0; the paper's eps = 0.01 is negligible against pericentres >= 0.05).
+
 - Gravity by tree (approximate force) instead of direct summation.
 - Softening of collisionless particles is adaptive (from h) in phantom, fixed in the paper.
 - Integrator: leapfrog with individual steps, not 4th-order Hermite.
