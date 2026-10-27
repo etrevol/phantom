@@ -370,6 +370,7 @@ ifeq ($(SETUP), m1torus)
 #   collisionless self-gravitating torus around a live central mass (Bannikova+ 2026)
     SETUPFILE= setup_m1torus.f90
     ANALYSIS= analysis_m1torus.f90
+    MODFILE= moddump_m1torus.f90
     LIVE_ANALYSIS=yes
     GRAVITY=yes
     ISOTHERMAL=yes
