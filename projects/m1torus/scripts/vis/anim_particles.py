@@ -7,7 +7,10 @@ dense particles are drawn last. Marked: the central mass, the torus barycentre a
 m = 1 mode (arrow along its phase, length proportional to A_1/Sigma_0). A strip below
 follows A_1/Sigma_0 and |r_c| with a cursor at the frame time.
 
-    anim_particles.py [--run DIR] [--every 1] [--fps 12] [--still T]
+    anim_particles.py [--run DIR] [--every 1] [--fps 12] [--still T] [--corotate]
+
+--corotate turns every frame by -Phi_1, so the mode stands still and its shape and the
+orbits streaming through it are visible.
 """
 
 from __future__ import annotations
@@ -48,7 +51,7 @@ def frame_data(path):
                 xc=(s["x"][0], s["y"][0], s["z"][0]) if s else (0.0, 0.0, 0.0))
 
 
-def build_figure(setup, n, tm, a1, rc):
+def build_figure(setup, n, tm, a1, rc, corotate=False):
     fig = plt.figure(figsize=(12.5, 7.6))
     ax_f = fig.add_axes([0.065, 0.31, 0.39, 0.62])
     ax_e = fig.add_axes([0.505, 0.31, 0.39, 0.62])
@@ -64,7 +67,8 @@ def build_figure(setup, n, tm, a1, rc):
         ax.set_yticks(ticks)
         ax.set_xlabel(r"$x/R_{\rm tor}$")
         ax.set_ylabel(ylab, labelpad=2)
-    ax_f.text(0.03, 0.97, "face-on", transform=ax_f.transAxes, va="top", fontsize=10)
+    ax_f.text(0.03, 0.97, r"face-on, frame of $m=1$" if corotate else "face-on",
+              transform=ax_f.transAxes, va="top", fontsize=10)
     ax_e.text(0.03, 0.97, "edge-on", transform=ax_e.transAxes, va="top", fontsize=10)
 
     # point size so the panels fill alike at any N (0.6 at the paper's 128k)
@@ -111,8 +115,14 @@ def build_figure(setup, n, tm, a1, rc):
                 tb_f=tb_f, cursor=cursor, clock=clock, arrow=None)
 
 
-def draw(art, path, pmass, tm, a1, m1):
+def draw(art, path, pmass, tm, a1, m1, corotate=False):
     fr = frame_data(path)
+    k = int(np.argmin(np.abs(tm - fr["t"])))
+    if corotate:
+        cr, sr = np.cos(-m1["Phi1"][k]), np.sin(-m1["Phi1"][k])
+        fr["x"], fr["y"] = cr * fr["x"] - sr * fr["y"], sr * fr["x"] + cr * fr["y"]
+        xc = fr["xc"]
+        fr["xc"] = (cr * xc[0] - sr * xc[1], sr * xc[0] + cr * xc[1], xc[2])
     rho = pmass * (HFACT / fr["h"]) ** 3
     order = np.argsort(rho)
     x, y, z, c = fr["x"][order], fr["y"][order], fr["z"][order], rho[order]
@@ -122,12 +132,14 @@ def draw(art, path, pmass, tm, a1, m1):
     art["sc_e"].set_array(c)
     art["bh_f"].set_data([fr["xc"][0]], [fr["xc"][1]])
     art["bh_e"].set_data([fr["xc"][0]], [fr["xc"][2]])
-    k = int(np.argmin(np.abs(tm - fr["t"])))
-    art["tb_f"].set_data([m1["xtb"][k]], [m1["ytb"][k]])
+    xtb, ytb = m1["xtb"][k], m1["ytb"][k]
+    if corotate:
+        xtb, ytb = cr * xtb - sr * ytb, sr * xtb + cr * ytb
+    art["tb_f"].set_data([xtb], [ytb])
     if art["arrow"] is not None:
         art["arrow"].remove()
     length = ARROW_FULL * a1[k] / A1_PAPER
-    phi = m1["Phi1"][k]
+    phi = 0.0 if corotate else m1["Phi1"][k]
     art["arrow"] = art["ax_f"].annotate(
         "", xy=(length * np.cos(phi), length * np.sin(phi)), xytext=(0, 0), zorder=7,
         arrowprops=dict(arrowstyle="-|>", color="crimson", lw=2, mutation_scale=14))
@@ -142,6 +154,7 @@ def main(argv=None):
     ap.add_argument("--every", type=int, default=1, help="use every n-th dump")
     ap.add_argument("--fps", type=int, default=12)
     ap.add_argument("--still", type=float, default=None, help="one PNG at this orbit")
+    ap.add_argument("--corotate", action="store_true", help="frame turning with the mode")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
@@ -154,24 +167,25 @@ def main(argv=None):
     tm = m1["time"] / P_ORB
     a1 = m1["A1"] / m1["sigma0"]
     rc = np.hypot(m1["xc"], m1["yc"])
-    art = build_figure(setup, n, tm, a1, rc)
+    art = build_figure(setup, n, tm, a1, rc, a.corotate)
 
     out = Path(a.out) if a.out else run / "figs"
     out.mkdir(parents=True, exist_ok=True)
     if a.still is not None:
         times = np.array([pio.read_dump(p)["header"]["time"] / P_ORB for p in dumps])
-        draw(art, dumps[int(np.argmin(np.abs(times - a.still)))], pmass, tm, a1, m1)
-        f = out / f"particles_t{a.still:06.1f}.png"
+        draw(art, dumps[int(np.argmin(np.abs(times - a.still)))], pmass, tm, a1, m1,
+             a.corotate)
+        f = out / f"particles{'_corot' if a.corotate else ''}_t{a.still:06.1f}.png"
         art["fig"].savefig(f, dpi=170)
         print(f)
         return 0
 
     from matplotlib.animation import FFMpegWriter
-    f = out / "anim_particles.mp4"
+    f = out / ("anim_particles_corot.mp4" if a.corotate else "anim_particles.mp4")
     writer = FFMpegWriter(fps=a.fps, bitrate=8000)
     with writer.saving(art["fig"], str(f), dpi=130):
         for p in dumps:
-            draw(art, p, pmass, tm, a1, m1)
+            draw(art, p, pmass, tm, a1, m1, a.corotate)
             writer.grab_frame()
     print(f"{len(dumps)} frames -> {f}")
     return 0
