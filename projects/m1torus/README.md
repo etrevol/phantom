@@ -11,8 +11,9 @@ central mass from the barycentre. This project asks three questions with phantom
 | **B** | how much dissipation (a gas fraction that cools) does the mode survive, and what does the gas do? | A, plus SPH gas with cooling |
 | **C** | how does a circumnuclear gas disc at 0.1-0.3 R_tor respond to the lopsided torus: forced eccentricity and inflow (coplanar), precession, warp or tearing (tilted)? | A, B's gas machinery |
 
-Order: A, then B, then C. Plan, checks and budgets: [`PLAN.md`](PLAN.md).
+Order: A, then B, then C. Tasks, status and budgets: [`PLAN.md`](PLAN.md); dated results
+and decisions: [`LOG.md`](LOG.md).
 
 Paper: `materials/papers/2026_bannikova_2604.11528_*.pdf`.
 
-Status: A in preparation.
+Status: see PLAN.md.
