@@ -24,7 +24,7 @@ module setup
 !   - i_max            : *maximum initial inclination [deg]*
 !   - omega_random     : *random argument of periapsis (paper's control run)*
 !   - np               : *number of torus particles*
-!   - eps_c            : *softening length of the central mass*
+!   - eps_c            : *softening length of the central mass (0 = Kepler)*
 !   - r_acc            : *accretion radius of the central mass*
 !   - iseed            : *random seed*
 !   - n_orbits         : *run length [orbits at R_tor]*
@@ -44,7 +44,12 @@ module setup
  real    :: M_tor = 0.1, R0 = 0.3, e_max = 0.5, i_max = 60.
  logical :: omega_random = .false.
  integer :: np = 131072, iseed = 1
- real    :: eps_c = 1.e-2, r_acc = 1.e-3
+ ! eps_c > 0 makes phantom soften the particle-sink force over max(eps_c, h_i)
+ ! (ptmass.F90) with the particle's adaptive h_i, and that potential changes with
+ ! h_i without a correction term: in the empty centre h_i ~ 0.2, energy drifted
+ ! 1.4e-4 per orbit. eps_c = 0 gives the Kepler force, as the paper's eps = 0.01
+ ! does for pericentres >= 0.05, and a drift of 1.7e-5.
+ real    :: eps_c = 0., r_acc = 1.e-3
  real    :: n_orbits = 300.
  integer :: n_analysis_orbit = 4, n_dumps_orbit = 1
 
@@ -189,7 +194,7 @@ subroutine write_setupfile(filename)
  call write_inopt(np,'np','number of torus particles',iunit)
  call write_inopt(iseed,'iseed','random seed',iunit)
  write(iunit,"(/,a)") '# central mass'
- call write_inopt(eps_c,'eps_c','softening length of the central mass',iunit)
+ call write_inopt(eps_c,'eps_c','softening length of the central mass (0 = Kepler)',iunit)
  call write_inopt(r_acc,'r_acc','accretion radius of the central mass',iunit)
  write(iunit,"(/,a)") '# run'
  call write_inopt(n_orbits,'n_orbits','run length [orbits at R_tor]',iunit)
