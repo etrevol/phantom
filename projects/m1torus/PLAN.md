@@ -26,7 +26,7 @@ athena-collab only the branch `artem-develop` counts as checked.
 | quantity | paper | where |
 |---|---|---|
 | onset of m = 1 | after virial equilibrium; axisymmetric at t = 35, lopsided at t = 51 | Fig. 4, 9 |
-| A_1 (A_1/Sigma_0) | 40.2 (0.377) | Table 2 |
+| A_1 (A_1/Sigma_0) | 40.2 (0.368) | Table 2 |
 | A_2, A_3 | 8.46, 1.77 | Table 2 |
 | k, Q_3 | 0.21, 0.99 | Table 2 |
 | central-mass offset r_c | ~0.024 | Sect. 9.3, Fig. 3 |
