@@ -366,6 +366,17 @@ ifeq ($(SETUP), ppitorus)
     KNOWN_SETUP=yes
 endif
 
+ifeq ($(SETUP), m1torus)
+#   collisionless self-gravitating torus around a live central mass (Bannikova+ 2026)
+    SETUPFILE= setup_m1torus.f90
+    ANALYSIS= analysis_m1torus.f90
+    LIVE_ANALYSIS=yes
+    GRAVITY=yes
+    ISOTHERMAL=yes
+    IND_TIMESTEPS=yes
+    KNOWN_SETUP=yes
+endif
+
 ifeq ($(SETUP), galcen)
 #   galactic centre
     SETUPFILE= setup_galcen_stars.f90
