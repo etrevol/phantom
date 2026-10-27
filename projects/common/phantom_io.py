@@ -8,6 +8,7 @@
 
 from __future__ import annotations
 
+import io
 import re
 from pathlib import Path
 
@@ -75,7 +76,9 @@ def read_ev(path):
     names = re.findall(r"\[\s*\d+\s+([^\]]+?)\s*\]", head)
     if not names:
         names = head.lstrip("#").split()
-    data = np.loadtxt(path, ndmin=2)
+    # Fortran drops the E of a three-digit exponent: -1.7976931349+308
+    text = re.sub(r"(\d)([+-]\d{3})(?=\s|$)", r"\1E\2", path.read_text())
+    data = np.loadtxt(io.StringIO(text), ndmin=2)
     if data.size == 0:
         return {n: np.array([]) for n in names}
     t = data[:, 0]
