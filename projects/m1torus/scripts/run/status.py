@@ -112,7 +112,7 @@ def main(argv=None):
     bad = False
     for run in runs:
         st = (run / "status").read_text().strip() if (run / "status").exists() else "?"
-        if not a.all and not a.runs and st in ("COMPLETED", "FAILED"):
+        if not a.all and not a.runs and (st in ("COMPLETED", "FAILED") or st.startswith("STOPPED")):
             continue
         status, line, problems = check(run)
         print(line)
