@@ -10,6 +10,7 @@
 # with its own binaries, inputs, provenance.json, run.log and a status file.
 # --restart DUMP continues from a full dump with that run's .setup and .in, for
 # numerical tests on an evolved state; give the new end time with --in tmax=...
+# --make VAR=VALUE passes a build flag (e.g. IND_TIMESTEPS=no; it forces a rebuild).
 set -euo pipefail
 
 name=run
@@ -18,6 +19,7 @@ kind=runs
 threads=8          # 8 physical cores; 16 hyperthreads are no faster
 fg=no
 restart=
+make_opts=()
 in_opts=()
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -27,6 +29,7 @@ while [[ $# -gt 0 ]]; do
     --threads) threads=$2; shift 2 ;;
     --fg) fg=yes; shift ;;
     --in) in_opts+=("$2"); shift 2 ;;
+    --make) make_opts+=("$2"); shift 2 ;;
     --restart) restart=$(cd "$(dirname "$2")" && pwd)/$(basename "$2"); shift 2 ;;
     --) shift; break ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
@@ -39,8 +42,9 @@ root=$(cd "$(dirname "$0")" && while [[ ! -f build/Makefile_setups && $PWD != / 
 dir=$root/results/m1torus/$campaign/$kind/$(date +%Y%m%d-%H%M%S)-$name
 
 export SYSTEM=${SYSTEM:-gfortran}
-( cd "$root" && make SETUP=m1torus >/dev/null && make SETUP=m1torus setup >/dev/null ) \
-  || { echo "build failed: cd $root && make SETUP=m1torus" >&2; exit 1; }
+( cd "$root" && make SETUP=m1torus "${make_opts[@]}" >/dev/null \
+  && make SETUP=m1torus "${make_opts[@]}" setup >/dev/null ) \
+  || { echo "build failed: cd $root && make SETUP=m1torus ${make_opts[*]:-}" >&2; exit 1; }
 
 mkdir -p "$dir"
 cp "$root/bin/phantom" "$root/bin/phantomsetup" "$dir/"
@@ -74,7 +78,7 @@ cat > provenance.json <<EOF
   "created": "$(date -Iseconds)",
   "git": "$(git -C "$root" rev-parse --short HEAD)",
   "dirty_files": $(git -C "$root" status --porcelain -- src build projects/m1torus | wc -l),
-  "make": "make SETUP=m1torus SYSTEM=$SYSTEM",
+  "make": "make SETUP=m1torus ${make_opts[*]:-} SYSTEM=$SYSTEM",
   "threads": $threads,
   "setup_opts": "${setup_opts[*]:-}",
   "restart": "${restart}",
