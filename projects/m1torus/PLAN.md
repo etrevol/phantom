@@ -21,10 +21,11 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k ~4.5 min/orbit (110 orbit
 | A4 | [ ] | canonical at 64k, 110-150 orbits (the user starts it overnight) | saturated A1/S0, k, r_c within 10% of the paper; 16k -> 64k converged | 9-14 h |
 | A5 | [ ] | thin control `0.5-30-0.3`, 16k, 150 orbits | no m = 1 above noise (paper Sect. 5) | 2 h |
 | A6 | [ ] | weak case `0.5-45-0.3`, 16k, 150 orbits | A1/S0 ~0.09, k ~0.08 (Table 2) | 2 h |
-| A7 | [ ] | torus mass M_tor = 0.06 and 0.01, 16k | r_c linear in M_tor (Fig. 6) | 2 x 2 h |
+| A7 | [ ] | torus mass M_tor = 0.06 and 0.01, 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); onset may come later at low mass, check Fig. 6 before setting the length | 2 x 2 h |
 | A8 | [ ] | `0.2-60-0.3`, 16k (optional) | stronger mode, A1/S0 ~0.46 | 2 h |
-| A9 | [ ] | pericentres of e >= 0.5 sit at Phi_1 + 180 deg here; the paper says "near the phase": settle the convention | explanation in LOG | - |
+| A9 | [x] | pericentres of e >= 0.5 sit at Phi_1 + 180 deg here; the paper says "near the phase": settle the convention | explanation in LOG | - |
 | A10 | [ ] | short write-up of A: methods, differences from the paper, results | LaTeX, like `projects/ppi/formulary` | - |
+| A11 | [ ] | M_tor = 0.3 (the NGC 613 mass ratio), 16k | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2 h |
 
 ### What the paper does (Sect. 2, Table 1, App. A)
 
@@ -46,7 +47,7 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k ~4.5 min/orbit (110 orbit
 | onset of m = 1 | after virial equilibrium; axisymmetric t = 35, lopsided t = 51 | t ~ 35-40 | Fig. 4, 9 |
 | A_1/Sigma_0 | 0.368 (A_1 = 40.2) | 0.349 | Table 2 |
 | A_2/Sigma_0, A_3/Sigma_0 | 0.077, 0.016 | 0.073, 0.020 | Table 2 |
-| k, Q_3 | 0.21, 0.99 | 0.209 (Poisson fit 0.200), 1.34 | Table 2, Sect. 7.2 |
+| k, Q_3 | 0.21, 0.99 | 0.209 (Poisson fit 0.200), 1.34 (A_3 at the 16k noise floor) | Table 2, Sect. 7.2 |
 | r_c | ~0.024 | 0.0217, flat to t = 150 | Sect. 9.3, Fig. 3 |
 | r_tb | 0.24 | 0.222 | Sect. 9.2 |
 | eccentricities | Rayleigh, sigma = 0.27 | sigma = 0.29 | App. B.1 |
@@ -62,18 +63,26 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k ~4.5 min/orbit (110 orbit
 
 ## B. Dissipation (after A)
 
-A fraction f_gas of the torus as SPH gas that cools fast (the fluid limit of colliding
-clouds); the collisionless rest unchanged. Does the mode survive, at what f_gas does it
-die, where does the gas go?
+A fraction f_gas of the torus particles becomes SPH gas, the rest stays collisionless. At
+what f_gas does the mode die, and where does the gas go? Design (B1, LOG 2026-10-27): gas
+locally isothermal with H/R = 0.1, the effective turbulent sound speed of Hopkins &
+Quataert (2010); no explicit viscosity, angular momentum moves by the resolved
+gravitational torques and shocks (shock viscosity with its switch); gas self-gravity on;
+the sink accretes gas only, r_acc = 0.05. SPH is the frequent-collision limit of a cloud
+ensemble; slower collisions would need sticky particles, which phantom lacks.
 
 | id | status | task | acceptance | cost |
 |---|---|---|---|---|
-| B1 | [ ] | design with the user: gas initial state, cooling (isothermal or beta), viscosity | written decision in LOG | - |
-| B2 | [ ] | setup option f_gas; conservation and cost test | dE/E as in A2 | 30 min |
-| B3 | [ ] | scan f_gas = 0.05, 0.1, 0.3 at 16k | mode amplitude vs f_gas | 3 x 2+ h |
-| B4 | [ ] | where the gas goes: thin disc, inflow, its own eccentricity | figures, LOG | - |
+| B1 | [x] | design with the user | decision in LOG | - |
+| B2 | [ ] | moddump: f_gas of the particles to gas, each split into lighter gas particles (N_gas ~ 32k); control run of the gas without the torus | dE/E as in A2; the control gives the numerical inflow; cost per orbit | 1 h |
+| B3 | [ ] | scan f_gas = 0.05, 0.1, 0.3 from the A3 dump at t = 100, ~50 orbits each | stellar A1/S0 and r_c against f_gas | 3 x 2-3 h |
+| B4 | [ ] | at the threshold f_gas: c_s = 0.3 v_K; one beta-cooling run (Gammie 2001); one run from t = 0 | does the threshold depend on the gas model; does the mode form at all | 3 x 2-4 h |
+| B5 | [ ] | where the gas goes: disc radius, eccentricity, alignment with the mode, inflow to the sink | figures, LOG; compare with Hopkins & Quataert (2010, 2011) | - |
 
 Viscosity and dissipation options in phantom: local note `projects/m1torus/CLAUDE.md`.
+Literature (in `materials/papers/`): Hopkins & Quataert 2010, 2011; Hopkins et al. 2012;
+Krolik & Begelman 1988; Gammie 2001; Meru & Bate 2011; Lodato & Price 2010; Hönig 2019;
+Combes et al. 2019.
 
 ## C. Nested gas disc (after B)
 

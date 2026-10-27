@@ -28,3 +28,37 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   Figures: `m1.png`, `ecc_maps.png`, `incl_peri.png`, `ecc_hist.png`, `pattern.png`,
   `corotating.png`, `anim_particles.mp4`, `anim_particles_corot.mp4`;
   comparison of both 16k runs: `results/m1torus/A/runs/compare_eps_16k.png`.
+- **A9, settled on our side.** With varpi = Omega + omega as in the paper, the e >= 0.5
+  pericentres sit at Phi_1 + 180 deg (within 5 deg) at t = 60-150, mean resultant length
+  0.50-0.67; the projected azimuth agrees within 2 deg; omega alone is uniform
+  (R <= 0.03), so the axis of Fig. 13 is varpi. This is the apocentre effect the paper
+  cites in Sect. 4.2 (an e = 0.5 orbit spends 80% of its time in the apocentre half).
+  "Near the phase of the pattern" fits either the 180 deg ambiguity of
+  Phi_m = arctan(b_m/a_m) (a plain arctan flips our Phi_1 in 60% of the rows after
+  t = 50) or a phase taken from the eccentricity vector. Question for the authors; A10
+  states both angles.
+- **Q3 at 16k is noise-limited.** Harmonic noise sigma/S0 = sqrt(2/N) = 0.011 and
+  <A^2> = A^2 + 2 sigma^2, so a true A3/S0 = 0.016 reads 0.022; we measure 0.020.
+- **Paper, Sect. 9.2 (NGC 613).** r_tb is scaled with M_tor (0.24 -> 0.72 R_tor), but
+  Sect. 3.3 has r_c linear in M_tor with the same participating fraction, i.e. r_tb
+  independent of M_tor. With r_tb = 0.24 the cavity-AGN distance (1 + M_tor) r_tb is
+  2.5 pc against 3 pc observed, without dissipation. Self-similarity is tested only to
+  M_tor = 0.1: task A11. **Sect. 9.1 (M31):** eq. 12 with dmu = -0.3 and S1/S2 = 7-10
+  gives J = 9-13, which matches the quoted A~ = 0.80-0.86; the quoted J = 4-6 would give
+  0.6-0.7.
+- **Phantom.** Sinks accrete gas and dust only (`is_accretable` in `part.F90`); star
+  particles pass through h_acc.
+- **B1, decision.** Literature: thermal pressure alone cannot keep a torus thick
+  (Krolik & Begelman 1988; Hopkins et al. 2012); simulations on these scales carry the
+  unresolved support as an effective turbulent sound speed, 10-50 km/s observed
+  (Hopkins & Quataert 2010), 0.07-0.35 v_K for NGC 613; beyond ~0.01-0.1 pc gravitational
+  torques, not local viscosity, move angular momentum, and near the black hole the
+  eccentric stellar pattern torques the gas through shocks (Hopkins & Quataert 2010,
+  2011). Decided: gas from the A3 dump at t = 100 (f_gas 0.05, 0.1, 0.3) plus one run from
+  t = 0 at the threshold; locally isothermal H/R = 0.1, then c_s = 0.3 v_K and one
+  beta-cooling run at the threshold; no explicit viscosity, gas-only control for the
+  numerical inflow. Defaults: gas self-gravity on, r_acc = 0.05, 16k stars plus ~32k
+  lighter gas particles.
+- **Not cited by the paper:** Hopkins & Quataert (2010a, b) and Hopkins et al. (2012), who
+  found m = 1 eccentric gas+stellar discs near black holes and proposed the M31 disc as
+  a fossil of such an inflow.
