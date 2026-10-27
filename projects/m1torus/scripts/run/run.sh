@@ -8,6 +8,8 @@
 # defaults (the paper's canonical run 0.5-60-0.3); phantom .in options go after --in, e.g.
 # --in tree_accuracy=0.3. The run lands in results/m1torus/<campaign>/<kind>/<stamp>-<name>/
 # with its own binaries, inputs, provenance.json, run.log and a status file.
+# --restart DUMP continues from a full dump with that run's .setup and .in, for
+# numerical tests on an evolved state; give the new end time with --in tmax=...
 set -euo pipefail
 
 name=run
@@ -15,6 +17,7 @@ campaign=A
 kind=runs
 threads=8          # 8 physical cores; 16 hyperthreads are no faster
 fg=no
+restart=
 in_opts=()
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -24,6 +27,7 @@ while [[ $# -gt 0 ]]; do
     --threads) threads=$2; shift 2 ;;
     --fg) fg=yes; shift ;;
     --in) in_opts+=("$2"); shift 2 ;;
+    --restart) restart=$(cd "$(dirname "$2")" && pwd)/$(basename "$2"); shift 2 ;;
     --) shift; break ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
   esac
@@ -50,11 +54,19 @@ set_opt() {
   sed -i -E "s|^( *$key *= *)[^!]*(!.*)?$|\1$val   \2|" "$file"
 }
 
-./phantomsetup m1torus > /dev/null 2>&1 || true        # writes the default .setup
-for kv in "${setup_opts[@]}"; do set_opt m1torus.setup "$kv"; done
-np=$(awk '$1=="np"{print $3}' m1torus.setup)
-./phantomsetup m1torus --maxp=$(( np + 1000 )) > setup.log 2>&1 \
-  || { echo FAILED > status; tail -20 setup.log; exit 1; }
+if [[ -n $restart ]]; then
+  src=$(dirname "$restart")
+  cp "$src/m1torus.setup" "$src/m1torus.in" .
+  cp "$restart" .
+  set_opt m1torus.in "dumpfile=$(basename "$restart")"
+  echo "restart from $restart" > setup.log
+else
+  ./phantomsetup m1torus > /dev/null 2>&1 || true        # writes the default .setup
+  for kv in "${setup_opts[@]}"; do set_opt m1torus.setup "$kv"; done
+  np=$(awk '$1=="np"{print $3}' m1torus.setup)
+  ./phantomsetup m1torus --maxp=$(( np + 1000 )) > setup.log 2>&1 \
+    || { echo FAILED > status; tail -20 setup.log; exit 1; }
+fi
 for kv in "${in_opts[@]}"; do set_opt m1torus.in "$kv"; done
 
 cat > provenance.json <<EOF
@@ -65,6 +77,7 @@ cat > provenance.json <<EOF
   "make": "make SETUP=m1torus SYSTEM=$SYSTEM",
   "threads": $threads,
   "setup_opts": "${setup_opts[*]:-}",
+  "restart": "${restart}",
   "in_opts": "${in_opts[*]:-}"
 }
 EOF

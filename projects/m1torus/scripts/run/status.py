@@ -46,8 +46,8 @@ def fmt_h(seconds):
 
 def check(run: Path):
     status = (run / "status").read_text().strip() if (run / "status").exists() else "?"
-    setup = pio.read_setup(run / "m1torus.setup")
-    total = float(setup.get("n_orbits", np.nan))
+    # tmax of the .in, not n_orbits of the .setup: a restart ends where its .in says
+    total = float(pio.read_setup(run / "m1torus.in").get("tmax", np.nan)) / P_ORB
     m1f = run / "m1torus_m1.ev"
     problems = []
     if not m1f.exists():
@@ -58,7 +58,8 @@ def check(run: Path):
     start = datetime.fromisoformat(json.loads((run / "provenance.json").read_text())
                                    ["created"]).timestamp()
     wall = (m1f.stat().st_mtime if status != "RUNNING" else time.time()) - start
-    rate = t / wall * 3600.0 if wall > 0 else np.nan
+    t_first = m1["time"][0] / P_ORB
+    rate = (t - t_first) / wall * 3600.0 if wall > 0 else np.nan
 
     # recent rate from the previous call, kept beside the run
     state = run / ".status_prev"
