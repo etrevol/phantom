@@ -1375,7 +1375,8 @@ end subroutine start_cell
 subroutine finish_cell(cell,cell_converged)
  use dim,      only:use_apr
  use io,       only:iprint,fatal
- use part,     only:get_partinfo,iamgas,maxphase,massoftype,igas,hrho,aprmassoftype
+ use part,     only:get_partinfo,iamgas,maxphase,massoftype,igas,hrho,aprmassoftype,&
+                     hsoft_nbody,istar,idarkmatter
  use options,  only:tolh
 
  type(celldens),  intent(inout) :: cell
@@ -1404,6 +1405,12 @@ subroutine finish_cell(cell,cell_converged)
        iamgasi  = .true.
     endif
     !if (.not.iactivei) print*,' ERROR: should be no inactive particles here',iamtypei,iactivei
+
+    ! a fixed softening length needs no h-rho iteration
+    if (hsoft_nbody > 0. .and. (iamtypei==istar .or. iamtypei==idarkmatter)) then
+       cell%h(i) = hsoft_nbody
+       cycle over_parts
+    endif
 
     apri = cell%apr(i)
     if (use_apr) then
@@ -1507,7 +1514,8 @@ subroutine store_results(icall,cell,getdv,getdb,realviscosity,stressmax,xyzh,&
                          maxneighact,np,ncalc,radprop)
  use part,        only:hrho,rhoh,get_partinfo,iamgas,&
                        mhd,maxphase,massoftype,igas,ndustlarge,ndustsmall,xyzh_soa,&
-                       maxgradh,idust,ifluxx,ifluxz,ithick,aprmassoftype
+                       maxgradh,idust,ifluxx,ifluxz,ithick,aprmassoftype,&
+                       hsoft_nbody,istar,idarkmatter
  use io,          only:fatal,real4
  use dim,         only:maxp,ndivcurlB,nalpha,use_dust,do_radiation,use_apr,gravity
  use options,     only:use_dustfrac,implicit_radiation
@@ -1593,6 +1601,15 @@ subroutine store_results(icall,cell,getdv,getdb,realviscosity,stressmax,xyzh,&
        if (maxgradh==maxp) then
           gradh(1,lli) = real(gradhi,kind=kind(gradh))
           if (gravity) gradh(2,lli) = real(gradsofti,kind=kind(gradh))
+       endif
+       ! fixed softening: constant h, so the grad-h and grad-soft corrections vanish
+       if (hsoft_nbody > 0. .and. (iamtypei==istar .or. iamtypei==idarkmatter)) then
+          xyzh(4,lli) = hsoft_nbody
+          xyzh_soa(cell%arr_index(i),4) = hsoft_nbody
+          if (maxgradh==maxp) then
+             gradh(1,lli) = 1.
+             if (gravity) gradh(2,lli) = 0.
+          endif
        endif
        rhomax = max(rhomax,real(rhoi))
     else

@@ -25,6 +25,7 @@ module setup
 !   - omega_random     : *random argument of periapsis (paper's control run)*
 !   - np               : *number of torus particles*
 !   - eps_c            : *softening length of the central mass (0 = Kepler)*
+!   - eps_star         : *fixed Plummer-equivalent softening of the torus (0 = adaptive)*
 !   - r_acc            : *accretion radius of the central mass*
 !   - iseed            : *random seed*
 !   - n_orbits         : *run length [orbits at R_tor]*
@@ -50,6 +51,9 @@ module setup
  ! 1.4e-4 per orbit. eps_c = 0 gives the Kepler force, as the paper's eps = 0.01
  ! does for pericentres >= 0.05, and a drift of 1.7e-5.
  real    :: eps_c = 0., r_acc = 1.e-3
+ ! eps_star > 0 fixes the torus softening (paper: Plummer eps = 0.01) instead of phantom's
+ ! adaptive h; the cubic spline matches a Plummer potential at r = 0 for h = 1.4 eps
+ real    :: eps_star = 0.
  real    :: n_orbits = 300.
  integer :: n_analysis_orbit = 4, n_dumps_orbit = 1
 
@@ -60,7 +64,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  use units,        only:set_units
  use physcon,      only:pc,solarm
  use part,         only:istar,set_particle_type,nptmass,xyzmh_ptmass,vxyz_ptmass, &
-                        ihacc,ihsoft
+                        ihacc,ihsoft,hsoft_nbody
  use options,      only:iexternalforce
  use timestep,     only:tmax,dtmax
  use io_control,   only:nout,nfulldump
@@ -105,6 +109,10 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  ! and height sin(i_max); phantom iterates it to its own value
  vol = 2.*pi*(2.*R0)*(2.*max(sin(i_max*pi/180.),R0))
  h0  = hfact*(pmass*vol/M_tor)**(1./3.)
+ if (eps_star > 0.) then
+    hsoft_nbody = 1.4*eps_star
+    h0 = hsoft_nbody
+ endif
 
  is = -abs(iseed)
  do i=1,np
@@ -169,7 +177,8 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
     print "(/,a)",' Collisionless torus (Bannikova et al. 2026)'
     print "(a,i10,a,es10.3,a,f6.3,a,f6.3,a,f6.1)",'  N = ',np,'  M_tor = ',M_tor, &
           '  R0 = ',R0,'  e_max = ',e_max,'  i_max = ',i_max
-    print "(a,es10.3,a,es10.3,a,es10.3)",'  eps_c = ',eps_c,'  r_acc = ',r_acc,'  h0 = ',h0
+    print "(a,es10.3,a,es10.3,a,es10.3,a,es10.3)",'  eps_c = ',eps_c,'  r_acc = ',r_acc, &
+          '  h0 = ',h0,'  eps_star = ',eps_star
     print "(a,3es11.3)",'  barycentre shift removed: ',xcm
     print "(a,f8.1,a,i4,a,i4,a)",'  tmax = ',n_orbits,' orbits, ',n_analysis_orbit, &
           ' analysis calls and ',n_dumps_orbit,' dumps per orbit'
@@ -193,6 +202,7 @@ subroutine write_setupfile(filename)
  call write_inopt(omega_random,'omega_random','random argument of periapsis',iunit)
  call write_inopt(np,'np','number of torus particles',iunit)
  call write_inopt(iseed,'iseed','random seed',iunit)
+ call write_inopt(eps_star,'eps_star','fixed Plummer softening of the torus (0 = adaptive)',iunit)
  write(iunit,"(/,a)") '# central mass'
  call write_inopt(eps_c,'eps_c','softening length of the central mass (0 = Kepler)',iunit)
  call write_inopt(r_acc,'r_acc','accretion radius of the central mass',iunit)
@@ -224,6 +234,7 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(np,'np',db,min=1,errcount=nerr)
  call read_inopt(iseed,'iseed',db,errcount=nerr)
  call read_inopt(eps_c,'eps_c',db,min=0.,errcount=nerr)
+ call read_inopt(eps_star,'eps_star',db,min=0.)
  call read_inopt(r_acc,'r_acc',db,min=0.,errcount=nerr)
  call read_inopt(n_orbits,'n_orbits',db,min=0.,errcount=nerr)
  call read_inopt(n_analysis_orbit,'n_analysis_orbit',db,min=1,errcount=nerr)
