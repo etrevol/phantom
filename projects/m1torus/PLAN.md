@@ -25,6 +25,14 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A9 | [x] | pericentres of e >= 0.5 sit at Phi_1 + 180 deg here; the paper says "near the phase": settle the convention | explanation in LOG | - |
 | A10 | [ ] | short write-up of A: methods, differences from the paper, results | LaTeX, like `projects/ppi/formulary` | - |
 | A11 | [ ] | M_tor = 0.3 (the NGC 613 mass ratio), 16k | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2 h |
+| A12 | [ ] | digitise the paper's Fig. A.1: onset and growth rate of r_c for 64k, 128k, 256k | their growth rate and onset against ours (64k starts ~20-30 orbits later here) | 30 min |
+| A13 | [ ] | can phantom soften star particles with a fixed length instead of the adaptive h | answer from the code | 30 min |
+| A14 | [ ] | softening test at 16k: hfact 0.9 and 1.5 (h x0.75, x1.25), or a fixed eps if A13 allows | A1/S0, r_c and growth rate against h; does h -> 0 close the 3-6% gap and the slower growth | 2 x 2 h |
+| A15 | [ ] | 16k canonical run continued to 1000 orbits | the mode lives to t = 1000 (paper Sect. 3.1) | ~11 h, overnight |
+
+Order (2026-10-28): A12, A13, A14 first: if the adaptive softening (h ~ 0.08 against the
+paper's 0.01) slows the growth and lowers the saturation, a weak mode such as A6 could
+miss its 150 orbits and read as no mode. Then A5-A7, A11; A15 on a free night.
 
 ### What the paper does (Sect. 2, Table 1, App. A)
 

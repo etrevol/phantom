@@ -84,3 +84,10 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   etot to 7e-8 where both exist, into `m1torus00.ev`; the mode diagnostics
   (`m1torus_m1.ev`) were never affected. `continue.sh` now moves `logfile` to the next
   free number.
+- **A4, reading corrected.** "Converged" was too strong: from 16k to 64k A1/S0 and |r_c|
+  rose by ~3% towards the paper, so they still drift with N. The paper's own Fig. A.1
+  shows its onset moving later with N too (256k and the symmetrised run start last),
+  with the same saturated r_c (plateau ~0.023 on the figure). Our 64k starts ~20-30
+  orbits after their 64k, i.e. grows slower. Suspect: phantom's adaptive softening,
+  h ~ 0.08 against eps = 0.01, weakens small-scale self-gravity; their eps tests
+  (1e-2-1e-4) are all far below our h. New tasks A12-A15, run before the controls.
