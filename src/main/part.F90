@@ -400,6 +400,7 @@ module part
  integer, parameter :: ipartbufsize = 129
 
  real            :: hfact,Bextx,Bexty,Bextz,tolh
+ real            :: hsoft_nbody = 0.  ! fixed softening of star and dark-matter particles, 0 = adaptive
  integer         :: npart
  integer(kind=8) :: ntot
  integer         :: ideadhead = 0

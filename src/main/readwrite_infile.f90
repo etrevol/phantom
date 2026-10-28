@@ -27,7 +27,7 @@ module readwrite_infile
 !   utils_apr, viscosity
 !
  use options,   only:iexternalforce
- use part,      only:hfact,tolh
+ use part,      only:hfact,tolh,hsoft_nbody
  use dim,       only:do_radiation,nucleation,use_dust,use_dustgrowth,mhd_nonideal,compiled_with_mcfost,&
                      inject_parts,curlv,driving,track_lum,disc_viscosity,isothermal
  implicit none
@@ -106,6 +106,8 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
  call write_options_tree(iwritein)
  call write_inopt(hfact,'hfact','h in units of particle spacing [h = hfact(m/rho)^(1/3)]',iwritein)
  call write_inopt(tolh,'tolh','tolerance on h-rho iterations',iwritein,exp=.true.)
+ if (hsoft_nbody > 0.) call write_inopt(hsoft_nbody,'hsoft_nbody',&
+    'fixed softening of star and dark-matter particles (0 = adaptive)',iwritein)
 
  call write_options_shock_capturing(iwritein)
  call write_options_damping(iwritein)
@@ -251,7 +253,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  use io,               only:warn
  use infile_utils,     only:inopts,read_inopt
  use options,          only:use_porosity
- use part,             only:hfact,tolh
+ use part,             only:hfact,tolh,hsoft_nbody
  use eos,              only:read_options_eos
  use io_control,       only:read_options_iocontrol
  use options,          only:read_options_output
@@ -295,6 +297,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  call read_inopt(hfact,'hfact',db,errcount=nerr,min=1.,max=5.)
  call read_inopt(tolh,'tolh',db,errcount=nerr,min=epsilon(tolh))
  if (tolh > 1.e-3) call warn(label,'tolh is quite large!')
+ call read_inopt(hsoft_nbody,'hsoft_nbody',db,min=0.)  ! optional, absent = adaptive
 
  ! parse options internal to other code modules
  call read_options_iocontrol(db,nerr)
