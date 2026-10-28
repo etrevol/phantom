@@ -62,3 +62,25 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **Not cited by the paper:** Hopkins & Quataert (2010a, b) and Hopkins et al. (2012), who
   found m = 1 eccentric gas+stellar discs near black holes and proposed the M31 disc as
   a fossil of such an inflow.
+
+## 2026-10-28
+
+- **A4, 64k** (`20261027-215121-canon-64k`, 150 orbits, 21:51-09:40, 4.7 min/orbit):
+  saturated t = 110-150, against 16k over the same window and the paper: A1/S0 0.356
+  (16k 0.344, paper 0.368), A2/S0 0.074 (0.072, 0.077), A3/S0 0.016 (0.020, 0.016), k
+  0.207 (0.209, 0.21), Q3 1.05, noise-corrected 0.99 (16k 1.33 and 1.07, paper 0.99),
+  |r_c| 0.0229 (0.0222, 0.024), |r_tb| 0.226 (0.218, 0.24), Rayleigh sigma 0.28,
+  pattern 0.0190 Omega_0 (53 orbits), pericentres of e >= 0.5 at Phi_1 + 180 deg. Within
+  6% of the paper and 3% of 16k: converged. Q3 = 1 at 64k confirms the 16k Q3 was noise.
+  The mode grows at the same rate (e-fold 16 orbits at both N) but starts later at 64k
+  (A1/S0 > 0.1 at t = 69 against 52): the seed is the shot noise, sqrt(pi/N). Energy
+  drift 5.1e-4 over 150 orbits (16k 1.1e-3), dL/L ~1.4e-3, no particle lost.
+  Figures in the run's `figs/`; comparison `results/m1torus/A/runs/compare_16k_64k.png`
+  (`scripts/vis/compare_runs.py`).
+- **Incident.** The run was extended from 110 to 150 orbits with `continue.sh`. phantom
+  names the .ev after `logfile` and rewrote `m1torus01.ev` (and the sink .ev) from
+  t = 110, losing 0-110. The energy was rebuilt from the 220 full dumps exactly as
+  `energies.f90` sums it (kinetic + sink potential + poten), agreeing with phantom's
+  etot to 7e-8 where both exist, into `m1torus00.ev`; the mode diagnostics
+  (`m1torus_m1.ev`) were never affected. `continue.sh` now moves `logfile` to the next
+  free number.

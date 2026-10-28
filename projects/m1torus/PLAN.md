@@ -8,8 +8,7 @@ Ground truth is the paper and our own measurements. The side projects on this la
 (athena-torus, athena-vv, phantom-sgtorus) are reference only; of athena-collab only
 `artem-develop` counts as checked.
 
-Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k ~4.5 min/orbit (110 orbits ~9 h,
-150 ~12-14 h). Ask the user before anything over 30 min.
+Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits 12 h). Ask the user before anything over 30 min.
 
 ## A. Reproduction of the collisionless mode
 
@@ -18,7 +17,7 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k ~4.5 min/orbit (110 orbit
 | A1 | [x] | setup, live analysis, run tooling, figures | runs end to end | - |
 | A2 | [x] | numerics at 16k: cost, conservation, energy-drift diagnosis | dE/E < 2e-3 over 150 orbits | - |
 | A3 | [x] | canonical `0.5-60-0.3`, 16k, 150 orbits | mode appears and holds | 2 h |
-| A4 | [ ] | canonical at 64k, 110-150 orbits (the user starts it overnight) | saturated A1/S0, k, r_c within 10% of the paper; 16k -> 64k converged | 9-14 h |
+| A4 | [x] | canonical at 64k, 150 orbits | saturated A1/S0, k, r_c within 10% of the paper; 16k -> 64k converged | 12 h |
 | A5 | [ ] | thin control `0.5-30-0.3`, 16k, 150 orbits | no m = 1 above noise (paper Sect. 5) | 2 h |
 | A6 | [ ] | weak case `0.5-45-0.3`, 16k, 150 orbits | A1/S0 ~0.09, k ~0.08 (Table 2) | 2 h |
 | A7 | [ ] | torus mass M_tor = 0.06 and 0.01, 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); onset may come later at low mass, check Fig. 6 before setting the length | 2 x 2 h |
@@ -42,16 +41,20 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k ~4.5 min/orbit (110 orbit
 
 ### Checks (canonical run)
 
-| quantity | paper | 16k, eps_c = 0 (A3) | where |
-|---|---|---|---|
-| onset of m = 1 | after virial equilibrium; axisymmetric t = 35, lopsided t = 51 | t ~ 35-40 | Fig. 4, 9 |
-| A_1/Sigma_0 | 0.368 (A_1 = 40.2) | 0.349 | Table 2 |
-| A_2/Sigma_0, A_3/Sigma_0 | 0.077, 0.016 | 0.073, 0.020 | Table 2 |
-| k, Q_3 | 0.21, 0.99 | 0.209 (Poisson fit 0.200), 1.34 (A_3 at the 16k noise floor) | Table 2, Sect. 7.2 |
-| r_c | ~0.024 | 0.0217, flat to t = 150 | Sect. 9.3, Fig. 3 |
-| r_tb | 0.24 | 0.222 | Sect. 9.2 |
-| eccentricities | Rayleigh, sigma = 0.27 | sigma = 0.29 | App. B.1 |
-| pattern | prograde, period >> orbital | 0.0186 Omega_0, period 54 orbits | Sect. 3.1 |
+Saturated averages over t = 110-150 for both runs (the 16k numbers in LOG for t = 90-110 are
+within 1%).
+
+| quantity | paper | 16k, eps_c = 0 (A3) | 64k (A4) | where |
+|---|---|---|---|---|
+| onset of m = 1 | after virial equilibrium; axisymmetric t = 35, lopsided t = 51 | A1/S0 > 0.1 at t = 52 | A1/S0 > 0.1 at t = 69; same growth, e-fold 16 orbits | Fig. 4, 9 |
+| A_1/Sigma_0 | 0.368 (A_1 = 40.2) | 0.344 | 0.356 | Table 2 |
+| A_2/Sigma_0, A_3/Sigma_0 | 0.077, 0.016 | 0.072, 0.020 | 0.074, 0.016 | Table 2 |
+| k, Q_3 | 0.21, 0.99 | 0.209, 1.33 (noise-corrected 1.07) | 0.207 (Poisson fit 0.204), 1.05 (0.99) | Table 2, Sect. 7.2 |
+| r_c | ~0.024 | 0.0222 | 0.0229 | Sect. 9.3, Fig. 3 |
+| r_tb | 0.24 | 0.218 | 0.226 | Sect. 9.2 |
+| eccentricities | Rayleigh, sigma = 0.27 | sigma = 0.28 | sigma = 0.28 | App. B.1 |
+| pattern | prograde, period >> orbital | 0.0186 Omega_0, period 54 orbits | 0.0190 Omega_0, 53 orbits | Sect. 3.1 |
+| energy drift, 150 orbits | not quoted | 1.1e-3 | 5.1e-4 | - |
 
 ### Differences from the paper (measured, not assumed)
 
