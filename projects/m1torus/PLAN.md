@@ -18,7 +18,7 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A2 | [x] | numerics at 16k: cost, conservation, energy-drift diagnosis | dE/E < 2e-3 over 150 orbits | - |
 | A3 | [x] | canonical `0.5-60-0.3`, 16k, 150 orbits | mode appears and holds | 2 h |
 | A4 | [x] | canonical at 64k, 150 orbits | saturated A1/S0, k, r_c within 10% of the paper; 16k -> 64k converged | 12 h |
-| A5 | [ ] | thin control `0.5-30-0.3`, 16k, 150 orbits | no m = 1 above noise (paper Sect. 5) | 2 h |
+| A5 | [x] | thin control `0.5-30-0.3`, 16k, 150 orbits | no m = 1 above noise (paper Sect. 5) | 2 h |
 | A6 | [ ] | weak case `0.5-45-0.3`, 16k, 150 orbits | A1/S0 ~0.09, k ~0.08 (Table 2) | 2 h |
 | A7 | [ ] | torus mass M_tor = 0.06 and 0.01, 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); onset may come later at low mass, check Fig. 6 before setting the length | 2 x 2 h |
 | A8 | [ ] | `0.2-60-0.3`, 16k (optional) | stronger mode, A1/S0 ~0.46 | 2 h |

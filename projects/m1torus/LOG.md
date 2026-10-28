@@ -102,3 +102,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **A13.** phantom has no fixed softening for star or dark-matter particles: their h comes
   from the neighbour sum (`dens.F90`); only sinks take a fixed hsoft. A fixed eps would
   need a code change; hfact rescales h.
+- **A5, thin control** (`20261028-121511-thin30-16k`, i_max = 30 deg, 16k, 150 orbits;
+  interrupted at t = 148 and finished with `continue.sh`, whose new logfile kept the .ev).
+  No mode: over t = 110-150 A1/S0 0.019, A2/S0 0.015, A3/S0 0.015, the flat spectrum of
+  shot noise (floor sqrt(pi/N) = 0.014); |r_c| 0.0010, |r_tb| 0.009, the noise level of
+  a barycentre of 16k particles. The paper's 0.5-30-0.3 gives A1 = 1.11, A1/S0 = 0.010,
+  twice its 128k floor: the same verdict. `results/m1torus/A/runs/compare_thin30.png`.
