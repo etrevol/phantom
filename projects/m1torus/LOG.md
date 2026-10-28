@@ -91,3 +91,14 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   orbits after their 64k, i.e. grows slower. Suspect: phantom's adaptive softening,
   h ~ 0.08 against eps = 0.01, weakens small-scale self-gravity; their eps tests
   (1e-2-1e-4) are all far below our h. New tasks A12-A15, run before the controls.
+- **A12, Fig. A.1 digitised** (`scripts/vis/digitise_figA1.py`). Smoothed r_c reaches
+  0.005 / 0.015 / plateau at: paper 64k 39 / 61 / 0.0233, 128k 38 / 58 / 0.0241, 256k
+  60 / 79 / 0.0239, symmetrised 104 / 125 / 0.0230; ours 16k 49 / 69 / 0.0222, 64k
+  66 / 85 / 0.0229. The rise 0.005 -> 0.015 takes 19-22 orbits in every run, theirs and
+  ours: the growth rate agrees, the earlier "grows slower" was wrong. The onset scatters
+  by 65 orbits among their own runs (seed realisation) and ours lies inside it. Their
+  plateau scatters 0.0230-0.0241; our 64k 0.0229 is at its lower edge, ~3% under their
+  mean, the same size as their run-to-run spread.
+- **A13.** phantom has no fixed softening for star or dark-matter particles: their h comes
+  from the neighbour sum (`dens.F90`); only sinks take a fixed hsoft. A fixed eps would
+  need a code change; hfact rescales h.
