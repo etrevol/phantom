@@ -57,8 +57,14 @@ def check(run: Path):
     age = time.time() - m1f.stat().st_mtime
     start = datetime.fromisoformat(json.loads((run / "provenance.json").read_text())
                                    ["created"]).timestamp()
-    wall = (m1f.stat().st_mtime if status != "RUNNING" else time.time()) - start
     t_first = m1["time"][0] / P_ORB
+    # after continue.sh the rate counts from the restart, not across the pause before it
+    clog = run / "continued.log"
+    if clog.exists() and clog.read_text().strip():
+        stamp, rest = clog.read_text().strip().splitlines()[-1].split(" ", 1)
+        start = datetime.fromisoformat(stamp).timestamp()
+        t_first = pio.read_dump(run / rest.split()[2])["header"]["time"] / P_ORB
+    wall = (m1f.stat().st_mtime if status != "RUNNING" else time.time()) - start
     rate = (t - t_first) / wall * 3600.0 if wall > 0 else np.nan
 
     # recent rate from the previous call, kept beside the run
