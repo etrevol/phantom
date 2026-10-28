@@ -29,9 +29,11 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A13 | [x] | can phantom soften star particles with a fixed length instead of the adaptive h | answer from the code | 30 min |
 | A14 | [ ] | (optional after A12) softening test at 16k: hfact 0.9 and 1.5 (h x0.75, x1.25) | A1/S0, r_c and growth rate against h; does h -> 0 close the 3-6% gap and the slower growth | 2 x 2 h |
 | A15 | [ ] | 16k canonical run continued to 1000 orbits | the mode lives to t = 1000 (paper Sect. 3.1) | ~11 h, overnight |
+| A16 | [ ] | (lowest) oscillation of the central-mass radius against softening: an unpublished figure of the authors shows |r_c| at 64k oscillating with a ~55-orbit period and growing amplitude after t ~ 200 for eps = 1e-3, 1e-4, flat for 1e-2 | from A15 (our sink unsoftened, torus h ~ 0.08) and, if needed, fixed eps_star 1e-3 and 1e-2 runs on the `m1torus/fixedsoft` branch: which softening, sink-particle or particle-particle, drives it | after A15 |
 
 Order (2026-10-28): A12 and A13 done; A12 found no slower growth (LOG), so A14 is optional
-and the controls come next: A5, A6, then A7, A11; A15 on a free night.
+and the controls come next: A5, A6, then A7, A11; A15 on a free night; A16 and the
+fixed-softening runs last.
 
 ### What the paper does (Sect. 2, Table 1, App. A)
 
