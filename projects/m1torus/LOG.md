@@ -113,3 +113,13 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   softening does not resolve close passes: dE/E slope -4.2e-4 per orbit at 0.1. At 0.04
   the slope is 4.7e-6 per orbit (~7e-4 over 150 orbits, as A3's 1.1e-3), at ~18 orbits/h
   on 4 threads. The run uses C_cour = C_force = 0.04.
+- **A14, fixed softening** (`20261028-150605-canon-16k-fixeps001`: A3's initial state,
+  eps = 0.01 Plummer-equivalent fixed, h = 0.014, C_cour = C_force = 0.04, 150 orbits,
+  6 h at 24 orbits/h; dE/E 1.8e-3). Over t = 110-150 against A3 (adaptive h ~ 0.08):
+  A1/S0 0.337 (0.344), A2/S0 0.070 (0.072), k 0.206 (0.209), Q3 noise-corrected 1.03
+  (1.07), |r_c| 0.0212 (0.0222), |r_tb| 0.212 (0.218), pattern 0.0183 Omega_0 (0.0186),
+  Rayleigh sigma 0.30 (0.29); growth e-fold 17.8 (16.8) orbits, onset 3 orbits later.
+  The paper's softening does not move the run towards the paper (0.368, 0.024): the
+  adaptive h is not the cause of the 3-6% gap. What remains is the N trend (16k -> 64k
+  +3%, extrapolating to ~0.36 at 128k) and the run-to-run spread the paper shows itself
+  (r_c plateau 0.0230-0.0241). Comparison: `results/m1torus/A/runs/compare_softening.png`.
