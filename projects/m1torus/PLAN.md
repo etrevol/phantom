@@ -27,13 +27,12 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A11 | [ ] | M_tor = 0.3 (the NGC 613 mass ratio), 16k | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2 h |
 | A12 | [x] | digitise the paper's Fig. A.1: onset and growth rate of r_c for 64k, 128k, 256k | their growth rate and onset against ours (64k starts ~20-30 orbits later here) | 30 min |
 | A13 | [x] | can phantom soften star particles with a fixed length instead of the adaptive h | answer from the code | 30 min |
-| A14 | [ ] | (optional after A12) softening test at 16k: hfact 0.9 and 1.5 (h x0.75, x1.25) | A1/S0, r_c and growth rate against h; does h -> 0 close the 3-6% gap and the slower growth | 2 x 2 h |
+| A14 | [~] | fixed softening at 16k (branch `m1torus/fixedsoft`, setup `eps_star`): A3 again with the same seed and eps = 0.01 as the paper, after 16k tests of cost and energy | A1/S0, r_c, onset and growth against A3 (adaptive h ~ 0.08) and the paper | tests 30 min, run 2-15 h |
 | A15 | [ ] | 16k canonical run continued to 1000 orbits | the mode lives to t = 1000 (paper Sect. 3.1) | ~11 h, overnight |
 | A16 | [ ] | (lowest) oscillation of the central-mass radius against softening: an unpublished figure of the authors shows |r_c| at 64k oscillating with a ~55-orbit period and growing amplitude after t ~ 200 for eps = 1e-3, 1e-4, flat for 1e-2 | from A15 (our sink unsoftened, torus h ~ 0.08) and, if needed, fixed eps_star 1e-3 and 1e-2 runs on the `m1torus/fixedsoft` branch: which softening, sink-particle or particle-particle, drives it | after A15 |
 
-Order (2026-10-28): A12 and A13 done; A12 found no slower growth (LOG), so A14 is optional
-and the controls come next: A5, A6, then A7, A11; A15 on a free night; A16 and the
-fixed-softening runs last.
+Order (2026-10-28, the user's): A14 now (A6 stopped at t = 10, continue it after); then
+A6, A7, A11; A15 on a free night; A16 last.
 
 ### What the paper does (Sect. 2, Table 1, App. A)
 
