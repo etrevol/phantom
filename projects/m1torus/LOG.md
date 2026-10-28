@@ -123,3 +123,6 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   adaptive h is not the cause of the 3-6% gap. What remains is the N trend (16k -> 64k
   +3%, extrapolating to ~0.36 at 128k) and the run-to-run spread the paper shows itself
   (r_c plateau 0.0230-0.0241). Comparison: `results/m1torus/A/runs/compare_softening.png`.
+- **A6 and the paper's Fig. 14.** The weak case 0.5-45-0.3 grows slowly in the paper: A1
+  rises from t ~ 50 and saturates (A1/S0 ~ 0.09) only at t ~ 500-1000, about 0.04-0.05
+  at t = 150. A6 is at the noise floor at t = 81; it goes on to 1000 orbits after 150.
