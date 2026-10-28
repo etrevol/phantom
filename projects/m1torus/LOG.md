@@ -108,3 +108,8 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   shot noise (floor sqrt(pi/N) = 0.014); |r_c| 0.0010, |r_tb| 0.009, the noise level of
   a barycentre of 16k particles. The paper's 0.5-30-0.3 gives A1 = 1.11, A1/S0 = 0.010,
   twice its 128k floor: the same verdict. `results/m1torus/A/runs/compare_thin30.png`.
+- **A14, tests** (16k, eps_star = 0.01, h = 0.014 fixed, 3 orbits, branch `m1torus/fixedsoft`).
+  At phantom's step factors (C_cour 0.3, C_force 0.25) and at 0.1 the small fixed
+  softening does not resolve close passes: dE/E slope -4.2e-4 per orbit at 0.1. At 0.04
+  the slope is 4.7e-6 per orbit (~7e-4 over 150 orbits, as A3's 1.1e-3), at ~18 orbits/h
+  on 4 threads. The run uses C_cour = C_force = 0.04.
