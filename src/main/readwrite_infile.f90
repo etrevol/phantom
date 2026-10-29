@@ -259,7 +259,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  use io,               only:warn
  use infile_utils,     only:inopts,read_inopt
  use options,          only:use_porosity
- use part,             only:hfact,tolh,hsoft_nbody
+ use part,             only:hfact,tolh,hsoft_nbody,accrete_stars
  use cloudcollisions,  only:r_cloud,e_rest,C_coll
  use eos,              only:read_options_eos
  use io_control,       only:read_options_iocontrol
@@ -308,6 +308,8 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)  ! absent = no collisions
  call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
  call read_inopt(C_coll,'C_coll',db,min=0.,max=1.,default=0.25)
+ ! a cloud that loses its angular momentum falls into the black hole
+ accrete_stars = (r_cloud > 0.)
 
  ! parse options internal to other code modules
  call read_options_iocontrol(db,nerr)

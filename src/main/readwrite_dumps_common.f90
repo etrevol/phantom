@@ -408,7 +408,7 @@ subroutine unfill_rheader(hdr,phantomdump,ntypesinfile,nptmass,&
  use externalforces, only:read_headeropts_extern,extract_iextern_from_hdr
  use boundary,       only:xmin,xmax,ymin,ymax,zmin,zmax,set_boundary
  use boundary_dyn,   only:dynamic_bdy,dxyz,irho_bkg_ini,rho_bkg_ini,rho_bkg_ini1
- use dump_utils,     only:extract,dump_h
+ use dump_utils,     only:extract,dump_h,i_real
  use dust,           only:grainsizecgs,graindenscgs
  use units,          only:unit_density,udist
  use dynamic_dtmax,  only:idtmax_n,idtmax_frac
@@ -430,7 +430,8 @@ subroutine unfill_rheader(hdr,phantomdump,ntypesinfile,nptmass,&
  if (ierr/=0)  call extract('gt',tfile,hdr,ierr)  ! this is sphNG's label for time
  call extract('dtmax',dtmaxi,hdr,ierr)
  call extract('rhozero',rhozero,hdr,ierr)
- call extract('ediss',ediss_coll,hdr,ierrs(1),default=0.)  ! absent unless clouds collided
+ ! absent unless clouds collided; read quietly
+ call extract('ediss',ediss_coll,hdr%realvals,hdr%realtags,hdr%nums(i_real),ierrs(1),default=0.,q=.true.)
  Bextx = 0.
  Bexty = 0.
  Bextz = 0.
