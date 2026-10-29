@@ -75,7 +75,12 @@ def load(dump):
     d = pio.read_dump(dump)
     g, s = d["gas"], d["sinks"]
     mtype = d["header_lists"]["massoftype"]
-    itype = g["itype"] if "itype" in g else np.full(len(g["x"]), ISTAR)
+    # a dump of one particle type carries no itype array: take the populated type
+    if "itype" in g:
+        itype = g["itype"]
+    else:
+        nt = d["header_lists"]["npartoftype"]
+        itype = np.full(len(g["x"]), 1 + int(np.argmax(nt)))
     alive = g["h"] > 0
     m = np.array([mtype[it - 1] for it in itype])
     x = np.c_[g["x"], g["y"], g["z"]] - [s["x"][0], s["y"][0], s["z"][0]]

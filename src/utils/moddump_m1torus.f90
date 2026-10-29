@@ -13,6 +13,12 @@ module moddump
 !                   sink's frame, so the sink integration drops out of the problem
 !   mode  = soften  sets the sink softening length to eps_c
 !   eps_c = value   softening for mode = soften
+!   mode  = gas     turns the torus particles into SPH gas, locally isothermal about
+!                   the sink (ieos = 6) with c_s = hor v_K (q = 1/2, so H/R = hor),
+!                   and sets the sink accretion radius to r_acc: the fluid limit of
+!                   colliding clouds
+!   hor   = value   H/R of the gas for mode = gas
+!   r_acc = value   accretion radius for mode = gas
 !
 ! :References: None
 !
@@ -20,7 +26,7 @@ module moddump
 !
 ! :Runtime parameters: None
 !
-! :Dependencies: externalforces, infile_utils, options, part
+! :Dependencies: eos, externalforces, infile_utils, options, part
 !
  implicit none
  character(len=*), parameter, public :: moddump_flags = ''
@@ -28,7 +34,9 @@ module moddump
 contains
 
 subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
- use part,           only:nptmass,xyzmh_ptmass,vxyz_ptmass,ihsoft
+ use part,           only:nptmass,xyzmh_ptmass,vxyz_ptmass,ihsoft,ihacc,igas,istar,&
+                           set_particle_type,iphase,iamtype
+ use eos,            only:ieos,polyk,qfacdisc,isink
  use options,        only:iexternalforce
  use externalforces, only:mass1,accradius1,iext_star
  use infile_utils,   only:open_db_from_file,inopts,read_inopt,close_db
@@ -38,15 +46,19 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  real,    intent(inout) :: xyzh(:,:),vxyzu(:,:)
  type(inopts), allocatable :: db(:)
  character(len=20) :: mode
- real :: eps_c,xc(3),vc(3)
+ real :: eps_c,xc(3),vc(3),hor,r_acc
  integer :: ierr,i
 
  mode  = 'none'
  eps_c = 1.e-2
+ hor   = 0.15
+ r_acc = 0.05
  call open_db_from_file(db,'moddump_m1torus.opts',22,ierr)
  if (ierr /= 0) stop 'moddump_m1torus: no moddump_m1torus.opts'
  call read_inopt(mode,'mode',db,errcount=ierr)
  call read_inopt(eps_c,'eps_c',db,errcount=ierr)
+ call read_inopt(hor,'hor',db,min=0.,default=0.15)
+ call read_inopt(r_acc,'r_acc',db,min=0.,default=0.05)
  call close_db(db)
 
  select case(trim(mode))
@@ -65,8 +77,24 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  case('soften')
     xyzmh_ptmass(ihsoft,1:nptmass) = eps_c
     print "(a,es10.3)",' moddump_m1torus: sink softening = ',eps_c
+ case('gas')
+    do i=1,npart
+       if (iamtype(iphase(i))==istar) call set_particle_type(i,igas)
+    enddo
+    npartoftype(igas)  = npartoftype(igas) + npartoftype(istar)
+    massoftype(igas)   = massoftype(istar)
+    npartoftype(istar) = 0
+    massoftype(istar)  = 0.
+    ! c_s^2 = polyk r^(-2 q) about the sink; G = M_sink = 1, so c_s = hor v_K for q = 1/2
+    ieos     = 6
+    isink    = 1
+    qfacdisc = 0.5
+    polyk    = hor**2
+    xyzmh_ptmass(ihacc,1) = r_acc
+    print "(a,i8,a,f6.3,a,f6.3)",' moddump_m1torus: ',npartoftype(igas),' particles to gas, H/R = ', &
+          hor,', r_acc = ',r_acc
  case default
-    stop 'moddump_m1torus: mode must be fixed or soften'
+    stop 'moddump_m1torus: mode must be fixed, soften or gas'
  end select
 
 end subroutine modify_dump
