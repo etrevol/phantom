@@ -66,8 +66,13 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  call read_inopt(eps_c,'eps_c',db,errcount=ierr)
  call read_inopt(hor,'hor',db,min=0.,default=0.15)
  call read_inopt(r_acc,'r_acc',db,min=0.,default=0.05)
- call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.01)
- call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
+ ! collisions only for mode = clouds; the other modes keep the dump's collisionless torus
+ if (trim(mode)=='clouds') then
+    call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.01)
+    call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
+ else
+    r_cloud = 0.
+ endif
  call close_db(db)
 
  select case(trim(mode))
