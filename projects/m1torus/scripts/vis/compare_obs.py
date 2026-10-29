@@ -28,13 +28,20 @@ GILDAS = LinearSegmentedColormap.from_list(
 GILDAS.set_bad("white")
 
 
-def panel_ref(ax, name, title):
+def panel_ref(ax, name, title, extent=None):
+    """A published panel; with extent [left, right, bottom, top] its frame is drawn on
+    calibrated axes (Fig. 6: +-0.30 arcsec from the tick marks, see ref_figures.py)."""
     f = REF / f"{name}.png"
-    if f.exists():
-        ax.imshow(plt.imread(f))
-    else:
+    if not f.exists():
         ax.text(0.5, 0.5, f"run ref_figures.py\n({name})", ha="center", transform=ax.transAxes)
-    ax.set_axis_off()
+        ax.set_axis_off()
+    elif extent is None:
+        ax.imshow(plt.imread(f))
+        ax.set_axis_off()
+    else:
+        ax.imshow(plt.imread(f), extent=extent, aspect="equal")
+        ax.set_xlabel("RA offset [arcsec]")
+        ax.set_ylabel("Dec offset [arcsec]")
     ax.set_title(title, fontsize=9)
 
 
@@ -82,7 +89,8 @@ def main():
         ax.set_ylabel("Dec offset [arcsec]")
         fig.colorbar(im, ax=ax, fraction=0.046, label=lab)
         ax.set_title(f"synthetic, {lab.split(' [')[0]}", fontsize=9)
-        panel_ref(axs[row, 1], ref, f"Combes et al. (2025) Fig. 6, {lab.split(' [')[0]}")
+        panel_ref(axs[row, 1], ref, f"Combes et al. (2025) Fig. 6, {lab.split(' [')[0]}",
+                  extent=[0.3, -0.3, -0.3, 0.3])
     axs[0, 0].plot(*_xy(h, t), "wx", ms=9, mew=2)
     fig.suptitle(f"NGC 613, CO(3-2) at 0.015 arcsec: {tag}\n"
                  f"hole {h['offset_pc']:.1f} pc from the AGN at PA {h['pa']:.0f} deg "

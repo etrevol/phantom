@@ -26,9 +26,11 @@ PANELS = {
     "combes25_fig6_m2": ("2026_combes_2509.08635v2", 6, (1008, 243, 1418, 655), "arcsec +-0.3"),
     # the whole figure with axes and colour bars, for reading the scales
     "combes25_fig6": ("2026_combes_2509.08635v2", 6, (100, 180, 1500, 760), "full"),
-    # Fig. 12: PV along PA -20 deg, 0.3 arcsec strip; Fig. 13: integrated spectrum
+    # Fig. 12: PV along PA -20 deg, 0.3 arcsec strip; Fig. 13: integrated CO and HCO+ spectra
+    # with their velocity axis. Fig. 6 field: ticks every 34.3 px = 0.05 arcsec on the
+    # frame, half-width 205 px = 0.299 arcsec (measured on the render)
     "combes25_fig12_pv": ("2026_combes_2509.08635v2", 8, (855, 150, 1545, 710), "full"),
-    "combes25_fig13_spec": ("2026_combes_2509.08635v2", 8, (915, 970, 1185, 1195), "full"),
+    "combes25_fig13_spec": ("2026_combes_2509.08635v2", 8, (845, 960, 1185, 1555), "full"),
     # Circinus, Lopez-Rodriguez et al. (2026), Fig. 2f ALMA 700 um dust, Fig. 2l HCN(3-2),
     # Fig. 3d 700 um with the clumpy-torus contours, Fig. 3e its dust distribution
     # (AASTeX pages, 1700 x 2200 px); 2 pc bars in the panels
