@@ -46,11 +46,14 @@ def main():
         vphi = (x[:, 0] * v[:, 1] - x[:, 1] * v[:, 0]) / np.maximum(R, 1e-9)
         q = np.quantile(R, [0.1, 0.5, 0.9])
         msink = dd["sinks"]["m"][0]
+        mstars = float(np.sum(dd["sinks"]["m"][1:]))        # sinks born from clumps
+        mtot0 = msink - 1.0 + mstars + m.sum()
         cb = mo.cube(p, mo.NGC613, mo.m1_phase(x, m) + 90.0)
         m0, _, _ = mo.moments(cb, mo.NGC613)
         h = mo.hole(m0, cb["xs"], mo.NGC613)
         rows.append(dict(t=p["time"] / P_ORB, ediss=dd["header"].get("ediss", 0.0) / e0,
-                         macc=(msink - 1.0) / (msink - 1.0 + m.sum()) if m.sum() > 0 else np.nan,
+                         macc=(msink - 1.0) / mtot0, mstar=mstars / mtot0,
+                         eheat=dd["header"].get("eheat", 0.0) / e0,
                          zr=float(np.median(np.abs(x[:, 2]) / np.maximum(R, 1e-9))),
                          sz=float(np.std(v[:, 2]) / np.mean(np.abs(vphi))),
                          r10=q[0], r50=q[1], r90=q[2], hole_pc=h["offset_pc"]))
@@ -71,7 +74,11 @@ def main():
     ax.set_title("The $m = 1$ mode and the black-hole offset", fontsize=10)
     ax = axs[0, 1]
     ax.plot(s["t"], s["ediss"], "k.-", label=r"$E_{\rm diss}/|E_0|$")
-    ax.plot(s["t"], s["macc"], "C1.-", label="mass fraction in the sink")
+    ax.plot(s["t"], s["macc"], "C1.-", label="mass fraction in the black hole")
+    if np.any(s["eheat"] > 0):
+        ax.plot(s["t"], s["eheat"], "C3.-", label=r"$E_{\rm heat}/|E_0|$ (thermostat)")
+    if np.any(s["mstar"] > 0):
+        ax.plot(s["t"], s["mstar"], "C4.-", label="mass fraction in sinks from clumps")
     ax.legend(fontsize=8)
     ax.set_title("Dissipation and inflow", fontsize=10)
     ax = axs[1, 0]

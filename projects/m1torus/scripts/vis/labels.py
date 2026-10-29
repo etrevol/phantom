@@ -62,9 +62,18 @@ def model_parts(run):
         pars["disc"] = (_math("R = " + _fmt(_num(setup["r_in"])) + "-" + _fmt(_num(setup["r_out"])))
                         + ", " + _math("H/R = " + _fmt(_num(setup["hor"]))))
     elif r_cloud > 0:
-        name = "Colliding-cloud model"
+        heat = _num(inp.get("heat_s", 0) or 0)
+        name = "Heated colliding-cloud model" if heat > 0 else "Colliding-cloud model"
         pars["e"] = _math("e = " + _fmt(_num(inp.get("e_rest", 0.5))))
         pars["r_cl"] = _math(r"r_{\rm cl} = " + _fmt(r_cloud))
+        if heat > 0:
+            pars["s"] = _math(r"\sigma/v_{\rm K} = " + _fmt(heat))
+            tau = _num(inp.get("heat_tau", 1) or 1)
+            if abs(tau - 1.) > 1e-9:
+                pars["tau"] = _math(r"\tau_{\rm heat} = " + _fmt(tau) + r"\,P_{\rm loc}")
+        nsf = int(_num(inp.get("sf_n", 0) or 0))
+        if nsf > 0:
+            pars["sf"] = "sinks from clumps of " + _math(f"{nsf + 1}") + " clouds"
     elif ieos in ("3", "6"):
         name = "Isothermal gas model"
         opts = run / "moddump_m1torus.opts"
@@ -90,7 +99,8 @@ def model_parts(run):
         if dump.exists():
             t0 = pio.read_dump(dump)["header"]["time"] / P_ORB
             when = _math(f"t = {t0:.0f}" + r"\,P_{\rm orb}")
-            what = {"Colliding-cloud model": "collisions", "Isothermal gas model": "gas"}.get(name)
+            what = {"Colliding-cloud model": "collisions", "Heated colliding-cloud model": "collisions",
+                    "Isothermal gas model": "gas"}.get(name)
             suffix = (f", {what} from {when} of the collisionless model" if what
                       else f", restarted at {when}")
     return name, pars, suffix

@@ -16,7 +16,7 @@ implementation differs from Bannikova et al. (2026) and is not "the paper".
 | colliding (sticky) clouds | Colliding-cloud model | M_tor, N, e, r_cl |
 | SPH gas converted from the torus | Isothermal gas model | M_tor, N, H/R |
 | SPH gas disc set up as a disc | Isothermal gas-disc model | M_tor, N, R range, H/R |
-| heated clouds with star formation (next) | Heated colliding-cloud model | as clouds, plus the heating and sink parameters |
+| clouds with the thermostat (and clump sinks) | Heated colliding-cloud model | as clouds, plus $\sigma/v_{\rm K}$, $\tau_{\rm heat}$ if not 1, the clump size that makes a sink |
 
 A run restarted from another model says so: "..., collisions from t = 100 P_orb of the
 collisionless model". Symbols are mathtext: $M_{\rm tor}$, $r_{\rm cl}$, $i_{\max}$,
