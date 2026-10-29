@@ -4,14 +4,15 @@
 ! against kinetic theory, n sigma <v_rel> N / 2.
 ! Build and run: projects/m1torus/scripts/test/run_test_cloudcollisions.sh
 program test_cloudcollisions
- use part,            only:istar,isetphase,maxtypes,ediss_coll
- use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds
+ use part,            only:istar,isetphase,maxtypes,ediss_coll,eheat_coll
+ use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_clouds
  implicit none
  real, parameter :: pi = 4.*atan(1.)
  integer :: nfail
  nfail = 0
  call test_pairs(nfail)
  call test_box(nfail)
+ call test_heat(nfail)
  if (nfail == 0) then
     print "(a)",'ALL PASSED'
  else
@@ -177,5 +178,69 @@ subroutine test_box(nfail)
  call check('elastic: kinetic energy',e1,e0,1.e-12,nfail)
 
 end subroutine test_box
+
+! thermostat: a cold Keplerian ring about a unit mass; one call with a vanishing
+! relaxation time must give sigma_R, sigma_phi, sigma_z = heat_s v_K in each annulus,
+! keep momentum and L_z, and book the kinetic energy it adds
+subroutine test_heat(nfail)
+ integer, intent(inout) :: nfail
+ integer, parameter :: n = 40000
+ real, allocatable :: xyzh(:,:),vxyzu(:,:)
+ integer(kind=1), allocatable :: iphase(:)
+ real :: mtype(maxtypes),u(2),rr,ph,p0(3),p1(3),lz0,lz1,e0,e1,bh(4),vbh(3)
+ real :: sel_r(3),s2(3),m1(3),cnt,cp,sp,dv(3),cyl(3),vk
+ integer :: i
+
+ allocate(xyzh(4,n),vxyzu(4,n),iphase(n))
+ do i=1,n
+    call random_number(u)
+    rr = 0.9 + 0.2*u(1)
+    ph = 2.*pi*u(2)
+    xyzh(:,i)  = (/rr*cos(ph), rr*sin(ph), 0., 0.01/)
+    vxyzu(:,i) = (/-sin(ph)/sqrt(rr), cos(ph)/sqrt(rr), 0., 0./)
+ enddo
+ iphase = isetphase(istar,iactive=.true.)
+ mtype = 0.
+ mtype(istar) = 1./n
+ bh  = (/0., 0., 0., 1./)
+ vbh = 0.
+ heat_s = 0.1
+ heat_tau = 1.e-8
+ eheat_coll = 0.
+ p0 = sum(vxyzu(1:3,:),dim=2)
+ lz0 = sum(xyzh(1,:)*vxyzu(2,:) - xyzh(2,:)*vxyzu(1,:))
+ e0 = 0.5*sum(vxyzu(1:3,:)**2)/n
+ call heat_clouds(n,xyzh,vxyzu,iphase,mtype,bh,vbh,1.)
+ p1 = sum(vxyzu(1:3,:),dim=2)
+ lz1 = sum(xyzh(1,:)*vxyzu(2,:) - xyzh(2,:)*vxyzu(1,:))
+ e1 = 0.5*sum(vxyzu(1:3,:)**2)/n
+ ! dispersions in the annulus 0.97 < R < 1.03, in units of v_K
+ s2 = 0.
+ m1 = 0.
+ cnt = 0.
+ do i=1,n
+    rr = sqrt(xyzh(1,i)**2 + xyzh(2,i)**2)
+    if (abs(rr - 1.) > 0.03) cycle
+    cp = xyzh(1,i)/rr
+    sp = xyzh(2,i)/rr
+    vk = 1./sqrt(rr)
+    dv = vxyzu(1:3,i)
+    cyl = (/ (dv(1)*cp + dv(2)*sp)/vk, (-dv(1)*sp + dv(2)*cp)/vk - 1., dv(3)/vk /)
+    m1 = m1 + cyl
+    s2 = s2 + cyl**2
+    cnt = cnt + 1.
+ enddo
+ sel_r = sqrt(s2/cnt - (m1/cnt)**2)
+ print "(a,i6,a,3f8.4)",'thermostat: ',int(cnt),' clouds near R = 1, sigma/v_K (R, phi, z) =',sel_r
+ call check('sigma_R / v_K (5%)',sel_r(1),0.1,0.05,nfail)
+ call check('sigma_phi / v_K (5%)',sel_r(2),0.1,0.05,nfail)
+ call check('sigma_z / v_K (5%)',sel_r(3),0.1,0.05,nfail)
+ call check('momentum x',p1(1),p0(1),1.e-10,nfail)
+ call check('momentum y',p1(2),p0(2),1.e-10,nfail)
+ call check('L_z',lz1,lz0,1.e-10,nfail)
+ call check('E added = eheat',e1 - e0,eheat_coll,1.e-10,nfail)
+ heat_s = 0.
+
+end subroutine test_heat
 
 end program test_cloudcollisions

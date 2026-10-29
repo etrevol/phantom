@@ -28,6 +28,8 @@ module setup
 !   - eps_star         : *fixed Plummer-equivalent softening of the torus (0 = adaptive)*
 !   - r_cloud          : *particles are clouds of this radius that collide (0 = collisionless)*
 !   - e_rest           : *normal restitution coefficient of cloud collisions*
+!   - heat_s           : *cloud thermostat target sigma / v_K (0 = off)*
+!   - heat_tau         : *cloud thermostat relaxation time [local orbits]*
 !   - geometry         : *0 = the paper's torus, 1 = isothermal gas disc (fluid limit, B)*
 !   - r_in             : *inner radius of the gas disc*
 !   - r_out            : *outer radius of the gas disc*
@@ -220,7 +222,7 @@ end subroutine setpart
 
 subroutine write_setupfile(filename)
  use infile_utils, only:write_inopt
- use cloudcollisions, only:r_cloud,e_rest
+ use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau
  character(len=*), intent(in) :: filename
  integer, parameter :: iunit = 20
 
@@ -238,6 +240,8 @@ subroutine write_setupfile(filename)
  call write_inopt(eps_star,'eps_star','fixed Plummer softening of the torus (0 = adaptive)',iunit)
  call write_inopt(r_cloud,'r_cloud','particles are clouds of this radius that collide (0 = collisionless)',iunit)
  call write_inopt(e_rest,'e_rest','normal restitution coefficient of cloud collisions',iunit)
+ call write_inopt(heat_s,'heat_s','cloud thermostat target sigma / v_K (0 = off)',iunit)
+ call write_inopt(heat_tau,'heat_tau','cloud thermostat relaxation time [local orbits]',iunit)
  write(iunit,"(/,a)") '# gas disc instead of the torus (geometry = 1)'
  call write_inopt(geometry,'geometry','0 = the paper''s torus, 1 = isothermal gas disc',iunit)
  call write_inopt(r_in,'r_in','inner radius of the gas disc',iunit)
@@ -258,7 +262,7 @@ end subroutine write_setupfile
 subroutine read_setupfile(filename,ierr)
  use infile_utils, only:open_db_from_file,inopts,read_inopt,close_db
  use io,           only:error
- use cloudcollisions, only:r_cloud,e_rest
+ use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau
  character(len=*), intent(in)  :: filename
  integer,          intent(out) :: ierr
  integer, parameter :: iunit = 21
@@ -279,6 +283,8 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(eps_star,'eps_star',db,min=0.,default=0.)
  call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)
  call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
+ call read_inopt(heat_s,'heat_s',db,min=0.,default=0.)
+ call read_inopt(heat_tau,'heat_tau',db,min=0.,default=1.)
  call read_inopt(geometry,'geometry',db,min=0,max=1,default=0)
  call read_inopt(r_in,'r_in',db,min=0.,default=0.1)
  call read_inopt(r_out,'r_out',db,min=0.,default=1.2)

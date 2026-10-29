@@ -402,6 +402,7 @@ module part
  real            :: hfact,Bextx,Bexty,Bextz,tolh
  real            :: hsoft_nbody = 0.  ! fixed softening of star and dark-matter particles, 0 = adaptive
  real            :: ediss_coll = 0.   ! energy radiated in cloud collisions since t = 0
+ real            :: eheat_coll = 0.   ! energy added by the cloud thermostat since t = 0
  logical         :: accrete_stars = .false.  ! sinks swallow star particles (colliding clouds)
  integer         :: npart
  integer(kind=8) :: ntot

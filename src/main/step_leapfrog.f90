@@ -131,7 +131,7 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
  use eos,             only:equationofstate
  use substepping,     only:substep,substep_gr,substep_sph_gr,substep_sph
  use ptmass,          only:ptmass_kick
- use cloudcollisions, only:r_cloud,collide_clouds
+ use cloudcollisions, only:r_cloud,collide_clouds,heat_clouds
  integer, intent(inout) :: npart
  integer, intent(in)    :: nactive
  real,    intent(in)    :: t,dtsph
@@ -740,6 +740,8 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
  if (r_cloud > 0.) then
     if (ind_timesteps) call fatal('step','cloud collisions need global timesteps (IND_TIMESTEPS=no)')
     call collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
+    if (nptmass > 0) call heat_clouds(npart,xyzh,vxyzu,iphase,massoftype,xyzmh_ptmass(1:4,1), &
+                                      vxyz_ptmass(1:3,1),dtsph)
     dtnew = min(dtnew,dtcoll)
  endif
 

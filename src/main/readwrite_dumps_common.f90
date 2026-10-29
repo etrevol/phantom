@@ -262,7 +262,7 @@ subroutine fill_header(sphNGdump,t,nparttot,npartoftypetot,nblocks,nptmass,hdr,i
  use eos,            only:write_headeropts_eos,polyk2
  use options,        only:tolh,alpha,alphau,alphaB,iexternalforce,ieos
  use part,           only:massoftype,hfact,Bextx,Bexty,Bextz,ndustsmall,ndustlarge,&
-                          idust,grainsize,graindens,ndusttypes,ediss_coll
+                          idust,grainsize,graindens,ndusttypes,ediss_coll,eheat_coll
  use checkconserved, only:get_conserv,etot_in,angtot_in,totmom_in,mdust_in,mtot_in
  use setup_params,   only:rhozero
  use timestep,       only:C_cour,C_force
@@ -316,6 +316,7 @@ subroutine fill_header(sphNGdump,t,nparttot,npartoftypetot,nblocks,nptmass,hdr,i
  call add_to_rheader(dtmax_user,'dtmax',hdr,ierr)
  call add_to_rheader(rhozero,'rhozero',hdr,ierr)
  if (ediss_coll > 0.) call add_to_rheader(ediss_coll,'ediss',hdr,ierr)  ! cloud collisions
+ if (eheat_coll > 0.) call add_to_rheader(eheat_coll,'eheat',hdr,ierr)  ! cloud thermostat
  if (sphNGdump) then ! number = 23
     call add_to_rheader(0.,'escaptot',hdr,ierr)
     call add_to_rheader(0.,'tkin',hdr,ierr)
@@ -402,7 +403,7 @@ subroutine unfill_rheader(hdr,phantomdump,ntypesinfile,nptmass,&
  use eos,            only:extract_eos_from_hdr, read_headeropts_eos
  use options,        only:ieos,iexternalforce
  use part,           only:massoftype,Bextx,Bexty,Bextz,mhd,periodic,&
-                          maxtypes,grainsize,graindens,ndusttypes,ediss_coll
+                          maxtypes,grainsize,graindens,ndusttypes,ediss_coll,eheat_coll
  use checkconserved, only:get_conserv,etot_in,angtot_in,totmom_in,mdust_in,mtot_in
  use setup_params,   only:rhozero
  use externalforces, only:read_headeropts_extern,extract_iextern_from_hdr
@@ -432,6 +433,7 @@ subroutine unfill_rheader(hdr,phantomdump,ntypesinfile,nptmass,&
  call extract('rhozero',rhozero,hdr,ierr)
  ! absent unless clouds collided; read quietly
  call extract('ediss',ediss_coll,hdr%realvals,hdr%realtags,hdr%nums(i_real),ierrs(1),default=0.,q=.true.)
+ call extract('eheat',eheat_coll,hdr%realvals,hdr%realtags,hdr%nums(i_real),ierrs(1),default=0.,q=.true.)
  Bextx = 0.
  Bexty = 0.
  Bextz = 0.

@@ -12,7 +12,13 @@ module cloudcollisions
 ! with restitution e_rest, so momentum and angular momentum are exact and
 ! the kinetic energy lost is added to ediss_coll (radiated).
 !
-! :References: Vollmer et al. (2022), A&A 665, A102
+! Optional heating (heat_s > 0): a thermostat that keeps the cloud velocity dispersion
+! in each radial annulus at heat_s times the local Keplerian speed, standing for the
+! turbulence that feedback and inflow drive in real tori; it relaxes the dispersion
+! towards the target over heat_tau local orbits with zero-mean random kicks, and books
+! the energy it adds in eheat_coll.
+!
+! :References: Vollmer et al. (2022), A&A 665, A102; Ostriker & Shetty (2011), ApJ 731, 41
 !
 ! :Owner: etrevol
 !
@@ -26,8 +32,10 @@ module cloudcollisions
  real,            public :: e_rest  = 0.5   ! normal restitution coefficient
  real,            public :: C_coll  = 0.25  ! dt < C_coll r_cloud / v_max
  integer(kind=8), public :: ncoll   = 0     ! collisions since the start of this run
+ real,            public :: heat_s  = 0.    ! target sigma / v_K of the thermostat, 0 = off
+ real,            public :: heat_tau = 1.   ! relaxation time of the thermostat [local orbits]
 
- public :: collide_clouds
+ public :: collide_clouds,heat_clouds
 
  private
 
@@ -188,5 +196,140 @@ pure subroutine key_range(n,skey,kn,lo,hi)
  enddo
 
 end subroutine key_range
+
+!-----------------------------------------------------------------------
+!+
+!  thermostat: in each annulus about the black hole, raise each velocity dispersion
+!  (R, phi, z) that lies below heat_s v_K towards it over heat_tau local orbits, with
+!  random kicks that change neither the momentum nor L_z of the annulus; the kinetic
+!  energy added goes to eheat_coll
+!+
+!-----------------------------------------------------------------------
+subroutine heat_clouds(npart,xyzh,vxyzu,iphase,massoftype,xyzmh_bh,vxyz_bh,dt)
+ use part, only:istar,iamtype,isdead_or_accreted,eheat_coll
+ integer,         intent(in)    :: npart
+ real,            intent(in)    :: xyzh(:,:),massoftype(:),xyzmh_bh(:),vxyz_bh(:),dt
+ real,            intent(inout) :: vxyzu(:,:)
+ integer(kind=1), intent(in)    :: iphase(:)
+ integer, parameter :: nb = 40, nmin = 16
+ real,    parameter :: rlo = 0.02, rhi = 8., twopi = 2.*3.14159265358979323846
+ logical, save :: seeded = .false.
+ integer, allocatable :: ib(:)
+ real,    allocatable :: kick(:,:),cyl(:,:)
+ integer :: i,b,c,cnt(nb),nseed,it
+ integer, allocatable :: seed(:)
+ real :: dx(3),dv(3),rcyl,cph,sph,rb,vk2,frac,add(nb,3),sum1(nb,3),sum2(nb,3)
+ real :: g1,g2,u1,u2,mcl,ek0,ek1,v(3),lz(nb),rsum(nb),kmean(nb,3)
+
+ if (heat_s <= 0.) return
+ if (.not.seeded) then
+    call random_seed(size=nseed)
+    allocate(seed(nseed))
+    seed = 20261029 + 37*[(i,i=1,nseed)]
+    call random_seed(put=seed)
+    seeded = .true.
+ endif
+ allocate(ib(npart),kick(3,npart),cyl(3,npart))
+ mcl = massoftype(istar)
+ cnt = 0
+ sum1 = 0.
+ sum2 = 0.
+ ib = 0
+ do i=1,npart
+    if (iamtype(iphase(i))/=istar .or. isdead_or_accreted(xyzh(4,i))) cycle
+    dx = xyzh(1:3,i) - xyzmh_bh(1:3)
+    dv = vxyzu(1:3,i) - vxyz_bh(1:3)
+    rcyl = sqrt(dx(1)**2 + dx(2)**2)
+    if (rcyl < rlo .or. rcyl >= rhi) cycle
+    b = 1 + int(nb*log(rcyl/rlo)/log(rhi/rlo))
+    ib(i) = b
+    cph = dx(1)/rcyl
+    sph = dx(2)/rcyl
+    cyl(:,i) = (/ dv(1)*cph + dv(2)*sph, -dv(1)*sph + dv(2)*cph, dv(3) /)
+    cnt(b) = cnt(b) + 1
+    sum1(b,:) = sum1(b,:) + cyl(:,i)
+    sum2(b,:) = sum2(b,:) + cyl(:,i)**2
+ enddo
+ ! variance to add per component in each annulus
+ add = 0.
+ do b=1,nb
+    if (cnt(b) < nmin) cycle
+    rb  = rlo*(rhi/rlo)**((b - 0.5)/nb)
+    vk2 = xyzmh_bh(4)/rb
+    frac = min(1., dt/(heat_tau*twopi*sqrt(rb**3/xyzmh_bh(4))))
+    do c=1,3
+       add(b,c) = max(0., heat_s**2*vk2 - (sum2(b,c)/cnt(b) - (sum1(b,c)/cnt(b))**2))*frac
+    enddo
+ enddo
+ ! Gaussian kicks in R, phi, z
+ kick = 0.
+ do i=1,npart
+    b = ib(i)
+    if (b == 0) cycle
+    if (cnt(b) < nmin) cycle
+    do c=1,3
+       call random_number(u1)
+       call random_number(u2)
+       g1 = sqrt(-2.*log(max(1.-u1,1.e-300)))*cos(twopi*u2)
+       kick(c,i) = sqrt(add(b,c))*g1
+    enddo
+ enddo
+ ! to Cartesian kicks; then per annulus remove their mean (momentum) and their L_z (a
+ ! uniform shift along e_phi), alternately until both vanish to round-off
+ do i=1,npart
+    b = ib(i)
+    if (b == 0) cycle
+    if (cnt(b) < nmin) cycle
+    dx = xyzh(1:3,i) - xyzmh_bh(1:3)
+    rcyl = sqrt(dx(1)**2 + dx(2)**2)
+    cyl(:,i) = kick(:,i)
+    kick(1,i) = (cyl(1,i)*dx(1) - cyl(2,i)*dx(2))/rcyl
+    kick(2,i) = (cyl(1,i)*dx(2) + cyl(2,i)*dx(1))/rcyl
+ enddo
+ do it=1,4
+    kmean = 0.
+    do i=1,npart
+       b = ib(i)
+       if (b == 0) cycle
+       if (cnt(b) < nmin) cycle
+       kmean(b,:) = kmean(b,:) + kick(:,i)
+    enddo
+    lz = 0.
+    rsum = 0.
+    do i=1,npart
+       b = ib(i)
+       if (b == 0) cycle
+       if (cnt(b) < nmin) cycle
+       kick(:,i) = kick(:,i) - kmean(b,:)/cnt(b)
+       dx = xyzh(1:3,i) - xyzmh_bh(1:3)
+       lz(b) = lz(b) + dx(1)*kick(2,i) - dx(2)*kick(1,i)
+       rsum(b) = rsum(b) + sqrt(dx(1)**2 + dx(2)**2)
+    enddo
+    do i=1,npart
+       b = ib(i)
+       if (b == 0) cycle
+       if (cnt(b) < nmin) cycle
+       dx = xyzh(1:3,i) - xyzmh_bh(1:3)
+       rcyl = sqrt(dx(1)**2 + dx(2)**2)
+       kick(1,i) = kick(1,i) + lz(b)/rsum(b)*dx(2)/rcyl
+       kick(2,i) = kick(2,i) - lz(b)/rsum(b)*dx(1)/rcyl
+    enddo
+ enddo
+ g2 = 0.
+ do i=1,npart
+    b = ib(i)
+    if (b == 0) cycle
+    if (cnt(b) < nmin) cycle
+    v = vxyzu(1:3,i)
+    ek0 = dot_product(v,v)
+    v = v + kick(:,i)
+    ek1 = dot_product(v,v)
+    vxyzu(1:3,i) = v
+    g2 = g2 + 0.5*mcl*(ek1 - ek0)
+ enddo
+ eheat_coll = eheat_coll + g2
+ deallocate(ib,kick,cyl)
+
+end subroutine heat_clouds
 
 end module cloudcollisions

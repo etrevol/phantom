@@ -28,7 +28,7 @@ module readwrite_infile
 !
  use options,   only:iexternalforce
  use part,      only:hfact,tolh,hsoft_nbody
- use cloudcollisions, only:r_cloud,e_rest,C_coll
+ use cloudcollisions, only:r_cloud,e_rest,C_coll,heat_s,heat_tau
  use dim,       only:do_radiation,nucleation,use_dust,use_dustgrowth,mhd_nonideal,compiled_with_mcfost,&
                      inject_parts,curlv,driving,track_lum,disc_viscosity,isothermal
  implicit none
@@ -113,6 +113,10 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
     call write_inopt(r_cloud,'r_cloud','radius of star particles as colliding clouds (0 = no collisions)',iwritein)
     call write_inopt(e_rest,'e_rest','normal restitution coefficient of cloud collisions',iwritein)
     call write_inopt(C_coll,'C_coll','timestep factor for collisions, dt < C_coll r_cloud / v_max',iwritein)
+    if (heat_s > 0.) then
+       call write_inopt(heat_s,'heat_s','thermostat target sigma / v_K of the clouds (0 = off)',iwritein)
+       call write_inopt(heat_tau,'heat_tau','thermostat relaxation time [local orbits]',iwritein)
+    endif
  endif
 
  call write_options_shock_capturing(iwritein)
@@ -260,7 +264,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  use infile_utils,     only:inopts,read_inopt
  use options,          only:use_porosity
  use part,             only:hfact,tolh,hsoft_nbody,accrete_stars
- use cloudcollisions,  only:r_cloud,e_rest,C_coll
+ use cloudcollisions,  only:r_cloud,e_rest,C_coll,heat_s,heat_tau
  use eos,              only:read_options_eos
  use io_control,       only:read_options_iocontrol
  use options,          only:read_options_output
@@ -308,6 +312,8 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)  ! absent = no collisions
  call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
  call read_inopt(C_coll,'C_coll',db,min=0.,max=1.,default=0.25)
+ call read_inopt(heat_s,'heat_s',db,min=0.,default=0.)  ! absent = no thermostat
+ call read_inopt(heat_tau,'heat_tau',db,min=0.,default=1.)
  ! a cloud that loses its angular momentum falls into the black hole
  accrete_stars = (r_cloud > 0.)
 
