@@ -24,6 +24,7 @@ module moddump
 !                   accretion radius to r_acc: collisions switched on in an evolved torus
 !   r_cloud, e_rest = values for mode = clouds
 !   heat_s, heat_tau = cloud thermostat for mode = clouds (heat_s = 0: off)
+!   sf_n = overlapping clouds that make a bound clump a sink (0: off)
 !
 ! :References: None
 !
@@ -44,7 +45,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
                            set_particle_type,iphase,iamtype
  use eos,            only:ieos,polyk,qfacdisc,isink
  use part,           only:hsoft_nbody,accrete_stars
- use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau
+ use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau,sf_n
  use options,        only:iexternalforce
  use externalforces, only:mass1,accradius1,iext_star
  use infile_utils,   only:open_db_from_file,inopts,read_inopt,close_db
@@ -73,6 +74,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
     call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
     call read_inopt(heat_s,'heat_s',db,min=0.,default=0.)
     call read_inopt(heat_tau,'heat_tau',db,min=0.,default=1.)
+    call read_inopt(sf_n,'sf_n',db,min=0,default=0)
  else
     r_cloud = 0.
  endif

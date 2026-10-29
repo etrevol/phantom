@@ -28,7 +28,7 @@ module readwrite_infile
 !
  use options,   only:iexternalforce
  use part,      only:hfact,tolh,hsoft_nbody
- use cloudcollisions, only:r_cloud,e_rest,C_coll,heat_s,heat_tau
+ use cloudcollisions, only:r_cloud,e_rest,C_coll,heat_s,heat_tau,sf_n
  use dim,       only:do_radiation,nucleation,use_dust,use_dustgrowth,mhd_nonideal,compiled_with_mcfost,&
                      inject_parts,curlv,driving,track_lum,disc_viscosity,isothermal
  implicit none
@@ -117,6 +117,7 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
        call write_inopt(heat_s,'heat_s','thermostat target sigma / v_K of the clouds (0 = off)',iwritein)
        call write_inopt(heat_tau,'heat_tau','thermostat relaxation time [local orbits]',iwritein)
     endif
+    if (sf_n > 0) call write_inopt(sf_n,'sf_n','overlapping clouds that turn a bound clump into a sink (0 = off)',iwritein)
  endif
 
  call write_options_shock_capturing(iwritein)
@@ -264,7 +265,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  use infile_utils,     only:inopts,read_inopt
  use options,          only:use_porosity
  use part,             only:hfact,tolh,hsoft_nbody,accrete_stars
- use cloudcollisions,  only:r_cloud,e_rest,C_coll,heat_s,heat_tau
+ use cloudcollisions,  only:r_cloud,e_rest,C_coll,heat_s,heat_tau,sf_n
  use eos,              only:read_options_eos
  use io_control,       only:read_options_iocontrol
  use options,          only:read_options_output
@@ -314,6 +315,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  call read_inopt(C_coll,'C_coll',db,min=0.,max=1.,default=0.25)
  call read_inopt(heat_s,'heat_s',db,min=0.,default=0.)  ! absent = no thermostat
  call read_inopt(heat_tau,'heat_tau',db,min=0.,default=1.)
+ call read_inopt(sf_n,'sf_n',db,min=0,default=0)  ! absent = no clump sinks
  ! a cloud that loses its angular momentum falls into the black hole
  accrete_stars = (r_cloud > 0.)
 

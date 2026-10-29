@@ -24,7 +24,7 @@ module cloudcollisions
 !
 ! :Runtime parameters: None
 !
-! :Dependencies: part, sortutils
+! :Dependencies: dim, io, part, sortutils
 !
  implicit none
 
@@ -34,8 +34,10 @@ module cloudcollisions
  integer(kind=8), public :: ncoll   = 0     ! collisions since the start of this run
  real,            public :: heat_s  = 0.    ! target sigma / v_K of the thermostat, 0 = off
  real,            public :: heat_tau = 1.   ! relaxation time of the thermostat [local orbits]
+ integer,         public :: sf_n    = 0     ! clouds overlapping one cloud to form a sink, 0 = off
+ integer, allocatable    :: nover(:)        ! clouds overlapping each particle, last step
 
- public :: collide_clouds,heat_clouds
+ public :: collide_clouds,heat_clouds,form_clump_sinks
 
  private
 
@@ -70,6 +72,11 @@ subroutine collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
  enddo
  if (n < 2) return
  allocate(list(n),idx(n),key(n),skey(n))
+ if (allocated(nover)) then
+    if (size(nover) < npart) deallocate(nover)
+ endif
+ if (.not.allocated(nover)) allocate(nover(npart))
+ nover = 0
 
  ! cells of size 2 r_cloud: a colliding partner lies in one of the 27 around
  dc = 2.*r_cloud
@@ -106,6 +113,8 @@ subroutine collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
                 xij = xyzh(1:3,i) - xyzh(1:3,j)
                 r2  = dot_product(xij,xij)
                 if (r2 >= rsum2 .or. r2 <= 0.) cycle
+                nover(i) = nover(i) + 1
+                nover(j) = nover(j) + 1
                 rij = sqrt(r2)
                 vij = vxyzu(1:3,i) - vxyzu(1:3,j)
                 vn  = dot_product(vij,xij)/rij
@@ -331,5 +340,110 @@ subroutine heat_clouds(npart,xyzh,vxyzu,iphase,massoftype,xyzmh_bh,vxyz_bh,dt)
  deallocate(ib,kick,cyl)
 
 end subroutine heat_clouds
+
+!-----------------------------------------------------------------------
+!+
+!  star formation in clumps: a cloud that sf_n or more clouds overlap, with the clouds
+!  within 2 r_cloud of it gravitationally bound (kinetic energy about their centre of
+!  mass plus their softened mutual potential < 0), becomes a sink at the centre of mass;
+!  mass, momentum and angular momentum (orbital plus the sink's spin) are kept, the
+!  group's internal energy goes to esf_coll; the sink accretes clouds within 2 r_cloud
+!+
+!-----------------------------------------------------------------------
+subroutine form_clump_sinks(npart,xyzh,vxyzu,iphase,massoftype,time)
+ use part, only:istar,iamtype,isdead_or_accreted,nptmass,xyzmh_ptmass,vxyz_ptmass, &
+                ihacc,ihsoft,ispinx,ispiny,ispinz,itbirth,esf_coll
+ use dim,  only:maxptmass
+ use io,   only:iprint
+ integer,         intent(in)    :: npart
+ real,            intent(inout) :: xyzh(:,:),vxyzu(:,:)
+ real,            intent(in)    :: massoftype(:),time
+ integer(kind=1), intent(in)    :: iphase(:)
+ integer, allocatable :: cand(:),grp(:)
+ integer :: i,j,k,l,nc,ng,nsink0
+ real :: mcl,r2max,xcm(3),vcm(3),ek,ep,dx(3),spin(3),d2
+
+ if (sf_n <= 0 .or. .not.allocated(nover)) return
+ nc = count(nover(1:npart) >= sf_n)
+ if (nc == 0) return
+ mcl = massoftype(istar)
+ r2max = (2.*r_cloud)**2
+ allocate(cand(nc),grp(npart))
+ nc = 0
+ do i=1,npart
+    if (nover(i) >= sf_n .and. .not.isdead_or_accreted(xyzh(4,i))) then
+       nc = nc + 1
+       cand(nc) = i
+    endif
+ enddo
+ nsink0 = nptmass
+ do k=1,nc
+    i = cand(k)
+    if (isdead_or_accreted(xyzh(4,i))) cycle      ! taken by an earlier sink this step
+    ng = 0
+    do j=1,npart
+       if (iamtype(iphase(j))/=istar .or. isdead_or_accreted(xyzh(4,j))) cycle
+       dx = xyzh(1:3,j) - xyzh(1:3,i)
+       if (dot_product(dx,dx) < r2max) then
+          ng = ng + 1
+          grp(ng) = j
+       endif
+    enddo
+    if (ng < sf_n + 1) cycle
+    xcm = 0.
+    vcm = 0.
+    do l=1,ng
+       xcm = xcm + xyzh(1:3,grp(l))
+       vcm = vcm + vxyzu(1:3,grp(l))
+    enddo
+    xcm = xcm/ng
+    vcm = vcm/ng
+    ek = 0.
+    ep = 0.
+    spin = 0.
+    do l=1,ng
+       j = grp(l)
+       dx = xyzh(1:3,j) - xcm
+       ek = ek + 0.5*mcl*dot_product(vxyzu(1:3,j) - vcm,vxyzu(1:3,j) - vcm)
+       spin = spin + mcl*cross(dx,vxyzu(1:3,j) - vcm)
+       do i=1,l-1
+          d2 = sum((xyzh(1:3,j) - xyzh(1:3,grp(i)))**2)
+          ep = ep - mcl*mcl/sqrt(d2 + r_cloud**2)      ! Plummer-softened over r_cloud
+       enddo
+    enddo
+    if (ek + ep >= 0.) cycle
+    if (nptmass + 1 > maxptmass) then
+       write(iprint,"(a)") ' form_clump_sinks: maxptmass reached, no more sinks'
+       exit
+    endif
+    nptmass = nptmass + 1
+    xyzmh_ptmass(:,nptmass)   = 0.
+    xyzmh_ptmass(1:3,nptmass) = xcm
+    xyzmh_ptmass(4,nptmass)   = ng*mcl
+    xyzmh_ptmass(ihacc,nptmass)  = 2.*r_cloud
+    xyzmh_ptmass(ihsoft,nptmass) = r_cloud
+    xyzmh_ptmass(ispinx,nptmass) = spin(1)
+    xyzmh_ptmass(ispiny,nptmass) = spin(2)
+    xyzmh_ptmass(ispinz,nptmass) = spin(3)
+    xyzmh_ptmass(itbirth,nptmass) = time
+    vxyz_ptmass(1:3,nptmass)  = vcm
+    do l=1,ng
+       xyzh(4,grp(l)) = -abs(xyzh(4,grp(l)))
+    enddo
+    esf_coll = esf_coll - (ek + ep)
+ enddo
+ if (nptmass > nsink0) write(iprint,"(a,i5,a,i6)") ' form_clump_sinks: ',nptmass - nsink0, &
+                                                   ' new sinks, total ',nptmass
+ deallocate(cand,grp)
+
+contains
+
+ pure function cross(a,b)
+  real, intent(in) :: a(3),b(3)
+  real :: cross(3)
+  cross = (/a(2)*b(3) - a(3)*b(2), a(3)*b(1) - a(1)*b(3), a(1)*b(2) - a(2)*b(1)/)
+ end function cross
+
+end subroutine form_clump_sinks
 
 end module cloudcollisions

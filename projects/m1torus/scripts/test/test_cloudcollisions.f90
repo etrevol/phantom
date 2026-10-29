@@ -4,8 +4,10 @@
 ! against kinetic theory, n sigma <v_rel> N / 2.
 ! Build and run: projects/m1torus/scripts/test/run_test_cloudcollisions.sh
 program test_cloudcollisions
- use part,            only:istar,isetphase,maxtypes,ediss_coll,eheat_coll
- use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_clouds
+ use part,            only:istar,isetphase,maxtypes,ediss_coll,eheat_coll,esf_coll,nptmass,&
+                            xyzmh_ptmass,vxyz_ptmass,ispinx,ispinz,nsinkproperties
+ use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_clouds,&
+                            sf_n,form_clump_sinks
  implicit none
  real, parameter :: pi = 4.*atan(1.)
  integer :: nfail
@@ -13,6 +15,7 @@ program test_cloudcollisions
  call test_pairs(nfail)
  call test_box(nfail)
  call test_heat(nfail)
+ call test_sinks(nfail)
  if (nfail == 0) then
     print "(a)",'ALL PASSED'
  else
@@ -242,5 +245,79 @@ subroutine test_heat(nfail)
  heat_s = 0.
 
 end subroutine test_heat
+
+! clump sinks: a cold, bound clump of 40 overlapping clouds becomes one sink with its
+! mass, momentum and angular momentum (orbital plus spin); a hot clump does not
+subroutine test_sinks(nfail)
+ integer, intent(inout) :: nfail
+ integer, parameter :: n = 80
+ real :: xyzh(4,n),vxyzu(4,n),mtype(maxtypes),u(6),dt,p0(3),l0(3),p1(3),l1(3),m0,m1s
+ integer(kind=1) :: iphase(n)
+ integer :: i
+
+ allocate(xyzmh_ptmass(nsinkproperties,10),vxyz_ptmass(3,10))
+ xyzmh_ptmass = 0.
+ vxyz_ptmass = 0.
+ nptmass = 0
+ r_cloud = 0.01
+ e_rest = 0.5
+ sf_n = 16
+ mtype = 0.
+ mtype(istar) = 1.e-3
+ iphase = isetphase(istar,iactive=.true.)
+ do i=1,n
+    call random_number(u)
+    if (i <= 40) then       ! cold clump near (1,0,0), slow internal motion
+       xyzh(1:3,i) = (/1.,0.,0./) + 0.006*(u(1:3) - 0.5)
+       vxyzu(1:3,i) = (/0.,1.,0./) + 1.e-3*(u(4:6) - 0.5)
+    else                    ! hot clump near (-1,0,0): internal speeds far above escape
+       xyzh(1:3,i) = (/-1.,0.,0./) + 0.006*(u(1:3) - 0.5)
+       vxyzu(1:3,i) = (/0.,-1.,0./) + 10.*(u(4:6) - 0.5)
+    endif
+ enddo
+ xyzh(4,:) = 0.014
+ vxyzu(4,:) = 0.
+ call budget_m(xyzh,vxyzu,mtype(istar),p0,l0,m0)
+ ! collisions fill the overlap counts the sink finder uses (they also dissipate a bit)
+ e_rest = 1.
+ call collide_clouds(n,xyzh,vxyzu,iphase,mtype,dt)
+ call budget_m(xyzh,vxyzu,mtype(istar),p0,l0,m0)
+ call form_clump_sinks(n,xyzh,vxyzu,iphase,mtype,0.)
+ call check('one sink formed',real(nptmass),1.,0.,nfail)
+ call check('sink mass = 40 clouds',xyzmh_ptmass(4,1),40.e-3,1.e-12,nfail)
+ call budget_m(xyzh,vxyzu,mtype(istar),p1,l1,m1s)
+ p1 = p1 + xyzmh_ptmass(4,1)*vxyz_ptmass(1:3,1)
+ l1 = l1 + xyzmh_ptmass(4,1)*(/xyzmh_ptmass(2,1)*vxyz_ptmass(3,1) - xyzmh_ptmass(3,1)*vxyz_ptmass(2,1), &
+                              xyzmh_ptmass(3,1)*vxyz_ptmass(1,1) - xyzmh_ptmass(1,1)*vxyz_ptmass(3,1), &
+                              xyzmh_ptmass(1,1)*vxyz_ptmass(2,1) - xyzmh_ptmass(2,1)*vxyz_ptmass(1,1)/) &
+         + xyzmh_ptmass(ispinx:ispinz,1)
+ m1s = m1s + xyzmh_ptmass(4,1)
+ call check('mass',m1s,m0,1.e-14,nfail)
+ call check('momentum y',p1(2),p0(2),1.e-12,nfail)
+ call check('L_z (orbital + spin)',l1(3),l0(3),1.e-12,nfail)
+ call check('E booked > 0 (bound group removed)',merge(1.,0.,esf_coll > 0.),1.,0.,nfail)
+ sf_n = 0
+ nptmass = 0
+
+end subroutine test_sinks
+
+subroutine budget_m(xyzh,vxyzu,m,p,l,mt)
+ real, intent(in)  :: xyzh(:,:),vxyzu(:,:),m
+ real, intent(out) :: p(3),l(3),mt
+ integer :: i
+
+ p = 0.
+ l = 0.
+ mt = 0.
+ do i=1,size(xyzh,2)
+    if (xyzh(4,i) <= 0.) cycle
+    p = p + m*vxyzu(1:3,i)
+    l(1) = l(1) + m*(xyzh(2,i)*vxyzu(3,i) - xyzh(3,i)*vxyzu(2,i))
+    l(2) = l(2) + m*(xyzh(3,i)*vxyzu(1,i) - xyzh(1,i)*vxyzu(3,i))
+    l(3) = l(3) + m*(xyzh(1,i)*vxyzu(2,i) - xyzh(2,i)*vxyzu(1,i))
+    mt = mt + m
+ enddo
+
+end subroutine budget_m
 
 end program test_cloudcollisions

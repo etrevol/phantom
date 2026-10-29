@@ -131,7 +131,7 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
  use eos,             only:equationofstate
  use substepping,     only:substep,substep_gr,substep_sph_gr,substep_sph
  use ptmass,          only:ptmass_kick
- use cloudcollisions, only:r_cloud,collide_clouds,heat_clouds
+ use cloudcollisions, only:r_cloud,collide_clouds,heat_clouds,form_clump_sinks
  integer, intent(inout) :: npart
  integer, intent(in)    :: nactive
  real,    intent(in)    :: t,dtsph
@@ -742,6 +742,7 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
     call collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
     if (nptmass > 0) call heat_clouds(npart,xyzh,vxyzu,iphase,massoftype,xyzmh_ptmass(1:4,1), &
                                       vxyz_ptmass(1:3,1),dtsph)
+    call form_clump_sinks(npart,xyzh,vxyzu,iphase,massoftype,timei)
     dtnew = min(dtnew,dtcoll)
  endif
 
