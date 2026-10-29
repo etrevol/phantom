@@ -185,8 +185,11 @@ def main(argv=None):
     prof, pe = np.histogram(psi, bins=72, range=(-np.pi, np.pi))
     prof = prof / nst
     pc = 0.5 * (pe[1:] + pe[:-1])
-    (s0, sfit, kfit), _ = curve_fit(poisson, pc, prof, p0=[prof.mean(), prof.mean() * 0.2,
-                                                        0.2], bounds=([0, 0, 0], [np.inf, np.inf, 0.99]))
+    try:
+        (s0, sfit, kfit), _ = curve_fit(poisson, pc, prof, p0=[prof.mean(), prof.mean() * 0.2,
+                                                            0.2], bounds=([0, 0, 0], [np.inf, np.inf, 0.99]))
+    except RuntimeError:            # no mode (A6): nothing for the kernel to fit
+        s0 = sfit = kfit = np.nan
     fig = plt.figure(figsize=(11.5, 4.6), constrained_layout=True)
     ax1 = fig.add_subplot(1, 2, 1)
     im = ax1.imshow(np.log10(np.maximum(sigma.T, 0.5)), origin="lower",
@@ -196,8 +199,12 @@ def main(argv=None):
     fig.colorbar(im, ax=ax1, shrink=0.85, label=r"$\log_{10}$ particles per pixel")
     ax2 = fig.add_subplot(1, 2, 2)
     ax2.plot(np.degrees(pc), prof / prof.mean(), color="0.3", lw=1.2, label="torus")
-    ax2.plot(np.degrees(pc), poisson(pc, s0, sfit, kfit) / prof.mean(), color="C3", lw=1.5,
-             label=rf"Poisson kernel, $k = {kfit:.3f}$")
+    if np.isfinite(kfit):
+        ax2.plot(np.degrees(pc), poisson(pc, s0, sfit, kfit) / prof.mean(), color="C3", lw=1.5,
+                 label=rf"Poisson kernel, $k = {kfit:.3f}$")
+    else:
+        ax2.text(0.03, 0.95, "Poisson kernel does not converge (no mode)", transform=ax2.transAxes,
+                 va="top", fontsize=9, color="C3")
     ax2.set(xlabel=r"$\psi = \phi - \Phi_1$ [deg]", ylabel=r"$\Sigma(\psi)/\Sigma_0$",
             xlim=(-180, 180))
     ax2.set_xticks(range(-180, 181, 60))
