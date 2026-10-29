@@ -334,3 +334,14 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   precess differentially and phase-mixes the mode; the cold cloud disc (sigma ~ 0.045)
   barely precesses. If so, mode survival is set by the effective dispersion, which the
   calibrated heating (s = 0.1, 0.3) will test.
+- **B8b, gas at H/R 0.08** (same start as B8a): fails after half an orbit, the tree
+  overflows as the thin isothermal gas (|z|/R 0.03) fragments, Q < 1; the dispersion
+  test needs sink creation for the clumps, which (b) of the B3 extension supplies.
+- **Comparison figures fixed** (user's check): the palette was a hand-made GILDAS
+  rainbow and the ranges rounded. Now the palettes are read pixel by pixel from the
+  colour bars of Combes Fig. 6 and Fig. 12 at 400 dpi (`vis/combes25_colours.npz`), the
+  ranges from their tick marks (moment 0 0.052-0.280 Jy/beam km/s, moment 1 -108..+109
+  km/s, moment 2 22-194 km/s, PV levels 0.0002-0.002 Jy/beam), and each pair of panels
+  carries one shared colour bar. Synthetic noise is now periodic (no bright rim at the
+  map edge). Particle movies of cloud runs colour by the density of the 32 nearest
+  neighbours, since a fixed softening carries no density.

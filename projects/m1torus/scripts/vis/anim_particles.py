@@ -2,7 +2,8 @@
 """Particle movie of a m1torus run, face-on and edge-on, in the style of Bannikova et al.
 
 Each particle is coloured by its own density, rho = m (h_fact/h)^3 from its smoothing
-length, on the logarithmic scale of the paper's density maps (1e-4 to 1e-1 M_c R_tor^-3);
+length (from its 32nd neighbour when the softening is fixed, as for colliding clouds),
+on the logarithmic scale of the paper's density maps (1e-4 to 1e-1 M_c R_tor^-3);
 dense particles are drawn last. Marked: the central mass, the torus barycentre and the
 m = 1 mode (arrow along its phase, length proportional to A_1/Sigma_0). A strip below
 follows A_1/Sigma_0 and |r_c| with a cursor at the frame time.
@@ -115,6 +116,18 @@ def build_figure(setup, n, tm, a1, rc, corotate=False):
                 tb_f=tb_f, cursor=cursor, clock=clock, arrow=None)
 
 
+def density(fr, pmass, k=32):
+    """rho = m (hfact/h)^3; with a fixed softening (colliding clouds) h carries no density,
+    so take it from the distance to the k-th neighbour instead."""
+    h = fr["h"]
+    if np.std(h) > 1e-6 * np.mean(h):
+        return pmass * (HFACT / h) ** 3
+    from scipy.spatial import cKDTree
+    pts = np.c_[fr["x"], fr["y"], fr["z"]]
+    rk = cKDTree(pts).query(pts, k=k + 1)[0][:, -1]
+    return pmass * k / (4.0 / 3.0 * np.pi * rk ** 3)
+
+
 def draw(art, path, pmass, tm, a1, m1, corotate=False):
     fr = frame_data(path)
     k = int(np.argmin(np.abs(tm - fr["t"])))
@@ -123,7 +136,7 @@ def draw(art, path, pmass, tm, a1, m1, corotate=False):
         fr["x"], fr["y"] = cr * fr["x"] - sr * fr["y"], sr * fr["x"] + cr * fr["y"]
         xc = fr["xc"]
         fr["xc"] = (cr * xc[0] - sr * xc[1], sr * xc[0] + cr * xc[1], xc[2])
-    rho = pmass * (HFACT / fr["h"]) ** 3
+    rho = density(fr, pmass)
     order = np.argsort(rho)
     x, y, z, c = fr["x"][order], fr["y"][order], fr["z"][order], rho[order]
     art["sc_f"].set_offsets(np.c_[x, y])

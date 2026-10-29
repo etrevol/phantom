@@ -22,10 +22,20 @@ import mockobs as mo  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[4]
 REF = ROOT / "results" / "m1torus" / "B" / "reference"
-# GILDAS rainbow as in the published maps: black, blue, cyan, green, yellow, red, magenta, white
-GILDAS = LinearSegmentedColormap.from_list(
-    "gildas", ["#000000", "#0000ff", "#00ffff", "#00ff00", "#ffff00", "#ff0000", "#ff00ff", "#ffffff"])
-GILDAS.set_bad("white")
+# Palettes and value ranges read pixel by pixel from the colour bars of Combes et al.
+# (2025) Figs. 6 and 12 (400 dpi render; ranges from the tick marks): moment 0
+# 0.052-0.280 Jy/beam km/s, moment 1 -108..+109 km/s, moment 2 22-194 km/s, PV in ten
+# discrete levels 0.0002-0.002 Jy/beam. Ours and theirs then share one colour scale.
+_C = np.load(Path(__file__).with_name("combes25_colours.npz"))
+PAL = {}
+for k in ("m0", "m1", "m2"):
+    cm = ListedColormap(_C[k], name=f"combes25_{k}")
+    cm.set_bad("white")
+    PAL[k] = (cm, float(_C["v" + k[1]][0]), float(_C["v" + k[1]][-1]))
+PV_LEVELS = list(_C["pv_levels"])
+PV_CMAP = ListedColormap(_C["pv_rgb"], name="combes25_pv")
+PV_CMAP.set_under("white")
+PV_CMAP.set_over(_C["pv_rgb"][-1])
 
 
 def panel_ref(ax, name, title, extent=None):
@@ -74,41 +84,40 @@ def main():
 
     # moments: masked where moment 0 is below the lowest colour (white there, as theirs)
     show = m0 >= 0.05
-    fig, axs = plt.subplots(3, 2, figsize=(9, 13))
-    specs = [(np.where(m0 >= 0.04, m0, np.nan), 0.05, 0.28, "moment 0 [Jy/beam km/s]", "combes25_fig6_m0"),
-             (np.where(show, m1, np.nan), -100, 100, "moment 1 [km/s]", "combes25_fig6_m1"),
-             (np.where(show, m2, np.nan), 20, 190, "moment 2 [km/s]", "combes25_fig6_m2")]
-    for row, (img, lo, hi, lab, ref) in enumerate(specs):
+    fig, axs = plt.subplots(3, 2, figsize=(10, 13), layout="constrained")
+    specs = [(np.where(m0 >= 0.04, m0, np.nan), "m0", "moment 0 [Jy/beam km/s]", "combes25_fig6_m0"),
+             (np.where(show, m1, np.nan), "m1", "moment 1 [km/s]", "combes25_fig6_m1"),
+             (np.where(show, m2, np.nan), "m2", "moment 2 [km/s]", "combes25_fig6_m2")]
+    for row, (img, key, lab, ref) in enumerate(specs):
         ax = axs[row, 0]
-        im = ax.imshow(img, origin="lower", extent=ext, cmap=GILDAS, vmin=lo, vmax=hi,
+        cmap, lo, hi = PAL[key]
+        im = ax.imshow(img, origin="lower", extent=ext, cmap=cmap, vmin=lo, vmax=hi,
                        interpolation="nearest")
         ax.set_xlim(xs[-1], xs[0])
         ax.plot(0, 0, "w+", ms=8, mew=1.5)
         beam(ax, t, xs)
         ax.set_xlabel("RA offset [arcsec]")
         ax.set_ylabel("Dec offset [arcsec]")
-        fig.colorbar(im, ax=ax, fraction=0.046, label=lab)
         ax.set_title(f"synthetic, {lab.split(' [')[0]}", fontsize=9)
         panel_ref(axs[row, 1], ref, f"Combes et al. (2025) Fig. 6, {lab.split(' [')[0]}",
                   extent=[0.3, -0.3, -0.3, 0.3])
+        # one scale for both panels: their palette and range, read from their colour bar
+        fig.colorbar(im, ax=[axs[row, 0], axs[row, 1]], fraction=0.03, pad=0.02,
+                     label=lab + "\n(both panels; scale of Combes Fig. 6)")
     axs[0, 0].plot(*_xy(h, t), "wx", ms=9, mew=2)
     fig.suptitle(f"NGC 613, CO(3-2) at 0.015 arcsec: {tag}\n"
                  f"hole {h['offset_pc']:.1f} pc from the AGN at PA {h['pa']:.0f} deg "
                  f"(observed 3 pc, NW)", fontsize=10)
-    fig.tight_layout()
     fig.savefig(out / f"{stem}_moments.png", dpi=110)
     plt.close(fig)
 
     # PV along PA -20 deg (their axis: 0.3 .. 0 arcsec, AGN at 0.15)
     pvd = mo.pv(cb, t, pa=t.pa, halfwidth=t.beam_arcsec)
     pos = 0.15 - xs
-    fig, axs = plt.subplots(1, 2, figsize=(12, 5))
-    levels = [0.0002, 0.0003, 0.0004, 0.0005, 0.0006, 0.0008, 0.001, 0.0011, 0.0013, 0.0015, 0.0017, 0.002]
-    cmap = ListedColormap(["#808080", "#7f00ff", "#0000cd", "#6495ed", "#008000", "#32cd32",
-                           "#ffff00", "#ffa500", "#ff8c00", "#ff4500", "#ff0000"])
-    cmap.set_under("white")
+    fig, axs = plt.subplots(1, 2, figsize=(13, 5), layout="constrained")
     ax = axs[0]
-    im = ax.pcolormesh(pos, vs, pvd, cmap=cmap, norm=BoundaryNorm(levels, cmap.N), shading="nearest")
+    im = ax.pcolormesh(pos, vs, pvd, cmap=PV_CMAP, norm=BoundaryNorm(PV_LEVELS, PV_CMAP.N),
+                       shading="nearest")
     r = np.linspace(1e-3, 0.3, 300)
     pcas = mo.pc_per_arcsec(t)
     vk = np.sqrt(mo.G_PC * t.M_bh / (r * pcas)) * np.sin(np.radians(t.inc))
@@ -117,11 +126,11 @@ def main():
     ax.set_ylim(-300, 300)
     ax.set_xlabel("major axis position [arcsec]")
     ax.set_ylabel("velocity [km/s]")
-    fig.colorbar(im, ax=ax, label="Jy/beam")
+    fig.colorbar(im, ax=list(axs), fraction=0.03, pad=0.02,
+                 label="Jy/beam (both panels; levels of Combes Fig. 12)")
     ax.set_title(f"synthetic PV, PA {t.pa - 360:.0f} deg; red: Kepler, 3.4e7 Msun, i = 50", fontsize=9)
     panel_ref(axs[1], "combes25_fig12_pv", "Combes et al. (2025) Fig. 12")
     fig.suptitle(f"NGC 613: {tag}", fontsize=10)
-    fig.tight_layout()
     fig.savefig(out / f"{stem}_pv.png", dpi=110)
     plt.close(fig)
 

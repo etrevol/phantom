@@ -163,7 +163,8 @@ def cube(p, t: Target, phi, seed=1):
     c *= beam_area                                             # Jy/beam
     # noise correlated over the beam, rms as observed
     rng = np.random.default_rng(seed)
-    n = gaussian_filter(rng.standard_normal(c.shape), (0, sig_beam / t.pix_arcsec, sig_beam / t.pix_arcsec))
+    n = gaussian_filter(rng.standard_normal(c.shape), (0, sig_beam / t.pix_arcsec, sig_beam / t.pix_arcsec),
+                        mode="wrap")  # periodic noise: no bright rim at the map edge
     c += n / n.std() * t.rms_mjy * 1e-3
     return dict(cube=c, xs=xs, vs=vs, east=east_as, north=north_as, v=v, vunit=vunit)
 
