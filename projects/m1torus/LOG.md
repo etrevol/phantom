@@ -244,3 +244,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **B6 start** (`results/m1torus/B/runs/20261029-133711-clouds-m01-e05-16k`): the paper's
   canonical torus as 16k colliding clouds, M_tor 0.1, r_cloud 0.01 (N0 ~ 2.6), e 0.5,
   r_acc 0.05, global steps, 30 orbits on 6 threads beside A7.
+- **B7, fluid limit code.** `moddump_m1torus` mode = gas turns the torus particles into SPH
+  gas, ieos = 6 about the sink with c_s = hor v_K (q = 1/2), r_acc set; polyk, qfacdisc
+  and isink travel in the dump header. Test: the paper's torus at 4k as gas with H/R
+  0.15 runs 2 orbits in 106 s on 2 threads; 12% of the gas falls into the sink in that
+  time, the shocked torus settles. Queue from here: one A slot (A7, then A6 to 400) and
+  one B slot (B6 clouds, then B8 fluid runs), two runs at a time.
