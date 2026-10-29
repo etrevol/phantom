@@ -517,3 +517,23 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   below the assumed 3.4e7 (Combes' own numbers give ~2.5e7); for A11 the enclosed mass
   M_BH (1 + M_tor) is 2.3e7. Remaining tension (A11: chi2 12 against ~5 expected): the
   inner masked m2 and the round core. Caveat: single snapshots at 16k, assumed errors.
+- **B18, the ALMA data in depth** (archive README, QA2 report, pipeline command log,
+  continuum maps `ngc613_spw19_21_25_27_cont_cut035.fits`, `ngc613_spw25_mfs_cut035.fits`).
+  QA2 pass; pipeline calibration and imaging (CASA 6.2.1, robust 0.5, no self-calibration,
+  "imaging products mitigated" for size); the reducer asks the PI to check the automatic
+  continuum ranges. The cube is continuum-subtracted (line-free mean 0); the fit
+  (order 1) used +505..+787 and -746..-388 km/s of CO(3-2). The nuclear continuum is
+  weak, 0.12 mJy/beam (aggregate, rms 0.019) and 0.21 (spw25), at E +0.010 N +0.003
+  arcsec: unsubtracted continuum cannot make the ~1 mJy/beam stripe of Combes Fig. 12.
+  At the AGN the line runs from -200 to +500 km/s (a red wing of 0.2-0.5 mJy/beam
+  beyond the +-300 km/s window of their moments and ours); a 1-pixel slit gives PV
+  peaks of 1.6 mJy/beam at +150..+300 km/s near the AGN, our 2-beam slit 1.1: the stripe
+  is fast nuclear gas, diluted by our wider slit (plausible). The blue side has
+  nothing below -200 km/s at the AGN in the pipeline cube. Flux: masked moment 0 gives
+  14.6 Jy km/s within 0.2 arcsec against 15.4 in their Table 2 (-6%, inside the 10%
+  calibration error). Trust: the same raw data; the archive calibration is standard and
+  checked (QA2), the imaging generic but documented; Combes' own imaging is undocumented
+  in its choices (channels 5.9 km/s, recipe). For comparisons with models the archive
+  cube is the better reference because we process both identically; it is not the
+  "truer" data. Their hotter central moment 2 stays unexplained in detail; the broad
+  nuclear wing included by a looser selection would raise it (not tested).
