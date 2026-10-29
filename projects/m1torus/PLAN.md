@@ -19,21 +19,23 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A3 | [x] | canonical `0.5-60-0.3`, 16k, 150 orbits | mode appears and holds | 2 h |
 | A4 | [x] | canonical at 64k, 150 orbits | saturated A1/S0, k, r_c within 10% of the paper; 16k -> 64k converged | 12 h |
 | A5 | [x] | thin control `0.5-30-0.3`, 16k, 150 orbits | no m = 1 above noise (paper Sect. 5) | 2 h |
-| A6 | [~] | weak case `0.5-45-0.3`, 16k, 150 orbits, then on to 1000 | A1/S0 ~0.09, k ~0.08 (Table 2); the paper's Fig. 14 saturates only at t ~ 500-1000 | 1.5 h + ~9 h |
-| A7 | [ ] | torus mass M_tor = 0.06 and 0.01, 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); growth slows with mass, check Fig. 6 before setting the length | 0.06: ~250 orbits, 3 h; 0.01: >= 1000 orbits, 13-17 h |
-| A8 | [ ] | `0.2-60-0.3`, 16k (optional) | stronger mode, A1/S0 ~0.46 | 2 h |
+| A6 | [~] | weak case `0.5-45-0.3`, 16k: 150 orbits done (noise level), on to 400 | rises clearly above noise by t ~ 300-400 as in Fig. 14 (A1/S0 ~0.07-0.09); 1000 only if 400 leaves doubt | +2.5 h (+5 h to 1000) |
+| A7 | [ ] | torus mass M_tor = 0.06 (needed) and 0.01 (optional: 0.06, 0.1, 0.3 already span a factor 5), 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); growth slows with mass, check Fig. 6 before setting the length | 0.06: ~250 orbits, 3 h; 0.01: >= 1000 orbits, 13-17 h |
+| A8 | [ ] | `0.2-60-0.3`, 16k (optional, no new test) | stronger mode, A1/S0 ~0.46 | 2 h |
 | A9 | [x] | pericentres of e >= 0.5 sit at Phi_1 + 180 deg here; the paper says "near the phase": settle the convention | explanation in LOG | - |
 | A10 | [ ] | short write-up of A: methods, differences from the paper, results | LaTeX, like `projects/ppi/formulary` | - |
-| A11 | [ ] | M_tor = 0.3 (the NGC 613 mass ratio), 16k | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2-2.5 h |
+| A11 | [~] | M_tor = 0.3 (the NGC 613 mass ratio), 16k, 120 orbits | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2-2.5 h |
 | A12 | [x] | digitise the paper's Fig. A.1: onset and growth rate of r_c for 64k, 128k, 256k | their growth rate and onset against ours (64k starts ~20-30 orbits later here) | 30 min |
 | A13 | [x] | can phantom soften star particles with a fixed length instead of the adaptive h | answer from the code | 30 min |
 | A14 | [x] | fixed softening at 16k (setup `eps_star`, merged 2026-10-28): A3 again with the same seed and eps = 0.01 as the paper, after 16k tests of cost and energy | A1/S0, r_c, onset and growth against A3 (adaptive h ~ 0.08) and the paper | tests 30 min, run 2-15 h |
 | A15 | [ ] | 16k canonical run continued to 1000 orbits (A3 from t = 150) | the mode lives to t = 1000 (paper Sect. 3.1) | ~14 h, overnight |
 | A16 | [ ] | (lowest) oscillation of the central-mass radius against softening: an unpublished figure of the authors shows |r_c| at 64k oscillating with a ~55-orbit period and growing amplitude after t ~ 200 for eps = 1e-3, 1e-4, flat for 1e-2 | from A15 (our sink unsoftened, torus h ~ 0.08) and, if needed, fixed eps_star 1e-3 and 1e-2 runs (C = 0.04, ~24 orbits/h at 16k): which softening, sink-particle or particle-particle, drives it | after A15 |
 
-Order (2026-10-28, the user's): A14 done; A6 running (stopped at t = 10 for A14, resumed);
-then A11, A7 (0.06 by day, 0.01 overnight), A6 on to 1000 and A15 on free nights; A8,
-A10; A16 last. Compute left for A: ~45-50 h.
+Order (2026-10-29, agreed with the user): by day A11, A7 at 0.06, A6 on to 400; then A10
+(LaTeX write-up of A, edited later if needed); A15 last of the needed tasks, overnight.
+Optional, only if results call for them: A7 at 0.01, A8, A6 to 1000; A16 last of all.
+All at 16k: 64k moved the saturated values by ~3% and the signals sought are 3-25 times
+the 16k noise floor.
 
 ### What the paper does (Sect. 2, Table 1, App. A)
 
