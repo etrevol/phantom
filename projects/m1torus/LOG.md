@@ -307,3 +307,20 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   |r_c| 0.021 -> 0.014 -> 0.021, while E_diss reaches 2.25 |E0| and 12% of the clouds
   fall into the sink. B6 from t = 0 collapsed before any mode grew; with the mode in
   place the dissipating torus keeps its lopsidedness (preliminary, 3.5 orbits).
+- **A7 done** (M_tor 0.06, 250 orbits, dE/E 9.7e-4): over t = 200-250 A1/S0 0.357, k 0.21,
+  |r_c| 0.0143, |r_tb| 0.233 (0.1: 0.344, 0.022, 0.218), pattern 0.0108 Omega_0 (0.0186 at
+  0.1: ratio 0.58 for a mass ratio 0.6), e-fold 28.5 orbits (16.8). Below 0.1 the paper's
+  self-similar picture holds: fixed amplitude and r_tb, r_c, growth rate and pattern
+  speed linear in M_tor. Above (A11, 0.3) it fails. `compare_mass.png`, run `figs/`.
+- **B6b done** (collisions on at t = 100, 15 orbits, e 0.5, r_cloud 0.01): the torus
+  collapses to a thin disc within an orbit (|z|/R 0.23 -> 0.015, sigma_z/v_phi 0.41 ->
+  0.045), radiates 4.3 |E0|, puts 24% of the clouds into the sink, and keeps the mode:
+  A1/S0 0.33 -> 0.25-0.30, |r_c| 0.016-0.022, a lopsided disc with spiral arms, no
+  fragmentation in 15 orbits. Order matters: dissipation from t = 0 (B6) left no mode,
+  dissipation after the mode (B6b) keeps it in the collapsed disc.
+- **Axis check of the published panels**: Fig. 6 ticks every 34.3 px = 0.05 arcsec, half
+  width 0.299 arcsec: the +-0.3 arcsec of the synthetic maps holds to 1%; the panels are
+  now drawn on the same calibrated axes.
+- **B8a start** (`20261029-163625-gas-from-a3t100-hor015`): A3 at t = 100 as isothermal gas,
+  H/R 0.15, r_acc 0.05, 15 orbits, the fluid pair of B6b. A first launch inherited
+  r_cloud from the moddump default and stopped (fixed, kept in `B/tests/`).

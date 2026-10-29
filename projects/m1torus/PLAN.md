@@ -20,7 +20,7 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A4 | [x] | canonical at 64k, 150 orbits | saturated A1/S0, k, r_c within 10% of the paper; 16k -> 64k converged | 12 h |
 | A5 | [x] | thin control `0.5-30-0.3`, 16k, 150 orbits | no m = 1 above noise (paper Sect. 5) | 2 h |
 | A6 | [~] | weak case `0.5-45-0.3`, 16k: 150 orbits done (noise level), on to 400 | rises clearly above noise by t ~ 300-400 as in Fig. 14 (A1/S0 ~0.07-0.09); 1000 only if 400 leaves doubt | +2.5 h (+5 h to 1000) |
-| A7 | [~] | torus mass M_tor = 0.06 (needed) and 0.01 (optional: 0.06, 0.1, 0.3 already span a factor 5), 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); growth slows with mass, check Fig. 6 before setting the length | 0.06: ~250 orbits, 3 h; 0.01: >= 1000 orbits, 13-17 h |
+| A7 | [x] | torus mass M_tor = 0.06 (needed) and 0.01 (optional: 0.06, 0.1, 0.3 already span a factor 5), 16k | r_c linear in M_tor with r_tb fixed (Fig. 6, Sect. 3.3); pattern speed linear in M_tor (Sect. 10); growth slows with mass, check Fig. 6 before setting the length | 0.06: ~250 orbits, 3 h; 0.01: >= 1000 orbits, 13-17 h |
 | A8 | [ ] | `0.2-60-0.3`, 16k (optional, no new test) | stronger mode, A1/S0 ~0.46 | 2 h |
 | A9 | [x] | pericentres of e >= 0.5 sit at Phi_1 + 180 deg here; the paper says "near the phase": settle the convention | explanation in LOG | - |
 | A10 | [ ] | short write-up of A: methods, differences from the paper, results | LaTeX, like `projects/ppi/formulary` | - |
