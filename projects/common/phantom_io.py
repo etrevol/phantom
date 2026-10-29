@@ -37,7 +37,7 @@ def read_dump(path):
     if np.frombuffer(first[:4], "<i4")[0] not in (60769, 690706):
         raise ValueError(f"{path}: not a phantom dump")
     fileid = next(rec).decode("ascii", "replace").strip()
-    header = {}
+    header, lists = {}, {}
     for dt in _DTYPES:
         n = int(np.frombuffer(next(rec), "<i4")[0])
         if n <= 0:
@@ -47,6 +47,7 @@ def read_dump(path):
         for k in range(n):
             tag = tags[16 * k:16 * (k + 1)].decode().strip()
             header.setdefault(tag, vals[k].item())
+            lists.setdefault(tag, []).append(vals[k].item())
     nblocks = int(np.frombuffer(next(rec), "<i4")[0])
     blocks = []
     for _ in range(nblocks):
@@ -62,7 +63,8 @@ def read_dump(path):
                 tag = next(rec).decode().strip()
                 out[tag] = np.frombuffer(next(rec), dt)
         arrays.append(out)
-    return dict(fileid=fileid, header=header, gas=arrays[0],
+    # header keeps the first value of a repeated tag; header_lists all (e.g. massoftype)
+    return dict(fileid=fileid, header=header, header_lists=lists, gas=arrays[0],
                 sinks=arrays[1] if len(arrays) > 1 else {})
 
 
