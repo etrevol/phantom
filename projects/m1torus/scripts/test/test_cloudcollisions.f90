@@ -6,7 +6,7 @@
 program test_cloudcollisions
  use part,            only:istar,isetphase,maxtypes,ediss_coll,eheat_coll,esf_coll,nptmass,&
                             xyzmh_ptmass,vxyz_ptmass,ispinx,ispinz,nsinkproperties
- use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_phi,heat_clouds,&
+ use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_phi,heat_clouds,v_alfven,&
                             sf_n,form_clump_sinks
  implicit none
  real, parameter :: pi = 4.*atan(1.)
@@ -70,14 +70,26 @@ subroutine test_pairs(nfail)
  call check('v2x',vxyzu(1,2),0.5,1.e-14,nfail)
  call check('E lost',ediss_coll,0.75,1.e-14,nfail)
 
+ print "(a)",'magnetised head-on, v_n = 2: M_A = 10 keeps 1/(sqrt(2) 10 - 1/2), M_A = 0.5 is elastic'
+ v_alfven = 0.2
+ call two((/-0.009,0.,0./),(/1.,0.,0./),(/0.009,0.,0./),(/-1.,0.,0./),xyzh,vxyzu,iphase,mtype)
+ call collide_clouds(2,xyzh,vxyzu,iphase,mtype,dt)
+ call check('v1x, M_A = 10',vxyzu(1,1),-sqrt(1./(sqrt(2.)*10. - 0.5)),1.e-12,nfail)
+ v_alfven = 4.
+ call two((/-0.009,0.,0./),(/1.,0.,0./),(/0.009,0.,0./),(/-1.,0.,0./),xyzh,vxyzu,iphase,mtype)
+ call collide_clouds(2,xyzh,vxyzu,iphase,mtype,dt)
+ call check('v1x, M_A = 0.5 (elastic)',vxyzu(1,1),-1.,1.e-12,nfail)
+ v_alfven = 0.
+
  print "(a)",'oblique, e = 0.3: p, L and E + E_lost conserved'
  e_rest = 0.3
  ediss_coll = 0.
  call two((/0.3,0.2,0.1/),(/0.7,-1.1,0.4/),(/0.31,0.205,0.112/),(/-0.5,0.9,-0.2/),xyzh,vxyzu,iphase,mtype)
  call budget(xyzh,vxyzu,p0,l0,e0)
+ ncoll = 0
  call collide_clouds(2,xyzh,vxyzu,iphase,mtype,dt)
  call budget(xyzh,vxyzu,p1,l1,e1)
- call check('ncoll this call',real(ncoll),2.,0.,nfail)
+ call check('ncoll this call',real(ncoll),1.,0.,nfail)
  call check('px',p1(1),p0(1),1.e-14,nfail)
  call check('py',p1(2),p0(2),1.e-14,nfail)
  call check('Lx',l1(1),l0(1),1.e-14,nfail)

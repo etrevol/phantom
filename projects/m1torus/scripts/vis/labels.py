@@ -64,7 +64,11 @@ def model_parts(run):
     elif r_cloud > 0:
         heat = _num(inp.get("heat_s", 0) or 0)
         name = "Heated colliding-cloud model" if heat > 0 else "Colliding-cloud model"
-        pars["e"] = _math("e = " + _fmt(_num(inp.get("e_rest", 0.5))))
+        va = _num(inp.get("v_alfven", 0) or 0)
+        if va > 0:     # magnetised clouds: e set by the collision speed (KB88 eq. 25)
+            pars["e"] = "magnetised, " + _math(r"v_{\rm A} = " + _fmt(va) + r"\,v_{\rm K}(R_{\rm tor})")
+        else:
+            pars["e"] = _math("e = " + _fmt(_num(inp.get("e_rest", 0.5))))
         pars["r_cl"] = _math(r"r_{\rm cl} = " + _fmt(r_cloud))
         if heat > 0:
             # a floor: R and z held (heat_phi absent before 2026-10-29 21:00 = all three)

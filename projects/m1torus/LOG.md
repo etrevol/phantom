@@ -577,3 +577,13 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   sits at M_A ~ 1.2-1.9, so the equilibrium dispersion would be ~1.2-1.9 v_A: a torus
   at sigma ~ 0.3 v_K needs v_A ~ 0.2 v_K (tens of km/s, mG fields): a prediction that
   ties the dispersion to the field (speculative until run).
+- **Speed-dependent restitution implemented** (`v_alfven`, setup/moddump/.in; KB88 eq. 25,
+  e = sqrt(1/(sqrt(2) M_A - 1/2)), elastic below M_A ~ 1.06; unit tests: M_A 10 gives
+  e 0.271, M_A 0.5 elastic, 38 checks pass). The field is a subgrid parameter of the
+  collisions only (no MHD; its large-scale stresses are not modelled); B follows from
+  v_A only with an assumed cloud density, B = v_A sqrt(4 pi rho). **B23 start**: from A3
+  at t = 100, v_A 0.2 v_K(R_tor), no thermostat, no clump sinks, r_cl 0.01, r_acc 0.05.
+  Prediction before the run (KB88 eq. 24): random speed settles at ~1.2-1.9 v_A,
+  sigma ~0.25-0.4 v_K. Stop criterion at t = 103: sigma_z/v_K < 0.15 (collapse) or
+  > 5% unbound or R90 > 4 (runaway): stop; sigma_z/v_K >= 0.2, < 2% unbound, R90 < 3:
+  on to 110 and check that sigma levels off (< 10% change 106 -> 110); else one orbit more.

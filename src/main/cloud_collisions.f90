@@ -12,6 +12,14 @@ module cloudcollisions
 ! with restitution e_rest, so momentum and angular momentum are exact and
 ! the kinetic energy lost is added to ediss_coll (radiated).
 !
+! Magnetised clouds (v_alfven > 0): the restitution follows from the energy a
+! collision keeps, 1 - eps = 1/(sqrt(2) M_A - 1/2) with M_A = |v_n|/v_alfven
+! (Krolik & Begelman 1988, eq. 25), e = sqrt(1 - eps), e = 1 below M_A ~ 1.06:
+! slow collisions are elastic, fast ones dissipative, so shear heating and
+! collisional cooling can balance (Goldreich & Tremaine 1978), which a constant
+! e cannot (e 0.5 flattens the torus, 0.9 unbinds it). The field is a subgrid
+! parameter of the collisions only; its large-scale stresses are not modelled.
+!
 ! Optional heating (heat_s > 0): a thermostat that keeps the radial and vertical cloud
 ! velocity dispersions in each annulus at heat_s times the local Keplerian speed,
 ! standing for the turbulence that feedback and inflow drive in real tori; sigma_phi
@@ -21,7 +29,8 @@ module cloudcollisions
 ! held sigma_phi (runs of 2026-10-29 before 21:00). It relaxes towards the target over
 ! heat_tau local orbits with zero-mean random kicks and books the energy in eheat_coll.
 !
-! :References: Vollmer et al. (2022), A&A 665, A102; Ostriker & Shetty (2011), ApJ 731, 41;
+! :References: Krolik & Begelman (1988), ApJ 329, 702; Goldreich & Tremaine (1978),
+!              Icarus 34, 227; Vollmer et al. (2022), A&A 665, A102; Ostriker & Shetty (2011), ApJ 731, 41;
 !              Binney & Tremaine (2008), Galactic Dynamics, Sect. 4.4.3
 !
 ! :Owner: etrevol
@@ -34,6 +43,7 @@ module cloudcollisions
 
  real,            public :: r_cloud = 0.    ! cloud radius, 0 = no collisions
  real,            public :: e_rest  = 0.5   ! normal restitution coefficient
+ real,            public :: v_alfven = 0.   ! Alfven speed in the clouds; > 0: e from KB88 eq. 25
  real,            public :: C_coll  = 0.25  ! dt < C_coll r_cloud / v_max
  integer(kind=8), public :: ncoll   = 0     ! collisions since the start of this run
  real,            public :: heat_s  = 0.    ! target sigma / v_K of the thermostat, 0 = off
@@ -42,7 +52,7 @@ module cloudcollisions
  integer,         public :: sf_n    = 0     ! clouds overlapping one cloud to form a sink, 0 = off
  integer, allocatable    :: nover(:)        ! clouds overlapping each particle, last step
 
- public :: collide_clouds,heat_clouds,form_clump_sinks
+ public :: collide_clouds,heat_clouds,form_clump_sinks,restitution
 
  private
 
@@ -66,7 +76,7 @@ subroutine collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
  integer(kind=8), allocatable   :: key(:),skey(:)
  integer         :: n,i,j,k,kk,ix,iy,iz,dx,dy,dz,lo,hi
  integer(kind=8) :: kn
- real            :: dc,rsum2,xij(3),vij(3),r2,rij,vn,mcl,mu,dvi,vmax2
+ real            :: dc,rsum2,xij(3),vij(3),r2,rij,vn,mcl,mu,dvi,vmax2,e
 
  dtcoll = huge(dtcoll)
  if (r_cloud <= 0.) return
@@ -125,10 +135,11 @@ subroutine collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
                 vn  = dot_product(vij,xij)/rij
                 if (vn >= 0.) cycle
                 ! impulse J = (1 + e) mu |v_n| along the line of centres
-                dvi = (1. + e_rest)*mu*(-vn)/mcl
+                e   = restitution(-vn)
+                dvi = (1. + e)*mu*(-vn)/mcl
                 vxyzu(1:3,i) = vxyzu(1:3,i) + dvi*xij/rij
                 vxyzu(1:3,j) = vxyzu(1:3,j) - dvi*xij/rij
-                ediss_coll = ediss_coll + 0.5*(1. - e_rest**2)*mu*vn**2
+                ediss_coll = ediss_coll + 0.5*(1. - e**2)*mu*vn**2
                 ncoll = ncoll + 1
              enddo
           enddo
@@ -147,6 +158,25 @@ subroutine collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
  deallocate(list,idx,key,skey)
 
 end subroutine collide_clouds
+
+!-----------------------------------------------------------------------
+!+
+!  restitution for a normal approach speed vn: e_rest, or for magnetised
+!  clouds the square root of the energy fraction kept, 1/(sqrt(2) M_A - 1/2)
+!+
+!-----------------------------------------------------------------------
+real function restitution(vn)
+ real, intent(in) :: vn
+ real :: keep
+
+ if (v_alfven <= 0.) then
+    restitution = e_rest
+    return
+ endif
+ keep = 1./max(sqrt(2.)*vn/v_alfven - 0.5,1.)
+ restitution = sqrt(keep)
+
+end function restitution
 
 !-----------------------------------------------------------------------
 !+

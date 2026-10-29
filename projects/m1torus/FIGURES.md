@@ -13,7 +13,7 @@ implementation differs from Bannikova et al. (2026) and is not "the paper".
 | model | name on figures | parameters shown |
 |---|---|---|
 | collisionless N-body torus | Collisionless torus model | M_tor, N; e_max, i_max, R_0 when not 0.5, 60 deg, 0.3; fixed epsilon; epsilon_c |
-| colliding (sticky) clouds | Colliding-cloud model | M_tor, N, e, r_cl |
+| colliding (sticky) clouds | Colliding-cloud model | M_tor, N, e (or "magnetised, $v_{\rm A} = ...\,v_{\rm K}(R_{\rm tor})$" when e follows the collision speed), r_cl |
 | SPH gas converted from the torus | Isothermal gas model | M_tor, N, H/R |
 | SPH gas disc set up as a disc | Isothermal gas-disc model | M_tor, N, R range, H/R |
 | clouds with the thermostat (and clump sinks) | Heated colliding-cloud model | as clouds, plus the thermostat floor $\sigma_{R,z} \geq s\,v_{\rm K}$ ($\sigma_{R,\phi,z}$ for runs before 2026-10-29 21:00), $\tau_{\rm heat}$ if not 1, the clump size that makes a sink |

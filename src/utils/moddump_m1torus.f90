@@ -25,6 +25,8 @@ module moddump
 !   r_cloud, e_rest = values for mode = clouds
 !   heat_s, heat_tau = cloud thermostat for mode = clouds (heat_s = 0: off)
 !   sf_n = overlapping clouds that make a bound clump a sink (0: off)
+!   v_alfven = Alfven speed in the clouds for mode = clouds: speed-dependent restitution
+!              (Krolik & Begelman 1988, eq. 25; 0: constant e_rest)
 !
 ! :References: None
 !
@@ -45,7 +47,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
                            set_particle_type,iphase,iamtype
  use eos,            only:ieos,polyk,qfacdisc,isink
  use part,           only:hsoft_nbody,accrete_stars
- use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau,sf_n
+ use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau,sf_n,v_alfven
  use options,        only:iexternalforce
  use externalforces, only:mass1,accradius1,iext_star
  use infile_utils,   only:open_db_from_file,inopts,read_inopt,close_db
@@ -75,6 +77,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
     call read_inopt(heat_s,'heat_s',db,min=0.,default=0.)
     call read_inopt(heat_tau,'heat_tau',db,min=0.,default=1.)
     call read_inopt(sf_n,'sf_n',db,min=0,default=0)
+    call read_inopt(v_alfven,'v_alfven',db,min=0.,default=0.)
  else
     r_cloud = 0.
  endif
