@@ -490,3 +490,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   start). Stop criterion fixed in advance, at t = 103 against r_cl 0.01 (in the black
   hole 19.5%, R90 6.5): stop if R90 > 4 or > 15% accreted; on to 110 if R90 < 3 and
   < 10%; between, one more orbit.
+- **B15 result (stopped at t = 103 by the criterion, R90 4.7 > 4).** N0 ~ 0.5 at s 0.3:
+  collisions radiate 1.06 |E0| in 3 orbits against 5.75 at N0 2.6, and the inflow
+  drops 19.5% -> 7.3%, but clouds still escape (6.4% unbound against 10.2%). Where
+  they start: 6-8% of every initial radius 0.3-2 R, not the colder edges. Controls
+  from existing runs at t = 103: no thermostat (B6b) 0.4% unbound, R90 1.5; s 0.1
+  (B12) 0.5%, R90 1.7. So the escape comes from re-randomising the velocities at
+  sigma 0.3 v_K (a Jeans-like tail refilled every step), nearly independent of the
+  collision rate; the inflow comes from the collisions. Cooling without heating (B6b,
+  N0 2.6): sigma_z 0.33 -> 0.09 in 2 orbits, |z|/R 0.23 -> 0.025; with t_cool ~ 1/N0,
+  a torus that stays hot for ~100 orbits (36 Myr at 8 pc) needs N0 <~ 0.04, clouds
+  that practically never collide: the collisionless limit, which B14 found hot enough
+  (noise-free m2) but too lopsided. Plausible reading: NGC 613's dispersion is either
+  that of a nearly collisionless cloud ensemble, a short-lived or fed state, or
+  non-circular motions (B16). The intermediate run r_cl 0.0062 is not needed.
