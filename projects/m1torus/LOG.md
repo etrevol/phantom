@@ -559,3 +559,8 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   (B18) fits the outflow. Candidate next steps: a test of the KB88 heating with e_rest
   0.9 and no thermostat (cheap, stop criterion at 3 orbits), the outflow added to the
   synthetic cube (cheap), a torus fed from outside (more work).
+- **B21 start**: clouds with e_rest 0.9, no thermostat, no clump sinks, r_cl 0.01, r_acc
+  0.05, from A3 at t = 100: B6b with one change (e 0.5 -> 0.9). Stop criterion, set in
+  advance against B6b at t = 103 (sigma_z/v_K ~0.07, |z|/R ~0.02; start 0.33, 0.23):
+  stop if sigma_z/v_K < 0.15 at t = 103; on to 110 if >= 0.25 with < 2% unbound;
+  between, one more orbit.
