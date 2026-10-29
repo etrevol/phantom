@@ -324,3 +324,13 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **B8a start** (`20261029-163625-gas-from-a3t100-hor015`): A3 at t = 100 as isothermal gas,
   H/R 0.15, r_acc 0.05, 15 orbits, the fluid pair of B6b. A first launch inherited
   r_cloud from the moddump default and stopped (fixed, kept in `B/tests/`).
+- **B8a done** (A3 at t = 100 as isothermal gas, H/R 0.15, 15 orbits): the fluid limit kills
+  the mode: A1/S0 0.33 -> 0.072 at t = 109 -> 0.037 at 115 (e-fold ~6 orbits); the gas
+  settles to |z|/R 0.10 (its c_s), sigma_z/v_phi 0.02, spreads viscously (R90 1.37 ->
+  2.0) and feeds 31% to the sink. L changes by 1.4e-3 while the sink spin takes 8% of
+  L, so phantom books the accreted L; the ANGMOM alarm at 1e-3 is tight for gas.
+  Against B6b (same start, clouds, mode kept at 0.25-0.30): the two limits of the cloud
+  ensemble disagree. Plausible cause: pressure (c_s = 0.15 v_K) makes eccentric orbits
+  precess differentially and phase-mixes the mode; the cold cloud disc (sigma ~ 0.045)
+  barely precesses. If so, mode survival is set by the effective dispersion, which the
+  calibrated heating (s = 0.1, 0.3) will test.
