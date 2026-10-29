@@ -280,3 +280,11 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   new .in carries r_cloud, e_rest, C_coll and hsoft_nbody; the mode is in place
   (A1/S0 0.35). Next in the B slot after B6: this restart for 20 orbits (does the mode
   survive collisions?), then the fluid runs B8.
+- **Snapshot 14:46.** A7 (M_tor 0.06, t = 176): onset t = 83 against 52 at 0.1, e-fold 28.5
+  orbits against 16.8 (ratio 1.70, the mass ratio is 1.67: growth rate ~ M_tor),
+  saturating at A1/S0 0.35 like 0.1, |r_c| 0.0134 = 0.6 x 0.022 (`compare_mass.png`).
+  B6 (t = 15): |z|/R 0.015 (the cloud radius), sigma_z/v_phi 0.05, 24% of the mass in
+  the sink, E_diss 4.4 |E0|, no m = 1 (A1/S0 at the noise floor), median R back to 0.86
+  as the disc spreads. On NGC 613 it is a filled disc with a centred hole of the
+  accretion radius; moment 2 (40-100 km/s, high at the centre) now resembles the
+  observed map, moment 1 reaches +-100 km/s against the observed ~+-50.
