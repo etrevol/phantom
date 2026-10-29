@@ -504,3 +504,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   (noise-free m2) but too lopsided. Plausible reading: NGC 613's dispersion is either
   that of a nearly collisionless cloud ensemble, a short-lived or fed state, or
   non-circular motions (B16). The intermediate run r_cl 0.0062 is not needed.
+- **B14 on the other collisionless tori** (`results/m1torus/B/fit_geometry_collisionless/`,
+  same grid, last dumps). Best chi2 (5 metrics): M_tor 0.3 (A11, t 120) 12.3 at i 45,
+  M_BH 1.75e7; weak 0.5-45-0.3 without a mode (A6, t 400) 22.1; thin 0.5-30-0.3 without
+  a mode (A5, t 150) 23.8; canonical (A3) 26.1; M_tor 0.06 (A7, t 250) 30.7 (grid edge
+  M_BH 1.5e7). All collisionless tori beat the dissipative models (84-104). The m = 1
+  clump is not what spoils the shape: tori without a mode are only slightly rounder
+  (noise-free b/a 0.79-0.80 against 0.71-0.73 with it; masked 0.65-0.72), all short of
+  NGC 613's 0.90 at i >= 40. Noise-free m2 38-53 / 25-37 km/s against the Gaussian
+  sigma 41/37: hot enough in every case; the masked inner m2 (22-28 against 39) stays
+  low for all, a line-profile effect of the mask. Every fit prefers M_BH 1.5-2.5e7
+  below the assumed 3.4e7 (Combes' own numbers give ~2.5e7); for A11 the enclosed mass
+  M_BH (1 + M_tor) is 2.3e7. Remaining tension (A11: chi2 12 against ~5 expected): the
+  inner masked m2 and the round core. Caveat: single snapshots at 16k, assumed errors.

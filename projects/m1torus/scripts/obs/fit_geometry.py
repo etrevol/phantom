@@ -37,7 +37,12 @@ B = ROOT / "results" / "m1torus" / "B" / "runs"
 SNAPS = {"A3": A / "20261027-141227-canon-16k-eps0" / "m1torus_00100",
          "B6b": B / "20261029-152300-clouds-from-a3t100-e05",
          "B8a": B / "20261029-163625-gas-from-a3t100-hor015",
-         "B12": B / "20261029-181639-heated-s01-from-a3t100"}
+         "B12": B / "20261029-181639-heated-s01-from-a3t100",
+         # other collisionless tori, saturated (or, without a mode, at the end)
+         "A5": A / "20261028-121511-thin30-16k" / "m1torus_00150",
+         "A6": A / "20261028-144810-weak45-16k" / "m1torus_00400",
+         "A7": A / "20261029-122207-mtor006-16k" / "m1torus_00250",
+         "A11": A / "20261029-100846-mtor03-16k" / "m1torus_00120"}
 INC = np.arange(15, 66, 5)
 MBH = np.arange(1.5, 4.51, 0.25) * 1e7
 AZ = (0, 90, 180, 270)               # azimuth about the m = 1 phase [deg]
@@ -115,7 +120,8 @@ def main():
     ap.add_argument("--out", default=str(ROOT / "results" / "m1torus" / "B" / "fit_geometry"))
     ap.add_argument("--inc", default="15,65,5", help="lo,hi,step [deg]")
     ap.add_argument("--mbh", default="1.5,4.5,0.25", help="lo,hi,step [1e7 Msun]")
-    ap.add_argument("--models", default=",".join(SNAPS))
+    ap.add_argument("--models", default="A3,B6b,B8a,B12")
+    ap.add_argument("--replot", action="store_true", help="redraw from the saved grid")
     a = ap.parse_args()
     global INC, MBH
     lo, hi, st = map(float, a.inc.split(","))
@@ -127,12 +133,17 @@ def main():
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     obs = observed()
-    jobs = [(n, az) for n in SNAPS for az in AZ]
-    with Pool(a.workers, initializer=_grid, initargs=(INC, MBH)) as pool:
-        got = pool.map(work, jobs)
-    grid = {n: np.full((len(AZ), len(INC), len(MBH), 5), np.nan) for n in SNAPS}
-    for n, az, res in got:
-        grid[n][AZ.index(az)] = res
+    if a.replot:
+        z = np.load(out / "fit_geometry.npz")
+        INC, MBH = z["inc"], z["mbh"]
+        grid = {n: z[n] for n in SNAPS}
+    else:
+        jobs = [(n, az) for n in SNAPS for az in AZ]
+        with Pool(a.workers, initializer=_grid, initargs=(INC, MBH)) as pool:
+            got = pool.map(work, jobs)
+        grid = {n: np.full((len(AZ), len(INC), len(MBH), 5), np.nan) for n in SNAPS}
+        for n, az, res in got:
+            grid[n][AZ.index(az)] = res
     np.savez_compressed(out / "fit_geometry.npz", inc=INC, mbh=MBH, az=AZ, obs=obs,
                         **{n: g for n, g in grid.items()})
 
@@ -163,7 +174,9 @@ def main():
         ax.plot(MBH[j] / 1e7, INC[i], "r*", ms=13)
         ax.plot(3.4, 50, "wo", mfc="none", ms=9, mew=1.5)
         ax.set_xlabel(r"$M_{\rm BH}$ [$10^7\,M_\odot$]")
-        name = L.model_parts(last_dump(SNAPS[n]).parent)[0]
+        # the name and every parameter: panels of one model type differ only there
+        name, pars, _ = L.model_parts(last_dump(SNAPS[n]).parent)
+        name = L.wrapped(f"{name} ({', '.join(pars.values())})", 48)
         ax.set_title(f"{name}\nbest $i = {INC[i]}^\\circ$, $M_{{\\rm BH}} = {MBH[j] / 1e7:.2f}$, "
                      f"$\\chi^2 = {cmin[i, j]:.1f}$ ($i = 50^\\circ$: {cmin[i50, j34]:.0f})", fontsize=8.5)
     axs[0].set_ylabel(r"inclination $i$ [deg]")
