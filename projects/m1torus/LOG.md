@@ -269,3 +269,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   Msun/yr). On B6 at t = 3 orbits scaled to Circinus: axis ratio 0.50 of the dust map
   (their disc 0.6), accretion 0.017 Msun/yr against the measured 0.2-0.34; the torus
   mass 0.1 M_BH = 1.7e5 Msun is an assumption, not a Circinus measurement.
+- **Hole measure reworked** (`mockobs.hole`): the lowest ratio of the smoothed moment 0 to
+  its local maximum over 4 beams, inside the emission. The paper's torus (A3, t = 100)
+  on NGC 613: hole 2.5 pc from the AGN (observed 3 pc). B6 after its collapse: the hole
+  sits on the sink (0.3-0.5 pc, one pixel), the cavity of the accretion radius, with no
+  offset. A7 at t = 148: A1/S0 0.345, |r_c| 0.013 = (0.06/0.1) x 0.022: the paper's
+  self-similar scaling holds from below, while A11 breaks it from above.
