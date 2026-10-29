@@ -232,3 +232,12 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   radius ~0.1 arcsec with a moment-0 peak 0.23 Jy/beam km/s (observed scale 0.05-0.25),
   but its PV diagram lacks the +-250 km/s near the centre: the paper's torus has an
   empty middle, NGC 613 has gas down to ~1 pc.
+- **B9, synthetic NGC 613 maps of the paper's torus** (A3 at t = 100, `compare_obs.py`,
+  `results/m1torus/B/compare_A3/`, against Combes et al. 2025 Figs. 6, 12, 13 cropped by
+  `ref_figures.py`). The ring of radius ~0.1 arcsec and its moment-0 level match; the
+  rest does not: the observed PV keeps emission within 0.05 arcsec of the AGN and rises
+  towards +-250 km/s there, the paper's torus puts it at +-0.1 arcsec on the Keplerian
+  curve with nothing inside; moment 2 of the outer torus is 80-120 km/s against the
+  observed 40-80 (a hotter, thicker torus than NGC 613's, beam smearing alike); the
+  integrated line is 195 km/s wide against 144. The observed moment 1 recedes to the
+  north (PA -20 deg), which the mock now follows.

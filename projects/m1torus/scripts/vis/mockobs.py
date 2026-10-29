@@ -53,10 +53,11 @@ class Target:
     pv_halfwidth_arcsec: float
 
 
-# NGC 613: Combes et al. (2025): D 17.2 Mpc, i 50, kinematic PA -20 (receding at 160),
+# NGC 613: Combes et al. (2025): D 17.2 Mpc, i 50, kinematic PA -20 (their moment 1
+# recedes to the north),
 # beam 0.015", 5.9 km/s channels, rms 0.4 mJy/beam, moments clipped at 0.6 mJy/beam,
 # 15.4 Jy km/s for 9.7e6 Msun (Table 2), M_BH 3.4e7, torus radius 8 pc.
-NGC613 = Target("NGC 613", 8.0, 3.4e7, 17.2, 50.0, 160.0, 0.015, 0.0029, 5.9, 300.0,
+NGC613 = Target("NGC 613", 8.0, 3.4e7, 17.2, 50.0, 340.0, 0.015, 0.0029, 5.9, 300.0,
                 0.4, 0.6, 0.3, 15.4 / 9.7e6, 1.0e7, 0.0075)
 # Circinus: Izumi et al. (2023), Tristram et al. (2022), Lopez-Rodriguez et al. (2026):
 # D 4.2 Mpc, edge-on maser disc, PA ~ 50, M_BH 1.7e6, dust disc 5 x 3 pc; beam ~0.1".
