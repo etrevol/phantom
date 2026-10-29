@@ -200,19 +200,25 @@ def pv(cb, t: Target, pa=None, halfwidth=None):
 
 
 def hole(m0, xs, t: Target, rmax_pc=None):
-    """Deepest minimum of the smoothed moment 0 inside the torus: offset [pc] and PA."""
+    """Deepest depression of the smoothed moment 0 that emission surrounds: offset [pc], PA.
+
+    depth = map / its local maximum over 4 beams; a hole is the lowest depth inside the
+    footprint where that local maximum exceeds 30% of the peak, within rmax of the AGN.
+    """
+    from scipy.ndimage import maximum_filter
     pcas = pc_per_arcsec(t)
     rmax = (rmax_pc or 0.6 * t.R_pc) / pcas
-    sm = gaussian_filter(m0, 0.5 * t.beam_arcsec / FWHM / (xs[1] - xs[0]))
+    pix = xs[1] - xs[0]
+    sm = gaussian_filter(np.nan_to_num(m0), 0.5 * t.beam_arcsec / FWHM / pix)
+    loc = maximum_filter(sm, size=int(4 * t.beam_arcsec / pix) | 1)
     X, Y = np.meshgrid(xs, xs)
-    r = np.hypot(X, Y)
-    inside = (r < rmax) & (sm > 0)
-    # a hole is a minimum surrounded by emission: compare to the median of its ring
-    k = np.argmin(np.where(inside, sm, np.inf))
+    inside = (np.hypot(X, Y) < rmax) & (loc > 0.3 * sm.max())
+    depth = np.where(inside, sm / np.maximum(loc, 1e-30), np.inf)
+    k = np.argmin(depth)
     jy, jx = np.unravel_index(k, sm.shape)
     off = np.hypot(X[jy, jx], Y[jy, jx]) * pcas
     pa = np.degrees(np.arctan2(X[jy, jx], Y[jy, jx])) % 360
-    return dict(offset_pc=float(off), pa=float(pa), depth=float(sm[jy, jx] / np.nanmax(sm)))
+    return dict(offset_pc=float(off), pa=float(pa), depth=float(depth[jy, jx]))
 
 
 def deproject_a1(m0, xs, t: Target, nr=8):
