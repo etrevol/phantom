@@ -537,3 +537,25 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   cube is the better reference because we process both identically; it is not the
   "truer" data. Their hotter central moment 2 stays unexplained in detail; the broad
   nuclear wing included by a looser selection would raise it (not tested).
+- **B17, literature, first pass** (downloaded to `materials/papers/`: Krolik & Begelman
+  1988, Elitzur & Shlosman 2006, Nenkova et al. 2008 I, Audibert et al. 2019; read with
+  Vollmer et al. 2008, 2022 already here). (1) Known: clouds with covering factor ~1
+  collide about once per orbit, the orbital energy lost drives the inflow, stellar
+  stirring falls short by orders of magnitude (KB88 Sects. III, IVa); our B6b, B12, B15
+  reproduce this, it is not new. (2) Proposed heating: viscous heating by partially
+  elastic (magnetised, beta <~ 0.1) collisions in the shear near the black hole (KB88
+  Sect. IVb, eq. 24: c1 (1 - eps) (dlnOmega/dlnr)^2 = eps [1 + (alpha/gamma)^2]; for
+  constant eps the balance is unstable, the torus collapses to a thin disc or swells
+  to dv ~ v_orb; Goldreich & Tremaine 1978 for eps rising with dv); worked out
+  analytically by Vollmer et al. 2004 and Beckert & Duschl 2004 (not read yet); with
+  eps = 1 - e^2, c1 ~ 1, alpha/gamma ~ 1-3, heating wins for e >~ 0.7-0.9 (our
+  estimate; we ran e = 0.5). Turbulence fed by the potential energy of the inflow and
+  infalling clouds (Vollmer et al. 2008, 2022, sticky particles with fragmentation).
+  The torus as the clumpy part of a disc wind (Elitzur & Shlosman 2006). (3) NGC 613:
+  broad wings to +-300 km/s in CO, HCN, HCO+, CS at the nucleus from a molecular
+  outflow (r ~ 25 pc, 2e6 Msun, 27 Msun/yr, jet-driven or fossil), and gravity torques
+  that drain 25-100 pc in one rotation (Audibert et al. 2019): part of moment 2 at
+  the nucleus is non-circular, and the torus is fed. Our red nuclear wing to +500 km/s
+  (B18) fits the outflow. Candidate next steps: a test of the KB88 heating with e_rest
+  0.9 and no thermostat (cheap, stop criterion at 3 orbits), the outflow added to the
+  synthetic cube (cheap), a torus fed from outside (more work).
