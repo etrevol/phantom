@@ -6,7 +6,7 @@
 program test_cloudcollisions
  use part,            only:istar,isetphase,maxtypes,ediss_coll,eheat_coll,esf_coll,nptmass,&
                             xyzmh_ptmass,vxyz_ptmass,ispinx,ispinz,nsinkproperties
- use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_clouds,&
+ use cloudcollisions, only:r_cloud,e_rest,C_coll,ncoll,collide_clouds,heat_s,heat_tau,heat_phi,heat_clouds,&
                             sf_n,form_clump_sinks
  implicit none
  real, parameter :: pi = 4.*atan(1.)
@@ -14,7 +14,8 @@ program test_cloudcollisions
  nfail = 0
  call test_pairs(nfail)
  call test_box(nfail)
- call test_heat(nfail)
+ call test_heat(nfail,.false.)
+ call test_heat(nfail,.true.)
  call test_sinks(nfail)
  if (nfail == 0) then
     print "(a)",'ALL PASSED'
@@ -183,10 +184,12 @@ subroutine test_box(nfail)
 end subroutine test_box
 
 ! thermostat: a cold Keplerian ring about a unit mass; one call with a vanishing
-! relaxation time must give sigma_R, sigma_phi, sigma_z = heat_s v_K in each annulus,
-! keep momentum and L_z, and book the kinetic energy it adds
-subroutine test_heat(nfail)
+! relaxation time must give sigma_R = sigma_z = heat_s v_K in each annulus and leave
+! sigma_phi cold (or heat it too with heat_phi), keep momentum and L_z, and book the
+! kinetic energy it adds
+subroutine test_heat(nfail,phi)
  integer, intent(inout) :: nfail
+ logical, intent(in)    :: phi
  integer, parameter :: n = 40000
  real, allocatable :: xyzh(:,:),vxyzu(:,:)
  integer(kind=1), allocatable :: iphase(:)
@@ -209,6 +212,7 @@ subroutine test_heat(nfail)
  vbh = 0.
  heat_s = 0.1
  heat_tau = 1.e-8
+ heat_phi = phi
  eheat_coll = 0.
  p0 = sum(vxyzu(1:3,:),dim=2)
  lz0 = sum(xyzh(1,:)*vxyzu(2,:) - xyzh(2,:)*vxyzu(1,:))
@@ -234,15 +238,20 @@ subroutine test_heat(nfail)
     cnt = cnt + 1.
  enddo
  sel_r = sqrt(s2/cnt - (m1/cnt)**2)
- print "(a,i6,a,3f8.4)",'thermostat: ',int(cnt),' clouds near R = 1, sigma/v_K (R, phi, z) =',sel_r
+ print "(a,l2,i7,a,3f8.4)",'thermostat heat_phi',phi,int(cnt),' clouds near R = 1, sigma/v_K (R, phi, z) =',sel_r
  call check('sigma_R / v_K (5%)',sel_r(1),0.1,0.05,nfail)
- call check('sigma_phi / v_K (5%)',sel_r(2),0.1,0.05,nfail)
+ if (phi) then
+    call check('sigma_phi / v_K (5%)',sel_r(2),0.1,0.05,nfail)
+ else
+    call check('sigma_phi / v_K stays cold',sel_r(2),0.,0.01,nfail)
+ endif
  call check('sigma_z / v_K (5%)',sel_r(3),0.1,0.05,nfail)
  call check('momentum x',p1(1),p0(1),1.e-10,nfail)
  call check('momentum y',p1(2),p0(2),1.e-10,nfail)
  call check('L_z',lz1,lz0,1.e-10,nfail)
  call check('E added = eheat',e1 - e0,eheat_coll,1.e-10,nfail)
  heat_s = 0.
+ heat_phi = .false.
 
 end subroutine test_heat
 

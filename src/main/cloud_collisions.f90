@@ -12,13 +12,17 @@ module cloudcollisions
 ! with restitution e_rest, so momentum and angular momentum are exact and
 ! the kinetic energy lost is added to ediss_coll (radiated).
 !
-! Optional heating (heat_s > 0): a thermostat that keeps the cloud velocity dispersion
-! in each radial annulus at heat_s times the local Keplerian speed, standing for the
-! turbulence that feedback and inflow drive in real tori; it relaxes the dispersion
-! towards the target over heat_tau local orbits with zero-mean random kicks, and books
-! the energy it adds in eheat_coll.
+! Optional heating (heat_s > 0): a thermostat that keeps the radial and vertical cloud
+! velocity dispersions in each annulus at heat_s times the local Keplerian speed,
+! standing for the turbulence that feedback and inflow drive in real tori; sigma_phi
+! follows from the epicycles (sigma_phi/sigma_R = kappa/2 Omega = 0.5 for Keplerian), so
+! it is not forced: holding it at heat_s too drives sigma_R to ~2 heat_s and unbinds
+! the torus at heat_s = 0.3. heat_phi = .true. restores the old thermostat that also
+! held sigma_phi (runs of 2026-10-29 before 21:00). It relaxes towards the target over
+! heat_tau local orbits with zero-mean random kicks and books the energy in eheat_coll.
 !
-! :References: Vollmer et al. (2022), A&A 665, A102; Ostriker & Shetty (2011), ApJ 731, 41
+! :References: Vollmer et al. (2022), A&A 665, A102; Ostriker & Shetty (2011), ApJ 731, 41;
+!              Binney & Tremaine (2008), Galactic Dynamics, Sect. 4.4.3
 !
 ! :Owner: etrevol
 !
@@ -34,6 +38,7 @@ module cloudcollisions
  integer(kind=8), public :: ncoll   = 0     ! collisions since the start of this run
  real,            public :: heat_s  = 0.    ! target sigma / v_K of the thermostat, 0 = off
  real,            public :: heat_tau = 1.   ! relaxation time of the thermostat [local orbits]
+ logical,         public :: heat_phi = .false. ! also hold sigma_phi (old thermostat)
  integer,         public :: sf_n    = 0     ! clouds overlapping one cloud to form a sink, 0 = off
  integer, allocatable    :: nover(:)        ! clouds overlapping each particle, last step
 
@@ -208,8 +213,8 @@ end subroutine key_range
 
 !-----------------------------------------------------------------------
 !+
-!  thermostat: in each annulus about the black hole, raise each velocity dispersion
-!  (R, phi, z) that lies below heat_s v_K towards it over heat_tau local orbits, with
+!  thermostat: in each annulus about the black hole, raise sigma_R and sigma_z (and
+!  sigma_phi if heat_phi) that lie below heat_s v_K towards it over heat_tau local orbits, with
 !  random kicks that change neither the momentum nor L_z of the annulus; the kinetic
 !  energy added goes to eheat_coll
 !+
@@ -267,6 +272,7 @@ subroutine heat_clouds(npart,xyzh,vxyzu,iphase,massoftype,xyzmh_bh,vxyz_bh,dt)
     vk2 = xyzmh_bh(4)/rb
     frac = min(1., dt/(heat_tau*twopi*sqrt(rb**3/xyzmh_bh(4))))
     do c=1,3
+       if (c == 2 .and. .not.heat_phi) cycle      ! sigma_phi is left to the epicycles
        add(b,c) = max(0., heat_s**2*vk2 - (sum2(b,c)/cnt(b) - (sum1(b,c)/cnt(b))**2))*frac
     enddo
  enddo

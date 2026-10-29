@@ -67,7 +67,10 @@ def model_parts(run):
         pars["e"] = _math("e = " + _fmt(_num(inp.get("e_rest", 0.5))))
         pars["r_cl"] = _math(r"r_{\rm cl} = " + _fmt(r_cloud))
         if heat > 0:
-            pars["s"] = _math(r"\sigma/v_{\rm K} = " + _fmt(heat))
+            # a floor: R and z held (heat_phi absent before 2026-10-29 21:00 = all three)
+            old = str(inp.get("heat_phi", "T")).strip().upper().startswith("T")
+            comp = r"R,\phi,z" if old else "R,z"
+            pars["s"] = _math(rf"\sigma_{{{comp}}} \geq " + _fmt(heat) + r"\,v_{\rm K}")
             tau = _num(inp.get("heat_tau", 1) or 1)
             if abs(tau - 1.) > 1e-9:
                 pars["tau"] = _math(r"\tau_{\rm heat} = " + _fmt(tau) + r"\,P_{\rm loc}")
