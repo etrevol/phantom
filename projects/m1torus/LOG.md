@@ -250,3 +250,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   0.15 runs 2 orbits in 106 s on 2 threads; 12% of the gas falls into the sink in that
   time, the shocked torus settles. Queue from here: one A slot (A7, then A6 to 400) and
   one B slot (B6 clouds, then B8 fluid runs), two runs at a time.
+- **B7, gas disc** (`setup_m1torus` geometry = 1, `set_disc`). At M_gas 0.1 and H/R 0.15
+  set_disc reports Q_min = 2.13 (the uniform-disc estimate gave 1.5); Q_min 1.5 needs
+  H/R ~ 0.105 at M 0.1 and ~0.32 at M 0.3. Test, 4k, r 0.1-1.2, Sigma ~ 1/R, 3 orbits:
+  axisymmetric (A1, A2 <= 0.03), |z|/R 0.10, but 19% of the gas reaches the sink at
+  r_acc 0.05: inflow from the inner edge at low resolution; the 16k gas-only control
+  (B7 acceptance) will measure it before the B8 disc runs.
