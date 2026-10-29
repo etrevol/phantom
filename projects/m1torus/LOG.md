@@ -256,3 +256,10 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   axisymmetric (A1, A2 <= 0.03), |z|/R 0.10, but 19% of the gas reaches the sink at
   r_acc 0.05: inflow from the inner edge at low resolution; the 16k gas-only control
   (B7 acceptance) will measure it before the B8 disc runs.
+- **B6 after one orbit**: the cloud torus has collapsed to a thin disc, median |z|/R
+  0.27 -> 0.056, sigma_z 0.44 -> 0.15, median R 0.84 -> 0.60, E_diss 0.075 (1.3 |E0|),
+  4% of the clouds in the sink. Its synthetic PV on NGC 613 now follows the Keplerian
+  curve of 3.4e7 Msun from 0.03 to 0.08 arcsec at 100-200 km/s, brighter and faster
+  than the observed PV, whose emission at +-0.05 arcsec stays within ~100 km/s (lower
+  than Kepler for 3.4e7 at i = 50; with the 2.5e7 that Combes' own numbers give, or a
+  smaller inclination, the gap shrinks).
