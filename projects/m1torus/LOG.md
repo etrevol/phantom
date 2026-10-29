@@ -371,3 +371,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **B12 start** (`20261029-181639-heated-s01-from-a3t100`): heated clouds, s 0.1, tau 0.1,
   sf_n 16, from A3 at t = 100 with the mode in place, 20 orbits. s 0.3 follows when A6
   ends.
+- **How far the models are from NGC 613, in numbers.** Combes et al. (2025) Fig. 6
+  digitised with the palettes of their colour bars: in the annulus 0.02-0.05 arcsec
+  (1.7-4 pc) |moment 1| (90th percentile) 86 km/s and moment 2 (median) 83 km/s, at
+  0.05-0.1 arcsec 55 and 51 km/s: moment 2 / |moment 1| ~ 0.95. The synthetic maps:
+  collisionless torus (A3, t 100) 107/43 and 96/34 (ratio 0.35-0.40); clouds (B6b)
+  144/24 and 117/11 (0.10-0.16); gas H/R 0.15 (B8a) 127/23 and 106/13 (0.12-0.18);
+  heated clouds s 0.1 (B12, t 110) 143/31 and 109/17 (0.15-0.21). Two mismatches: all
+  models rotate 1.5-2 times faster in projection (M_BH sin^2 i too large for the
+  assumed 3.4e7 and i = 50, both uncertain: Combes' own numbers give 2.5e7, and i comes
+  from an oval assumed circular), and all are 2.5-9 times too cold relative to their
+  rotation; the ratio rises as 1/sin i, so a lower inclination closes part of the gap.
+  NGC 613's torus is dynamically hot (sigma/v ~ 0.5-1 for i = 25-50 deg) or its moment 2
+  carries non-circular motions. A fit over i and M_BH plus heated runs at s 0.3 (and
+  higher if needed) will separate the two.
