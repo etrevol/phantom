@@ -587,3 +587,11 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   sigma ~0.25-0.4 v_K. Stop criterion at t = 103: sigma_z/v_K < 0.15 (collapse) or
   > 5% unbound or R90 > 4 (runaway): stop; sigma_z/v_K >= 0.2, < 2% unbound, R90 < 3:
   on to 110 and check that sigma levels off (< 10% change 106 -> 110); else one orbit more.
+- **B23, v_A 0.2 (stopped at t = 103: sigma_z/v_K 0.113 < 0.15).** sigma_z/v_K 0.227,
+  0.153, 0.122, 0.113 at t 100.5-103, sigma_R 0.17-0.18, |z|/R 0.067; 0.4% unbound,
+  R90 2.0, 15% into the black hole. Unlike B6b (e 0.5: 0.077 at 103 and still falling
+  12% per orbit) the cooling slows (7% per orbit) and nothing runs away: a balance
+  forms, as Goldreich & Tremaine (1978) and KB88 predict, but ~2.5 times below the
+  estimate: the balance sets M_A ~1.2 for the normal relative speed, not for sigma per
+  component. If sigma scales with v_A, sigma_z ~0.3 v_K needs v_A ~0.55-0.6. Next,
+  same criterion: v_A 0.6, prediction sigma_z/v_K ~0.3 at t = 103 and levelling.
