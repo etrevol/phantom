@@ -220,3 +220,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   without accretion a plunging cloud forced 1e-9 substeps (now sinks swallow clouds), and
   a central clump deepens phantom's tree beyond 2 maxp nodes at small N: build with
   NCELLSMAX=1048576.
+- **B4 merged, B5 first numbers.** Branch merged into master after a second regression
+  (2 orbits at 2k: `.ev`, `m1.ev` and every physical array of the last dump identical;
+  only the unused `alpha` of star particles differs, by 5e-44). Covering number of the
+  paper's torus at 16k: r_cloud 0.01 gives N0 = 2.6 along an equatorial ray at t = 0
+  (range 0-7), 1.5 at t = 100; r_cloud 0.005 gives 0.6. Cost: 16k clouds, r_cloud 0.01,
+  r_acc 0.05, global steps, 9.2 orbits/h on 6 threads beside A7. First physics: the
+  paper's torus (M_tor 0.1, e = 0.5) radiates 0.044 = 78% of |E0| in half an orbit and
+  2% of the clouds fall into the black hole; a thick torus of colliding clouds collapses
+  within about one orbit. `mockobs.py` maps A3 at t = 100 onto NGC 613 as a ring of
+  radius ~0.1 arcsec with a moment-0 peak 0.23 Jy/beam km/s (observed scale 0.05-0.25),
+  but its PV diagram lacks the +-250 km/s near the centre: the paper's torus has an
+  empty middle, NGC 613 has gas down to ~1 pc.
