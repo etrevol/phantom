@@ -83,8 +83,11 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     stem = Path(a.dump).name
     model = L.wrapped(L.model_label(Path(a.dump).resolve().parent), 100)
-    tag = (model + "\n" + rf"$t = {p['time'] / (2 * np.pi):.0f}\,P_{{\rm orb}}$, "
+    tag = (model + "\n" + rf"$t = {p['time'] / (2 * np.pi):.1f}\,P_{{\rm orb}}$, "
            + rf"viewing azimuth ${phi:.0f}^\circ$ from the torus $x$ axis")
+    st = Path(a.dump).resolve().parent / "status"
+    if st.exists() and "FAILED" in st.read_text():
+        tag += "\n(the run stopped soon after this state; see the log)"
     c25 = L.REF["combes25"]
     ext = [xs[0], xs[-1], xs[0], xs[-1]]
 
@@ -100,6 +103,12 @@ def main():
         im = ax.imshow(img, origin="lower", extent=ext, cmap=cmap, vmin=lo, vmax=hi,
                        interpolation="nearest")
         ax.set_xlim(xs[-1], xs[0])
+        # above the published range the top colour is near white like "no data": outline it
+        over = np.nan_to_num(img, nan=-np.inf) > hi
+        if over.any():
+            ax.contour(xs, xs, over.astype(float), levels=[0.5], colors="k", linewidths=0.7)
+            ax.text(0.02, 0.97, f"above the scale inside the black line (max {np.nanmax(img):.3g})",
+                    transform=ax.transAxes, va="top", fontsize=7.5)
         ax.plot(0, 0, "w+", ms=8, mew=1.5)
         beam(ax, t, xs)
         ax.set_xlabel("RA offset [arcsec]")
