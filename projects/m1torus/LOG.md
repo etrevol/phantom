@@ -191,3 +191,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   HII feedback, but supernova injection only as a test problem. Estimate for the clouds:
   N0 ~ 4 with 16k clouds in a disc of H/R 0.2 gives r_cl ~ 0.01 R, below the tidal radius
   ~0.02 R; ~600 Msun in 0.08 pc is n(H2) ~ 5e6 cm^-3, as the HCO+(4-3) gas.
+- **A11, M_tor = 0.3** (`20261029-100846-mtor03-16k`, 16k, 120 orbits, 2 h 10 min). After
+  the m = 2 transient the torus relaxes to <a> 1.14, <e> 0.36; m = 1 rises from t ~ 40 to
+  A1/S0 0.11 by t = 60 and creeps to 0.12-0.14 by t = 120, not clearly saturated. Over
+  t = 80-120 against A3 (M_tor 0.1) in the same window: A1/S0 0.132 (0.340), k 0.15
+  (0.21), |r_c| 0.0210 (0.0213), |r_tb| 0.070 (0.216), M_tor r_tb = r_c as momentum
+  requires; pattern 0.050 Omega_0 (period 20 orbits, A3 0.019); Rayleigh sigma 0.33;
+  e >= 0.5 pericentres at Phi_1 - 176 deg as in A3. The black-hole offset stays at
+  ~0.021, the barycentre offset drops threefold: the paper's linear scaling r_tb ~ M_tor
+  (0.72 R at 0.3, Sect. 9.2) fails here, and (1 + M_tor) r_tb = 0.09 R = 0.7 pc at NGC 613
+  against the observed 3 pc. Caveats: one seed, the start is far from equilibrium at this
+  mass, the mode may still grow. dE/E 3.0e-3 and dL/L 6.1e-3 grow linearly, three and
+  fifteen times A3; cause not yet checked. `results/m1torus/A/runs/compare_mtor.png`.

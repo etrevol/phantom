@@ -24,7 +24,7 @@ Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits
 | A8 | [ ] | `0.2-60-0.3`, 16k (optional, no new test) | stronger mode, A1/S0 ~0.46 | 2 h |
 | A9 | [x] | pericentres of e >= 0.5 sit at Phi_1 + 180 deg here; the paper says "near the phase": settle the convention | explanation in LOG | - |
 | A10 | [ ] | short write-up of A: methods, differences from the paper, results | LaTeX, like `projects/ppi/formulary` | - |
-| A11 | [~] | M_tor = 0.3 (the NGC 613 mass ratio), 16k, 120 orbits | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2-2.5 h |
+| A11 | [x] | M_tor = 0.3 (the NGC 613 mass ratio), 16k, 120 orbits | does r_tb stay ~0.24 (Sect. 3.3) or grow (Sect. 9.2); cavity-AGN offset (1 + M_tor) r_tb against the observed 3/8 = 0.375 R_tor | 2-2.5 h |
 | A12 | [x] | digitise the paper's Fig. A.1: onset and growth rate of r_c for 64k, 128k, 256k | their growth rate and onset against ours (64k starts ~20-30 orbits later here) | 30 min |
 | A13 | [x] | can phantom soften star particles with a fixed length instead of the adaptive h | answer from the code | 30 min |
 | A14 | [x] | fixed softening at 16k (setup `eps_star`, merged 2026-10-28): A3 again with the same seed and eps = 0.01 as the paper, after 16k tests of cost and energy | A1/S0, r_c, onset and growth against A3 (adaptive h ~ 0.08) and the paper | tests 30 min, run 2-15 h |
