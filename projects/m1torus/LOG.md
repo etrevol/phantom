@@ -465,3 +465,21 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   So the collisionless torus is hot enough but too lopsided and has the wrong line
   profile; the dissipative models are too cold; B15 (hotter clouds) is the lever, not
   geometry.
+- **s 0.3 with the corrected thermostat** (`20261029-201331-heated-rz-s03-from-a3t100`,
+  sigma_R, sigma_z >= 0.3 v_K, t 100-120): the torus does not survive. 32.5% of the
+  clouds fall into the black hole within ~5 orbits, then the inflow stops because the
+  inner edge recedes (r10 0.39 -> 1.24); the thermostat puts 3.7 |E0| in during the
+  first 5 orbits and unbinds the outer part: r50 0.79 -> 6.7, r90 1.5 -> 70 R. A1/S0
+  0.33 -> 0.11, |r_c| 0.21; the synthetic NGC 613 maps are empty (the emission spreads
+  far beyond 0.3 arcsec). dL/L 9e-5.
+- **B12 re-read in the same terms**: no clump sinks formed in either run; B12 drains like
+  a viscous disc, 41% into the black hole in 20 orbits, r10 0.36 -> 0.61, r50 0.70 ->
+  1.54, r90 1.4 -> 3.4; it radiated 8.4 |E0| against 1.4 |E0| from the thermostat, so
+  most of its dissipation is paid by the inflow. Early inflow rates 4.3 (B12) and 7 %
+  per orbit (s 0.3): ratio 1.7, against ~3.8 from sigma_R^2 if collisional viscosity
+  alone set them; at s 0.3 evaporation, not viscosity, dominates. Conclusion
+  (plausible): a torus of colliding clouds with r_cl = 0.01 cannot be held at
+  sigma ~ 0.3 v_K by random kicks; it drains (sigma_R ~ 0.2) or evaporates (0.35).
+  NGC 613's sigma/|v| ~ 0.5 then needs rarer collisions (B15, r_cloud), resupply, or
+  non-circular motions (B16). Caveat: the kick thermostat also heats clouds already
+  leaving the torus (annuli out to 8 R), which may speed up the evaporation.
