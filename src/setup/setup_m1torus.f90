@@ -28,14 +28,19 @@ module setup
 !   - eps_star         : *fixed Plummer-equivalent softening of the torus (0 = adaptive)*
 !   - r_cloud          : *particles are clouds of this radius that collide (0 = collisionless)*
 !   - e_rest           : *normal restitution coefficient of cloud collisions*
+!   - geometry         : *0 = the paper's torus, 1 = isothermal gas disc (fluid limit, B)*
+!   - r_in             : *inner radius of the gas disc*
+!   - r_out            : *outer radius of the gas disc*
+!   - p_index          : *surface density index of the gas disc, Sigma ~ R^-p*
+!   - hor              : *H/R of the gas disc, c_s = hor v_K about the sink*
 !   - r_acc            : *accretion radius of the central mass*
 !   - iseed            : *random seed*
 !   - n_orbits         : *run length [orbits at R_tor]*
 !   - n_analysis_orbit : *analysis calls per orbit*
 !   - n_dumps_orbit    : *full dumps per orbit*
 !
-! :Dependencies: cloudcollisions, infile_utils, io, io_control, options,
-!   part, physcon, random, timestep, units
+! :Dependencies: cloudcollisions, eos, infile_utils, io, io_control,
+!   options, part, physcon, random, setdisc, timestep, units
 !
  implicit none
  public :: setpart
@@ -56,6 +61,10 @@ module setup
  ! eps_star > 0 fixes the torus softening (paper: Plummer eps = 0.01) instead of phantom's
  ! adaptive h; the cubic spline matches a Plummer potential at r = 0 for h = 1.4 eps
  real    :: eps_star = 0.
+ ! geometry = 1: an isothermal gas disc about the sink instead of the torus; c_s = hor v_K
+ ! (ieos = 6, q = 1/2), Sigma ~ R^-p_index between r_in and r_out (NGC 613: B, PLAN)
+ integer :: geometry = 0
+ real    :: r_in = 0.1, r_out = 1.2, p_index = 1., hor = 0.15
  real    :: n_orbits = 300.
  integer :: n_analysis_orbit = 4, n_dumps_orbit = 1
 
@@ -65,8 +74,10 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
                    gamma,hfact,time,fileprefix)
  use units,        only:set_units
  use physcon,      only:pc,solarm
- use part,         only:istar,set_particle_type,nptmass,xyzmh_ptmass,vxyz_ptmass, &
+ use part,         only:istar,igas,set_particle_type,nptmass,xyzmh_ptmass,vxyz_ptmass, &
                         ihacc,ihsoft,hsoft_nbody
+ use eos,          only:ieos,qfacdisc,isink
+ use setdisc,      only:set_disc
  use options,      only:iexternalforce
  use cloudcollisions, only:r_cloud
  use timestep,     only:tmax,dtmax
@@ -104,12 +115,27 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  npart = np
  pmass = M_tor/np
  npartoftype(:) = 0
- npartoftype(istar) = np
  massoftype(:) = 0.
- massoftype(istar) = pmass
+ if (geometry == 1) then
+    ! sink at the origin; set_disc adds the disc's own enclosed mass to the rotation
+    call set_disc(id,master,npart=np,rmin=r_in,rmax=r_out,rref=1.,p_index=p_index,q_index=0.5, &
+                  HoverR=hor,gamma=1.,hfact=hfact,disc_mass=M_tor,star_mass=1.,particle_type=igas, &
+                  particle_mass=pmass,xyzh=xyzh,vxyzu=vxyzu,polyk=polyk,ismooth=.true., &
+                  writefile=.false.)
+    npartoftype(igas) = np
+    massoftype(igas)  = pmass
+    ieos     = 6
+    isink    = 1
+    qfacdisc = 0.5
+    h0 = xyzh(4,1)
+ else
+    npartoftype(istar) = np
+    massoftype(istar) = pmass
+ endif
 
  ! initial guess of h from the mean density of a ring of radius 1, half-width R0
  ! and height sin(i_max); phantom iterates it to its own value
+ if (geometry /= 1) then
  vol = 2.*pi*(2.*R0)*(2.*max(sin(i_max*pi/180.),R0))
  h0  = hfact*(pmass*vol/M_tor)**(1./3.)
  ! a cloud is softened over its own radius unless eps_star says otherwise
@@ -153,6 +179,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
     vxyzu(3,i) = (so*si)*vxo + (co*si)*vyo
     call set_particle_type(i,istar)
  enddo
+ endif
 
  nptmass = 1
  xyzmh_ptmass(:,1) = 0.
@@ -211,6 +238,12 @@ subroutine write_setupfile(filename)
  call write_inopt(eps_star,'eps_star','fixed Plummer softening of the torus (0 = adaptive)',iunit)
  call write_inopt(r_cloud,'r_cloud','particles are clouds of this radius that collide (0 = collisionless)',iunit)
  call write_inopt(e_rest,'e_rest','normal restitution coefficient of cloud collisions',iunit)
+ write(iunit,"(/,a)") '# gas disc instead of the torus (geometry = 1)'
+ call write_inopt(geometry,'geometry','0 = the paper''s torus, 1 = isothermal gas disc',iunit)
+ call write_inopt(r_in,'r_in','inner radius of the gas disc',iunit)
+ call write_inopt(r_out,'r_out','outer radius of the gas disc',iunit)
+ call write_inopt(p_index,'p_index','surface density index of the gas disc, Sigma ~ R^-p',iunit)
+ call write_inopt(hor,'hor','H/R of the gas disc, c_s = hor v_K about the sink',iunit)
  write(iunit,"(/,a)") '# central mass'
  call write_inopt(eps_c,'eps_c','softening length of the central mass (0 = Kepler)',iunit)
  call write_inopt(r_acc,'r_acc','accretion radius of the central mass',iunit)
@@ -246,6 +279,11 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(eps_star,'eps_star',db,min=0.,default=0.)
  call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)
  call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
+ call read_inopt(geometry,'geometry',db,min=0,max=1,default=0)
+ call read_inopt(r_in,'r_in',db,min=0.,default=0.1)
+ call read_inopt(r_out,'r_out',db,min=0.,default=1.2)
+ call read_inopt(p_index,'p_index',db,default=1.)
+ call read_inopt(hor,'hor',db,min=0.,default=0.15)
  call read_inopt(r_acc,'r_acc',db,min=0.,errcount=nerr)
  call read_inopt(n_orbits,'n_orbits',db,min=0.,errcount=nerr)
  call read_inopt(n_analysis_orbit,'n_analysis_orbit',db,min=1,errcount=nerr)
