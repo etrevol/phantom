@@ -88,6 +88,11 @@ def chi2(mod, obs):
     return float(np.nansum(v ** 2) + q ** 2) if np.all(np.isfinite(mod)) else np.inf
 
 
+def _grid(inc, mbh):
+    global INC, MBH
+    INC, MBH = inc, mbh
+
+
 def work(job):
     name, az = job
     t0 = target()
@@ -108,12 +113,22 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--out", default=str(ROOT / "results" / "m1torus" / "B" / "fit_geometry"))
+    ap.add_argument("--inc", default="15,65,5", help="lo,hi,step [deg]")
+    ap.add_argument("--mbh", default="1.5,4.5,0.25", help="lo,hi,step [1e7 Msun]")
+    ap.add_argument("--models", default=",".join(SNAPS))
     a = ap.parse_args()
+    global INC, MBH
+    lo, hi, st = map(float, a.inc.split(","))
+    INC = np.arange(lo, hi + 1e-6, st).astype(int)
+    lo, hi, st = map(float, a.mbh.split(","))
+    MBH = np.arange(lo, hi + 1e-6, st) * 1e7
+    for n in set(SNAPS) - set(a.models.split(",")):
+        del SNAPS[n]
     out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     obs = observed()
     jobs = [(n, az) for n in SNAPS for az in AZ]
-    with Pool(a.workers) as pool:
+    with Pool(a.workers, initializer=_grid, initargs=(INC, MBH)) as pool:
         got = pool.map(work, jobs)
     grid = {n: np.full((len(AZ), len(INC), len(MBH), 5), np.nan) for n in SNAPS}
     for n, az, res in got:
@@ -123,8 +138,10 @@ def main():
 
     summary = dict(observed=dict(zip(["m1_p90_in", "m2_med_in", "m1_p90_out", "m2_med_out", "b_a"],
                                      map(float, obs))))
-    fig, axs = plt.subplots(1, len(SNAPS), figsize=(4.2 * len(SNAPS), 4.4), layout="constrained",
-                            sharey=True)
+    axs_n = len(SNAPS)
+    fig, axs = plt.subplots(1, axs_n, figsize=(4.2 * axs_n + 1, 4.4), layout="constrained",
+                            sharey=True, squeeze=False)
+    axs = axs[0]
     for ax, (n, g) in zip(axs, grid.items()):
         c2 = np.array([[[chi2(g[k, i, j], obs) for j in range(len(MBH))] for i in range(len(INC))]
                        for k in range(len(AZ))])
@@ -132,7 +149,7 @@ def main():
         cmin = c2.min(axis=0)
         i, j = np.unravel_index(np.argmin(cmin), cmin.shape)
         k = best_az[i, j]
-        i50, j34 = list(INC).index(50), int(np.argmin(np.abs(MBH - 3.4e7)))
+        i50, j34 = int(np.argmin(np.abs(INC - 50))), int(np.argmin(np.abs(MBH - 3.4e7)))
         summary[n] = dict(best_inc=int(INC[i]), best_mbh=float(MBH[j]), best_az=AZ[k],
                           chi2_best=float(cmin[i, j]), chi2_default=float(cmin[i50, j34]),
                           metrics_best=list(map(float, g[k, i, j])),

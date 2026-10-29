@@ -448,3 +448,20 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   now as the floor sigma_{R,phi,z} >= 0.1 v_K. With the user: the thermostat holds
   sigma_R and sigma_z only (`heat_phi = F`, default; T keeps the old mode); unit test
   covers both modes. Restarted s 0.3 as `20261029-201331-heated-rz-s03-from-a3t100`.
+- **B14, viewing geometry against the archive cube** (`scripts/obs/fit_geometry.py`,
+  `results/m1torus/B/fit_geometry*/`). i 15-65 deg, M_BH 1.5-4.5e7 (A3 and B12 also
+  i 15-45, M_BH 3-8e7), four azimuths about the m = 1 phase, beam, channels and noise
+  of the archive cube, moments by the same function. Metrics: |m1| p90 and m2 median in
+  0.02-0.05 and 0.05-0.1 arcsec, moment-0 b/a within 0.15 arcsec; observed 73/56, 39/25,
+  b/a 0.90 (0.82-0.90 for any aperture and threshold). No geometry fits any model: best
+  chi2 (5 metrics) 26 for the collisionless torus (i 55, M_BH 2.0e7; i = 50, 3.4e7: 37),
+  104 clouds (B6b), 91 gas (B8a), 84 heated clouds (B12, at the grid edge i 65,
+  M_BH 1.5e7; default 194). Geometry is not the main cause of the gap. What stays at
+  every geometry: masked m2 of the inner annulus too low (A3 24, clouds and gas <= 19
+  against 39), moment 0 lopsided (b/a 0.46-0.83, the m = 1 clump) against a round
+  observed core. Caveat: the mask cuts the broad, multi-peaked model lines harder than
+  the observed one at the same peak S/N (5.2): noise-free m2 of A3 at its best geometry
+  is 49/35, as hot as NGC 613's Gaussian sigma 41/37; the heated clouds stay cold (26/17).
+  So the collisionless torus is hot enough but too lopsided and has the wrong line
+  profile; the dissipative models are too cold; B15 (hotter clouds) is the lever, not
+  geometry.
