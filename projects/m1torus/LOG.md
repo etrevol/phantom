@@ -436,3 +436,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   archive cube's by any of our masks, and Fig. 12 has a vertical stripe at the AGN over
   +-300 km/s that the pipeline cube lacks; their own reduction (continuum, weighting,
   channels) differs from the pipeline, not tested.
+- **s 0.3 run invalid; thermostat corrected** (`20261029-194616-heated-s03-from-a3t100`,
+  status INVALID). The torus flew apart: median R of the live clouds 0.95 -> 11 in 6.5
+  orbits, 30% unbound by t = 102, 38% into the black hole, which took their momentum
+  and drifted (|r_c| 0.40; total momentum kept). Cause: the thermostat held each of
+  sigma_R, sigma_phi, sigma_z at s v_K, but Keplerian epicycles fix sigma_phi/sigma_R =
+  kappa/2 Omega = 0.5 (Binney & Tremaine 2008, Sect. 4.4.3); the start (A3, t 100)
+  already had sigma_R 0.30-0.35, sigma_phi 0.16-0.17 (ratio 0.48-0.53), and pumping
+  sigma_phi to 0.27 drove sigma_R past 0.5. B12 (s 0.1) is consistent (ratio 0.53-0.59)
+  but its effective state is sigma_R ~0.18, sigma_phi 0.10, sigma_z 0.10 v_K: labelled
+  now as the floor sigma_{R,phi,z} >= 0.1 v_K. With the user: the thermostat holds
+  sigma_R and sigma_z only (`heat_phi = F`, default; T keeps the old mode); unit test
+  covers both modes. Restarted s 0.3 as `20261029-201331-heated-rz-s03-from-a3t100`.
