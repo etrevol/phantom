@@ -178,3 +178,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   a thick torus at M_gas 0.3 (sigma ~ 60 km/s at 8 pc), which the oval of NGC 613 can
   test, and it disagrees with the thin Q < 1 dense gas of Circinus, which (2) covers. Its
   pressure also makes a fluid m = 1 mode precess, so the outcome is not given in advance.
+- **B3 revised: sticky clouds** (with the user, same day). Hopkins & Quataert (2010) already
+  ran GADGET with an effective sound speed of 20-100 km/s and star formation around a
+  3e7 Msun black hole and found lopsided eccentric gas+star discs whenever more than
+  ~0.1 M_BH of gas reaches 1-10 pc; the fluid model alone repeats their method. Vollmer et
+  al. (2022) ran partially inelastic cloud collisions for the Galactic Centre and NGC 1068,
+  but in a fixed potential, without self-gravity or a live black hole, so with no m = 1
+  mode and no black-hole offset. Chosen: self-gravitating sticky clouds (the paper's
+  particles plus the dissipation it invokes) as the main model, the SPH fluid limit as the
+  second; thin disc with sinks, beta cooling and ISM cooling with star formation are
+  recorded for later. phantom has ISM cooling (Koyama & Inutsuka), sink star formation and
+  HII feedback, but supernova injection only as a test problem. Estimate for the clouds:
+  N0 ~ 4 with 16k clouds in a disc of H/R 0.2 gives r_cl ~ 0.01 R, below the tidal radius
+  ~0.02 R; ~600 Msun in 0.08 pc is n(H2) ~ 5e6 cm^-3, as the HCO+(4-3) gas.

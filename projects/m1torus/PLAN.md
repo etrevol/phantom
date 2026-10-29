@@ -75,17 +75,33 @@ within 1%).
 - Gravity by tree, adaptive softening between torus particles (h ~ 0.08), leapfrog with
   individual steps; the paper: direct summation, eps = 0.01, Hermite.
 
-## B. Dissipation: the molecular torus as gas (after A)
+## B. Dissipation: the molecular torus as colliding clouds (after A)
 
 Question: the paper applies its collisionless torus to the molecular torus of NGC 613
 (Sect. 9.2) and blames its 5.8 pc against the observed 3 pc on dissipation between clouds,
-left for future work. Does a torus of colliding clouds, modelled as SPH gas, form and keep
-an m = 1 mode, and do its synthetic maps look like the ALMA maps? Targets and their
-numbers: LOG 2026-10-29. Main target NGC 613 (Combes et al. 2025), second Circinus
+left for future work. Does a torus of colliding clouds form and keep an m = 1 mode, does
+the black hole still move, and do synthetic maps look like the ALMA maps? Targets and
+their numbers: LOG 2026-10-29. Main target NGC 613 (Combes et al. 2025), second Circinus
 (Izumi et al. 2023; Lopez-Rodriguez et al. 2026; Tristram et al. 2022); M31 optional.
-Design kept from B1: no explicit viscosity, shock viscosity with its switch, gas
-self-gravity on, the sink accretes gas only, r_acc = 0.05. Changed: the torus is gas,
-not a small gas fraction of a stellar torus, and the sound speed follows from Q (B3).
+
+Models (decision 2026-10-29, LOG):
+- **Main: sticky clouds.** Each particle is one cloud: the paper's self-gravitating
+  collisionless particles, softened by the cloud radius r_cl (fixed `hsoft_nbody`), plus
+  partially inelastic collisions when two clouds overlap and approach. The impulse acts
+  along the line of centres with restitution e, so momentum and angular momentum are exact
+  and the lost energy is booked as radiated. Constant cloud masses (no coalescence or
+  fragmentation, unlike Vollmer et al. 2022). r_cl follows from the covering number N0 of
+  an equatorial ray, N0 = n pi r_cl^2 L: N0 ~ 4 (Circinus clumpy fit) with 16k clouds in a
+  disc of H/R 0.2 gives r_cl ~ 0.01 R (0.08 pc at NGC 613), under the tidal radius
+  R (m_cl / 3 M_BH)^(1/3) ~ 0.02 R; clouds of ~600 Msun and that size have n(H2) ~ 5e6
+  cm^-3, the density of the HCO+(4-3) gas. New code: phantom has no collisions.
+- **Second: fluid limit.** SPH gas, the limit of frequent collisions: effective turbulent
+  sound speed with Q_min ~ 1.5, locally isothermal about the sink (`ieos = 6`), as
+  Hopkins & Quataert (2010). No explicit viscosity, shock viscosity with its switch, gas
+  self-gravity on, the sink accretes gas only, r_acc = 0.05.
+- Recorded, later if the two disagree or call for it: thin isothermal disc with sink
+  creation (Q < 1), beta cooling, ISM cooling with star formation and HII feedback.
+  Agreement of the two limits makes a result robust; disagreement is itself the result.
 
 Units and observables (code: G = M_BH = R = 1):
 
@@ -103,17 +119,22 @@ Units and observables (code: G = M_BH = R = 1):
 
 | id | status | task | acceptance | cost |
 |---|---|---|---|---|
-| B1 | [x] | design with the user (2026-10-27) | decision in LOG | - |
+| B1 | [x] | first design with the user (2026-10-27) | LOG | - |
 | B2 | [x] | targets and their numbers (2026-10-29) | LOG; papers in `materials/papers/` | - |
-| B3 | [x] | gas thermodynamics (2026-10-29): (1) effective sound speed from Q_min ~ 1.5, sink-centred locally isothermal, the model; (2) thin H/R = 0.1 with sink creation, the check; (3) beta cooling, recorded only | LOG | - |
-| B4 | [ ] | code: gas option of `setup_m1torus` through `set_disc` (sink-centred locally isothermal `ieos = 6`, enclosed-mass rotation); moddump turning star particles into split gas particles; `mockobs.py` (units, projection at i and PA, cube with the beam, moments 0-2, PV, hole offset, A1 of moment 0); `ref_figures.py` (crops of the published figures with calibrated axes); digitised Combes Fig. 6 moment 0 | a disc at Q >= 2 stays axisymmetric 5 orbits; mock of an axisymmetric Keplerian disc gives the Keplerian PV curve and no hole offset | 1-2 days |
-| B5 | [ ] | tests: gas-only control (numerical inflow), cost per orbit, N_gas 32k against 64k | inflow far below the run values; cost known | 2-4 h |
-| B6 | [ ] | NGC 613 disc: equilibrium gas disc r 0.1-1.2, M_gas = 0.1 and 0.3 with model (1), one run with model (2), seeded by noise only, 50-100 orbits | does m = 1 grow, how fast against the torus life of ~10 orbits (Combes) | 2 x TBD |
-| B7 | [ ] | the paper's torus as gas: all particles to gas at t = 0 (M_tor 0.1 and 0.3, pairs of A3 and A11) and from A3 at t = 100 | does dissipation keep, weaken or kill the mode; how the thick torus settles | 3 x TBD |
-| B8 | [ ] | comparison figures, ours left and the published panel right, same field, beam, threshold and colour scale, with a profile strip below where the panel can be digitised; list below | figures, LOG, handbook | 1 day |
-| B9 | [ ] | optional, M31: f_gas = 0.01 from A3 at t = 100 (gas of stellar mass loss, Chang et al. 2007) | does the stellar mode notice the gas | 2-3 h |
+| B3 | [x] | models (2026-10-29): sticky clouds the main, SPH fluid limit the second, three more recorded | LOG | - |
+| B4 | [ ] | collision module: pairs from the tree within r_i + r_j, approaching only, normal restitution e, dissipated energy summed into the energy budget; hook after the step, global steps first with dt < C_coll r_cl / v_rel; `.in` keys for r_cl and e, off by default | two-cloud collision against the analytic result; p and L to round-off, E + E_diss to the integrator error; collision rate in a uniform cloud box against n sigma v_rel; e = 1 conserves E; r_cl = 0 reproduces A3 bit for bit | 2-4 days |
+| B5 | [ ] | sticky tests: cost per orbit at 16k with global steps; dt convergence; N0 = 4 and 10 | cost known; result unchanged when C_coll halves | 2-4 h |
+| B6 | [ ] | sticky runs from the paper's torus: M_tor 0.1 (pair of A3) and 0.3 (pair of A11) at e = 0.5; one at e = 0; one from A3 at t = 100 (collisions switched on with the mode in place) | mode growth and saturation, r_c, thickness and dispersion against A; dissipated power | 4-5 x TBD |
+| B7 | [ ] | fluid limit, code: gas option of `setup_m1torus` through `set_disc` (enclosed-mass rotation, `ieos = 6`, c_s from Q_min); moddump turning cloud particles into split gas particles for the same initial torus | a disc at Q >= 2 stays axisymmetric 5 orbits; gas-only control gives the numerical inflow | 1 day + 2 h tests |
+| B8 | [ ] | fluid runs: the paper's torus as gas (M_tor 0.1, 0.3) and the NGC 613 disc (r 0.1-1.2, M_gas 0.1, 0.3) | same diagnostics as B6 | 4 x TBD |
+| B9 | [ ] | synthetic observations: `mockobs.py` (units, projection at i and PA, cube with the beam, moments 0-2, PV, integrated spectrum, hole offset, A1 of moment 0; clouds emit with their mass spread over r_cl); `ref_figures.py` (crops of the published panels with calibrated axes, kept local); digitised Combes Fig. 6 moment 0 | a mock of an axisymmetric Keplerian disc gives the Keplerian PV and no hole offset | 1-2 days |
+| B10 | [ ] | comparison figures, ours left and the published panel right, same field, beam, threshold and colour scale, profile strip below where digitised; list below | figures, LOG, handbook | 1 day |
+| B11 | [ ] | optional, M31: a few per cent of clouds in the A3 torus at t = 100 (gas of stellar mass loss, Chang et al. 2007) | does the stellar mode notice them | 2-3 h |
 
-B8 comparisons. Viewing angles are the observed ones; the observer azimuth relative to
+Order: B4 and B9 code by day while A runs; B5 tests when cores are free; B6 before B8.
+Runs over 30 min are asked for first.
+
+B10 comparisons, for both models. Viewing angles are the observed ones; the observer azimuth relative to
 the mode phase is the one free parameter, fitted to the hole position and stated. Each
 quantity is shown over time, not only at the best-matching snapshot.
 
@@ -132,15 +153,15 @@ quantity is shown over time, not only at the best-matching snapshot.
 Not in B: the AMI images at 3.8-4.8 um (Lopez-Rodriguez Fig. 1) trace AGN-heated dust and
 need radiative transfer (RADMC-3D or HyperCAT); AGN feedback, which may make the hole
 itself (Garcia-Burillo et al. 2024); feeding from the nuclear spiral. Synthetic maps take
-line emission proportional to gas column (optically thin, uniform excitation); CO(3-2) is
+line emission proportional to column (optically thin, uniform excitation); CO(3-2) is
 partly thick, so moment 0 is compared in shape, not in peak value.
 
-Viscosity and dissipation options in phantom: local note `projects/m1torus/CLAUDE.md`.
 Literature (in `materials/papers/`): Combes et al. 2019, 2025; Izumi et al. 2023;
 Tristram et al. 2022; Lopez-Rodriguez et al. 2026; Gamez Rosas et al. 2025;
-Garcia-Burillo et al. 2024; Pereira-Santaella et al. 2026; Adams, Ruden & Shu 1989;
-Chang et al. 2007; Hopkins & Quataert 2010, 2011; Hopkins et al. 2012; Krolik & Begelman
-1988; Gammie 2001; Meru & Bate 2011; Lodato & Price 2010; Hönig 2019.
+Garcia-Burillo et al. 2024; Pereira-Santaella et al. 2026; Vollmer et al. 2008, 2022;
+Adams, Ruden & Shu 1989; Chang et al. 2007; Hopkins & Quataert 2010, 2011; Hopkins et
+al. 2012; Wada 2002, 2012; Krolik & Begelman 1988; Gammie 2001; Kratter & Lodato 2016;
+Lodato & Price 2010; Hönig 2019. Viscosity options in phantom: local note.
 
 ## C. Nested gas disc (after B)
 
