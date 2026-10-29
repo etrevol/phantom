@@ -166,3 +166,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   ~3e6 within 2 pc. phantom offers `set_disc` with the enclosed-mass correction of the
   rotation, `ieos = 6` (locally isothermal about the sink; `ieos = 3` is about the origin,
   wrong once the black hole moves) and sink creation.
+- **B3, decision** (with the user). Three ways to treat a massive gas torus whose thin
+  state has Q < 1: (1) an effective turbulent sound speed set so that Q_min ~ 1.5, locally
+  isothermal about the sink (Hopkins & Quataert 2010 carry unresolved support this way);
+  H/R comes out ~0.15 at M_gas 0.1 and ~0.45 at 0.3; (2) a thin disc, H/R = 0.1, with sink
+  creation where clumps collapse (closest to the clumpy Q < 1 disc of Circinus, but the
+  clumps then move as collisionless points); (3) beta cooling (Gammie 2001), the disc
+  regulates itself to Q ~ 1 and its thickness follows, at the price of a free beta,
+  while real molecular gas cools fast enough to fragment. Chosen: (1) as the model,
+  (2) as the check, (3) recorded only. Limits of (1): it cannot make clumps, it predicts
+  a thick torus at M_gas 0.3 (sigma ~ 60 km/s at 8 pc), which the oval of NGC 613 can
+  test, and it disagrees with the thin Q < 1 dense gas of Circinus, which (2) covers. Its
+  pressure also makes a fluid m = 1 mode precess, so the outcome is not given in advance.

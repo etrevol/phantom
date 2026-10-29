@@ -85,7 +85,7 @@ numbers: LOG 2026-10-29. Main target NGC 613 (Combes et al. 2025), second Circin
 (Izumi et al. 2023; Lopez-Rodriguez et al. 2026; Tristram et al. 2022); M31 optional.
 Design kept from B1: no explicit viscosity, shock viscosity with its switch, gas
 self-gravity on, the sink accretes gas only, r_acc = 0.05. Changed: the torus is gas,
-not a small gas fraction of a stellar torus, and the sound speed is an open decision (B3).
+not a small gas fraction of a stellar torus, and the sound speed follows from Q (B3).
 
 Units and observables (code: G = M_BH = R = 1):
 
@@ -105,13 +105,29 @@ Units and observables (code: G = M_BH = R = 1):
 |---|---|---|---|---|
 | B1 | [x] | design with the user (2026-10-27) | decision in LOG | - |
 | B2 | [x] | targets and their numbers (2026-10-29) | LOG; papers in `materials/papers/` | - |
-| B3 | [ ] | decide the gas thermodynamics with the user: a thin massive disc has Q < 1 and fragments, which isothermal SPH cannot follow without sinks | decision in LOG | - |
+| B3 | [x] | gas thermodynamics (2026-10-29): (1) effective sound speed from Q_min ~ 1.5, sink-centred locally isothermal, the model; (2) thin H/R = 0.1 with sink creation, the check; (3) beta cooling, recorded only | LOG | - |
 | B4 | [ ] | code: gas option of `setup_m1torus` through `set_disc` (sink-centred locally isothermal `ieos = 6`, enclosed-mass rotation); moddump turning star particles into split gas particles; `mockobs.py` (units, projection at i and PA, cube with the beam, moments 0-2, PV, hole offset, A1 of moment 0); `ref_figures.py` (crops of the published figures with calibrated axes); digitised Combes Fig. 6 moment 0 | a disc at Q >= 2 stays axisymmetric 5 orbits; mock of an axisymmetric Keplerian disc gives the Keplerian PV curve and no hole offset | 1-2 days |
 | B5 | [ ] | tests: gas-only control (numerical inflow), cost per orbit, N_gas 32k against 64k | inflow far below the run values; cost known | 2-4 h |
-| B6 | [ ] | NGC 613 disc: equilibrium gas disc r 0.1-1.2, M_gas = 0.1 and 0.3, model from B3, seeded by noise only, 50-100 orbits | does m = 1 grow, how fast against the torus life of ~10 orbits (Combes) | 2 x TBD |
+| B6 | [ ] | NGC 613 disc: equilibrium gas disc r 0.1-1.2, M_gas = 0.1 and 0.3 with model (1), one run with model (2), seeded by noise only, 50-100 orbits | does m = 1 grow, how fast against the torus life of ~10 orbits (Combes) | 2 x TBD |
 | B7 | [ ] | the paper's torus as gas: all particles to gas at t = 0 (M_tor 0.1 and 0.3, pairs of A3 and A11) and from A3 at t = 100 | does dissipation keep, weaken or kill the mode; how the thick torus settles | 3 x TBD |
-| B8 | [ ] | comparison figures, ours left and theirs right: NGC 613 moments 0, 1, 2 (Combes Fig. 6), PV (Fig. 12), hole offset over time against 0.375 R, A1(R) of moment 0 against the digitised map; Circinus column map edge-on at PA 50 deg against Lopez-Rodriguez Figs. 2 and 3e, PV against Izumi Fig. 2, inflow at 0.27 pc | figures, LOG, handbook | 1 day |
+| B8 | [ ] | comparison figures, ours left and the published panel right, same field, beam, threshold and colour scale, with a profile strip below where the panel can be digitised; list below | figures, LOG, handbook | 1 day |
 | B9 | [ ] | optional, M31: f_gas = 0.01 from A3 at t = 100 (gas of stellar mass loss, Chang et al. 2007) | does the stellar mode notice the gas | 2-3 h |
+
+B8 comparisons. Viewing angles are the observed ones; the observer azimuth relative to
+the mode phase is the one free parameter, fitted to the hole position and stated. Each
+quantity is shown over time, not only at the best-matching snapshot.
+
+| # | published panel | ours | measured |
+|---|---|---|---|
+| 1 | Combes 2025 Fig. 6 left: CO(3-2) moment 0, beam 0.015 arcsec, field +-0.3 arcsec | moment 0 at i = 50 deg, PA -20 deg | emission radius (8 pc), oval axis ratio (i against thickness), peak and hole positions from the AGN (hole 0.5 pc at 3 pc), A1(R) of the deprojected map against the digitised one |
+| 2 | Fig. 6 middle: moment 1, +-100 km/s | moment 1 | kinematic PA, amplitude, twist of the isovelocity lines (eccentric orbits) |
+| 3 | Fig. 6 right: moment 2, 50-300 km/s | moment 2 smeared by the same beam | dispersion in the outer disc, where smearing is small: tests H/R |
+| 4 | Fig. 12: PV along PA -20 deg with the Keplerian curve of 3.4e7 Msun | PV along the same slit | envelope, asymmetry between the two sides |
+| 5 | Fig. 13 / Table 2: integrated CO(3-2) spectrum, FWHM 144 km/s | integrated spectrum | FWHM, horn asymmetry (lopsidedness) |
+| 6 | Lopez-Rodriguez 2026 Fig. 2 (700 um dust, HCN disc) and Fig. 3e (dust of the clumpy-torus fit) | column map edge-on at PA 50 deg, their beam | extent and aspect ratio; coarse, 1-2 beams across |
+| 7 | Izumi 2023 Fig. 2C: HCN and [CI] PV along the major axis | PV | Keplerian envelope, blue/red asymmetry |
+| 8 | Izumi 2023 Fig. 2E (sigma/V_rot, a proxy of h/r) and Fig. 4 (Toomre Q) | the same profiles | h/r(r), Q(r) |
+| 9 | Izumi 2023: inflow 0.2-0.34 Msun/yr at 0.27 pc | sink accretion rate | in physical units |
 
 Not in B: the AMI images at 3.8-4.8 um (Lopez-Rodriguez Fig. 1) trace AGN-heated dust and
 need radiative transfer (RADMC-3D or HyperCAT); AGN feedback, which may make the hole
