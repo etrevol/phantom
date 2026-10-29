@@ -93,7 +93,9 @@ def check(run: Path):
     if n < 0.999 * n0:
         problems.append("ACCRETED")
     log = run / "run.log"
-    if log.exists() and re.search(r"\bNaN\b|ERROR|FATAL", log.read_text(errors="ignore")):
+    # builds before ebce1648e logged an ERROR for the absent optional key; harmless
+    text = log.read_text(errors="ignore").replace("ERROR: hsoft_nbody not found", "") if log.exists() else ""
+    if re.search(r"\bNaN\b|ERROR|FATAL", text):
         problems.append("LOG")
     free = shutil.disk_usage("/mnt/d" if Path("/mnt/d").exists() else "/").free / 1e9
     if free < 20:
