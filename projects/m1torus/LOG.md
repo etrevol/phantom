@@ -483,3 +483,10 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   NGC 613's sigma/|v| ~ 0.5 then needs rarer collisions (B15, r_cloud), resupply, or
   non-circular motions (B16). Caveat: the kick thermostat also heats clouds already
   leaving the torus (annuli out to 8 R), which may speed up the evaporation.
+- **B15 start: rarer collisions at s 0.3.** N0 (covering number of an equatorial ray)
+  scales as r_cl^2: 2.6 at 0.01, ~1 at 0.0062, ~0.5 at 0.0044. Only the extreme run
+  (`20261029-212729-heated-rz-s03-rcl0044-from-a3t100`) goes: if even N0 ~ 0.5 drains
+  or evaporates, the intermediate one is not needed (`...-rcl0062-...` stopped at its
+  start). Stop criterion fixed in advance, at t = 103 against r_cl 0.01 (in the black
+  hole 19.5%, R90 6.5): stop if R90 > 4 or > 15% accreted; on to 110 if R90 < 3 and
+  < 10%; between, one more orbit.
