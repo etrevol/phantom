@@ -288,3 +288,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   as the disc spreads. On NGC 613 it is a filled disc with a centred hole of the
   accretion radius; moment 2 (40-100 km/s, high at the centre) now resembles the
   observed map, moment 1 reaches +-100 km/s against the observed ~+-50.
+- **B6 ends at t = 28.3 by fragmentation** (tree overflow even at NCELLSMAX = 2^20). After
+  the collapse the cold disc of clouds (sigma_R ~ 0.04, Q_stellar 1.1-1.5 at R 0.5-1.2)
+  grows multi-armed spirals and from t ~ 24 fragments: at t = 28, 357 clouds within one
+  cloud radius, several clumps at R 1.3-1.7; equal-radius clouds that never merge pile
+  up without limit, which is the model failing, not the physics. The clumps raise
+  A1/S0 to 0.19 and |r_c| to 0.008 in three orbits: a lopsided state from fragments,
+  not the paper's mode, which never appeared (A1/S0 at the noise floor to t = 24).
+  Final: E_diss 5.3 |E0|, 31% of the clouds in the sink, L to 1.3e-4.
+  `figs/particles_t0028.0.png`, `figs/b_series.png`. The particle movie colours by
+  h, which is fixed here, so its colour scale carries no information for clouds.
+- **B6b start** (`20261029-152300-clouds-from-a3t100-e05`): collisions switched on in A3
+  at t = 100 with the mode in place, 15 orbits (fragmentation took ~24 in B6). A first
+  launch wrote dumps every 5 orbits (wrong dtmax) and was stopped after 7 s, kept in
+  `B/tests/`.
