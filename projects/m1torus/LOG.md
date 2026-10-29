@@ -358,3 +358,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   observed 40-80 km/s. The earlier statement that the cloud model's moment 2 "resembles
   the observed map" was the artefact: NGC 613's gas is hotter than the collapsed cloud
   disc, which argues for the heating of the next step.
+- **Heated colliding-cloud model** (B3 extension, with the user: (c) heating + (b) clump
+  sinks). Code: `heat_clouds` (thermostat to sigma = heat_s v_K per annulus, relaxed over
+  heat_tau local orbits, kicks keep momentum and L_z, energy in `eheat`) and
+  `form_clump_sinks` (a cloud overlapped by sf_n clouds in a bound group becomes a sink
+  at the centre of mass; mass, momentum, L with spin kept; internal energy in `esf`).
+  Unit tests pass. Phantom test (paper torus from t = 0, s 0.1, tau 1, 3 orbits): no
+  clump sinks yet (fragmentation took ~24 orbits in B6), but tau = 1 is too slow:
+  collisions radiated 2.7 |E0| against 0.22 added, sigma_z/v_phi 0.076 instead of 0.1,
+  |z|/R 0.04. The thermostat must act faster than collisions (~0.2 orbits): tau = 0.1
+  in the runs; s stays the calibrated parameter, tau a numerical one.
+- **B12 start** (`20261029-181639-heated-s01-from-a3t100`): heated clouds, s 0.1, tau 0.1,
+  sf_n 16, from A3 at t = 100 with the mode in place, 20 orbits. s 0.3 follows when A6
+  ends.

@@ -130,6 +130,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B9 | [x] | synthetic observations: `mockobs.py` (units, projection at i and PA, cube with the beam, moments 0-2, PV, integrated spectrum, hole offset, A1 of moment 0; clouds emit with their mass spread over r_cl); `ref_figures.py` (crops of the published panels with calibrated axes, kept local); digitised Combes Fig. 6 moment 0 | a mock of an axisymmetric Keplerian disc gives the Keplerian PV and no hole offset | 1-2 days |
 | B10 | [ ] | comparison figures, ours left and the published panel right, same field, beam, threshold and colour scale, profile strip below where digitised; list below | figures, LOG, handbook | 1 day |
 | B11 | [ ] | optional, M31: a few per cent of clouds in the A3 torus at t = 100 (gas of stellar mass loss, Chang et al. 2007) | does the stellar mode notice them | 2-3 h |
+| B12 | [~] | heated colliding-cloud model (thermostat s = sigma/v_K, clump sinks): s = 0.1 and 0.3, from A3 at t = 100, 20 orbits each; compare with B6b (no heating) and NGC 613 moment 2 | does the mode survive at the observed dispersion; moment 2 and thickness against Combes 2025 and Izumi 2023 | 2 x ~2.5 h |
 
 Order: B4 and B9 code by day while A runs; B5 tests when cores are free; B6 before B8.
 Runs over 30 min are asked for first.
