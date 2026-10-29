@@ -564,3 +564,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   advance against B6b at t = 103 (sigma_z/v_K ~0.07, |z|/R ~0.02; start 0.33, 0.23):
   stop if sigma_z/v_K < 0.15 at t = 103; on to 110 if >= 0.25 with < 2% unbound;
   between, one more orbit.
+- **B21 result (stopped at t = 103: 41% unbound > 2%).** e_rest 0.9, no thermostat: the
+  torus does not cool, sigma_z/v_K 0.36 and |z|/R 0.28 at t = 103 (B6b with e 0.5:
+  0.08 and 0.02), sigma_R/v_K 0.44-0.52; but it overheats: 13% unbound by t = 100.5,
+  41% by 103, 21% into the black hole, R50 5.5, R90 18.6. Collisional shear heating
+  works (KB88 Sect. IVb), and with a constant e it has no stable balance, as KB88
+  state after Cook & Franklin (1964): e 0.5 collapses to a thin disc, e 0.9 runs away.
+  A stable equilibrium needs dissipation that rises with the collision speed
+  (Goldreich & Tremaine 1978); KB88 eq. 25 gives that for magnetised clouds: kept
+  energy fraction 1 - eps = 1/(sqrt(2) M_A - 1/2), M_A the collision speed over the
+  Alfven speed v_A in the clouds. With eq. 24 (c1 ~ 1, alpha/gamma ~ 1-3) the balance
+  sits at M_A ~ 1.2-1.9, so the equilibrium dispersion would be ~1.2-1.9 v_A: a torus
+  at sigma ~ 0.3 v_K needs v_A ~ 0.2 v_K (tens of km/s, mG fields): a prediction that
+  ties the dispersion to the field (speculative until run).
