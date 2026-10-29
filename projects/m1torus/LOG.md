@@ -595,3 +595,19 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   estimate: the balance sets M_A ~1.2 for the normal relative speed, not for sigma per
   component. If sigma scales with v_A, sigma_z ~0.3 v_K needs v_A ~0.55-0.6. Next,
   same criterion: v_A 0.6, prediction sigma_z/v_K ~0.3 at t = 103 and levelling.
+
+## 2026-10-30
+
+- **B23, v_A 0.6 (stopped at t = 103: 15.7% unbound > 5%, R90 8.7 > 4).** sigma_z/v_K
+  0.283, 0.258, 0.267, 0.280 at t 100.5-103: it holds at the predicted ~0.28 (sigma
+  scales with v_A: 0.11 at v_A 0.2), sigma_R 0.35-0.41, |z|/R 0.20. But the torus
+  drains and evaporates as the s 0.3 thermostat run did: 31% into the black hole and
+  16% unbound in 3 orbits, R50 2.4. Three different heating laws (thermostat s 0.3,
+  constant e 0.9, magnetised e with v_A 0.6) give the same outcome once sigma ~0.3 v_K:
+  a collisional cloud torus that hot lives a few orbits; at v_A 0.2 (sigma_z 0.11) it
+  stays bound but drains 15% in 3 orbits. Plausible reading: viscous inflow ~ sigma^2
+  and a refilled high-speed tail, independent of the heating law. Drain rate at
+  sigma 0.3: ~30% of a 1e7 Msun torus in 3 orbits (~1 Myr) is ~3 Msun/yr into
+  r < 0.4 pc, to be set against the inflow rate that feeds NGC 613 and its weak AGN
+  (not yet checked, speculative). The intermediate v_A 0.3-0.4 would give the hottest
+  torus that stays bound (one 20-min test).
