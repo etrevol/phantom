@@ -241,3 +241,6 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   observed 40-80 (a hotter, thicker torus than NGC 613's, beam smearing alike); the
   integrated line is 195 km/s wide against 144. The observed moment 1 recedes to the
   north (PA -20 deg), which the mock now follows.
+- **B6 start** (`results/m1torus/B/runs/20261029-133711-clouds-m01-e05-16k`): the paper's
+  canonical torus as 16k colliding clouds, M_tor 0.1, r_cloud 0.01 (N0 ~ 2.6), e 0.5,
+  r_acc 0.05, global steps, 30 orbits on 6 threads beside A7.
