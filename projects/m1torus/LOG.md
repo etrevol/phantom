@@ -302,3 +302,8 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   at t = 100 with the mode in place, 15 orbits (fragmentation took ~24 in B6). A first
   launch wrote dumps every 5 orbits (wrong dtmax) and was stopped after 7 s, kept in
   `B/tests/`.
+- **B6b, first 3.5 orbits**: with collisions switched on in the saturated A3 torus, the
+  mode survives the collapse so far: A1/S0 0.33 -> 0.23 (half an orbit) -> 0.28-0.35,
+  |r_c| 0.021 -> 0.014 -> 0.021, while E_diss reaches 2.25 |E0| and 12% of the clouds
+  fall into the sink. B6 from t = 0 collapsed before any mode grew; with the mode in
+  place the dissipating torus keeps its lopsidedness (preliminary, 3.5 orbits).
