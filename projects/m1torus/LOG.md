@@ -263,3 +263,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   than the observed PV, whose emission at +-0.05 arcsec stays within ~100 km/s (lower
   than Kepler for 3.4e7 at i = 50; with the 2.5e7 that Combes' own numbers give, or a
   smaller inclination, the gap shrinks).
+- **B9 done**: `mockobs.py`, `ref_figures.py` (Combes 2025 Figs. 6, 12, 13; Lopez-Rodriguez
+  2026 Figs. 2f, 2l, 3d, 3e; Izumi 2023 Figs. 2C, 2E), `compare_obs.py` (NGC 613),
+  `compare_circinus.py` (dust column and axis ratio, PV, sigma_z/v_phi, accretion in
+  Msun/yr). On B6 at t = 3 orbits scaled to Circinus: axis ratio 0.50 of the dust map
+  (their disc 0.6), accretion 0.017 Msun/yr against the measured 0.2-0.34; the torus
+  mass 0.1 M_BH = 1.7e5 Msun is an assumption, not a Circinus measurement.
