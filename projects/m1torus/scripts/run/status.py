@@ -13,6 +13,8 @@ Problems flagged
   SLOWDOWN   recent rate below a third of the average (timestep collapse)
   ENERGY     |dE/E| > 1e-2 (integration has gone wrong)
   ACCRETED   particles lost to the central mass (> 0.1%)
+  ANGMOM     runs with colliding clouds, which radiate energy and feed the black hole by
+             design, in place of ENERGY and ACCRETED: |dL/L| > 1e-3
   LOG        NaN, ERROR or FATAL in run.log
   DISK       less than 20 GB free on the host drive
 """
@@ -81,6 +83,14 @@ def check(run: Path):
     de = abs(ev["etot"][-1] / ev["etot"][0] - 1.0) if ev else np.nan
     dl = abs(ev["angtot"][-1] / ev["angtot"][0] - 1.0) if ev else np.nan
     n0, n = m1["n"][0], m1["n"][-1]
+    # colliding clouds radiate energy and fall into the black hole by design: watch L,
+    # which collisions and accretion keep, and report the radiated energy instead
+    clouds = float(pio.read_setup(run / "m1torus.in").get("r_cloud", 0) or 0) > 0
+    ediss = 0.0
+    if clouds:
+        dumps = sorted(run.glob("m1torus_[0-9][0-9][0-9][0-9][0-9]"))
+        if dumps:
+            ediss = pio.read_dump(dumps[-1])["header"].get("ediss", 0.0) / abs(ev["etot"][0])
     a1 = m1["A1"][-1] / m1["sigma0"][-1]
     rc = float(np.hypot(m1["xc"][-1], m1["yc"][-1]))
 
@@ -88,10 +98,14 @@ def check(run: Path):
         problems.append(f"STALL({fmt_h(age)})")
     if np.isfinite(recent) and recent < rate / 3.0:
         problems.append("SLOWDOWN")
-    if de > 1e-2:
-        problems.append("ENERGY")
-    if n < 0.999 * n0:
-        problems.append("ACCRETED")
+    if clouds:
+        if dl > 1e-3:
+            problems.append("ANGMOM")
+    else:
+        if de > 1e-2:
+            problems.append("ENERGY")
+        if n < 0.999 * n0:
+            problems.append("ACCRETED")
     log = run / "run.log"
     # builds before ebce1648e logged an ERROR for the absent optional key; harmless
     text = log.read_text(errors="ignore").replace("ERROR: hsoft_nbody not found", "") if log.exists() else ""
@@ -103,7 +117,8 @@ def check(run: Path):
 
     line = (f"{run.name}: {status} {t:6.1f}/{total:.0f} orb, "
             f"{rate:5.1f} orb/h (recent {recent:5.1f}), ETA {fmt_h(eta) if status == 'RUNNING' else '-'}, "
-            f"dE/E {de:.1e}, dL/L {dl:.1e}, N {int(n)}/{int(n0)}, "
+            + (f"E_diss/|E0| {ediss:.2f}, " if clouds else f"dE/E {de:.1e}, ")
+            + f"dL/L {dl:.1e}, N {int(n)}/{int(n0)}, "
             f"A1/S0 {a1:.3f}, |r_c| {rc:.4f}"
             + (f"  !! {' '.join(problems)}" if problems else "  ok"))
     return status, line, problems
