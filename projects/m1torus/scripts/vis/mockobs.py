@@ -169,7 +169,7 @@ def cube(p, t: Target, phi, seed=1):
     return dict(cube=c, xs=xs, vs=vs, east=east_as, north=north_as, v=v, vunit=vunit)
 
 
-def moments(cb, t: Target, nsig=3.0):
+def moments(cb, t: Target, nsig=4.75, rms=None):
     """Moments 0-2 with a smooth-and-mask selection (Dame 2011).
 
     A plain clip at 1.5 rms lets noise through in ~7% of the channels, scattered over
@@ -177,13 +177,17 @@ def moments(cb, t: Target, nsig=3.0):
     Fig. 6 such specks are black (sigma ~ 0). The mask is the cube smoothed by one beam
     and 1.5 channels above nsig times its own rms, grown by one beam and one channel;
     inside it the channels above the clip count. Their exact recipe is not given; this is
-    the standard reconstruction.
+    the standard reconstruction. nsig = 4.75 makes the archive cube of NGC 613 cover
+    15% of the annulus 0.15-0.3 arcsec with specks, as their Fig. 6 does (3 sigma: 41%).
+    The archive cube of NGC 613 goes through this same
+    function (scripts/obs/ngc613_cube.py) with its own rms of the smoothed cube.
     """
     c, vs = cb["cube"], cb["vs"]
     pix = cb["xs"][1] - cb["xs"][0]
     sb = t.beam_arcsec / FWHM / pix
     sm = gaussian_filter(c, (1.5, sb, sb), mode="wrap")
-    rms = np.std(sm[:, :8, :])                       # an emission-free strip at the edge
+    if rms is None:
+        rms = np.std(sm[:, :8, :])                   # an emission-free strip at the edge
     mask = sm > nsig * rms
     mask = gaussian_filter(mask.astype(float), (1.0, sb, sb)) > 0.05
     w = np.where(mask & (c > t.clip_mjy * 1e-3), c, 0.0)

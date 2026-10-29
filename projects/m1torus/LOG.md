@@ -424,3 +424,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   through the archive cube, then Fig. 12). The archive column reproduces Fig. 6, which
   checks the axes, palettes and recipe of the whole pipeline at once. Movie titles
   shrink to end before the clock; movies labelled like figures (FIGURES.md).
+- **First two columns made identical** (the user saw them differ). The archive cube had
+  its own mask (3-D dilation, rms from far channels), the synthetic one a Gaussian-grown
+  mask, and both panels hid m0 < 0.04-0.05, which Fig. 6 shows black. Now one function,
+  `mockobs.moments`, for both; all masked pixels shown; same limits; PV unmasked in both.
+  The threshold 4.75 sigma reproduces the speck coverage of Fig. 6 in 0.15-0.3 arcsec
+  (15%; 3 sigma gives 41%). NGC 613 by this mask: |m1| p90 73 and 56, m2 median 39 and
+  25 km/s, ratio 0.54 and 0.44 (3 sigma: 0.63 and 0.55; Gaussian sigma 0.62-0.65): the
+  recipe moves the ratio by ~0.1, so models are measured with the same function only.
+  Unexplained: m2 inside the torus in Fig. 6 (cyan-green, 60-100 km/s) is about twice the
+  archive cube's by any of our masks, and Fig. 12 has a vertical stripe at the AGN over
+  +-300 km/s that the pipeline cube lacks; their own reduction (continuum, weighting,
+  channels) differs from the pipeline, not tested.

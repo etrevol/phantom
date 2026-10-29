@@ -5,8 +5,8 @@ The cube: project 2019.1.00273.S, pipeline spw25, SODA cutout of 0.35 arcsec rad
 (materials/data/alma_ngc613/README.txt). Moments 0-2 by
   clip    the recipe Combes et al. (2025) state for Fig. 6: channels above 0.6 mJy/beam
           within +-300 km/s of the systemic velocity (1481 km/s)
-  mask    smooth-and-mask (Dame 2011): the cube smoothed by one beam and 1.5 channels,
-          above 3 times its rms, grown by one beam; the same as our synthetic maps
+  mask    smooth-and-mask (Dame 2011), mockobs.moments: the cube smoothed by one beam and 1.5 channels,
+          above 4.75 times its rms, grown by one beam; the same as our synthetic maps
   gauss   one Gaussian per pixel with peak S/N > 5: sigma with the channel width
           (variance dv^2/12) removed
 and the annulus numbers used for the models: |moment 1| (90th percentile) and moment 2
@@ -23,15 +23,17 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
-from scipy.ndimage import gaussian_filter, binary_dilation  # noqa: E402
+from scipy.ndimage import gaussian_filter  # noqa: E402
 from scipy.optimize import curve_fit  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
 ROOT = HERE.parents[3]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "vis"))
+from dataclasses import replace  # noqa: E402
 from fits_min import read_fits  # noqa: E402
 import labels as L  # noqa: E402
+import mockobs as mo  # noqa: E402
 from matplotlib.colors import ListedColormap  # noqa: E402
 
 CUBE = ROOT / "materials" / "data" / "alma_ngc613" / "ngc613_co32_spw25_cut035.fits"
@@ -112,12 +114,12 @@ def main():
 
     w_clip = np.where((c > 6e-4) & win[:, None, None], c, 0.0)
     clip = moments(w_clip, v, dv)
+    # the mask recipe is the one of the synthetic maps (mockobs.moments), run on this
+    # cube's beam and channels; the noise of the smoothed cube from channels beyond 450 km/s
     sb = beam / FWHM / pix
-    sm = gaussian_filter(c, (1.5, sb, sb))
-    rms_s = float(np.std(sm[np.abs(v) > 450]))
-    msk = binary_dilation(sm > 3 * rms_s, iterations=max(1, int(round(sb)))) & win[:, None, None]
-    w_mask = np.where(msk & (c > 6e-4), c, 0.0)
-    mask = moments(w_mask, v, dv)
+    rms_s = float(np.std(gaussian_filter(c, (1.5, sb, sb), mode="wrap")[np.abs(v) > 450]))
+    tgt = replace(mo.NGC613, beam_arcsec=beam, dv=dv, pix_arcsec=pix)
+    mask = mo.moments(dict(cube=c[win], vs=v[win], xs=north), tgt, rms=rms_s)
     amp, v0, sig = gauss_fit(c, v, rms, dv)
 
     res = dict(rms_mjy=rms * 1e3, dv=dv, beam_arcsec=beam,
@@ -128,8 +130,9 @@ def main():
     # the masked moments and the cube, for the comparison figures (compare_obs.py)
     np.savez_compressed(out / "ngc613_mask_moments.npz", m0=mask[0], m1=mask[1], m2=mask[2],
                         east=east, north=north, beam=beam)
-    np.savez_compressed(out / "ngc613_cube_masked.npz", cube=np.where(msk, c, 0.0).astype(np.float32),
-                        v=v, east=east, north=north, beam=beam, rms=rms)
+    # the PV of Fig. 12 shows noise, so the cube goes unmasked, as the synthetic one
+    np.savez_compressed(out / "ngc613_cube_win.npz", cube=c[win].astype(np.float32),
+                        v=v[win], east=east, north=north, beam=beam, rms=rms)
 
     pal = np.load(HERE.parent / "vis" / "combes25_colours.npz")
     cm = {}

@@ -42,8 +42,11 @@ their own run names (their N and epsilon).
   published panel ("Combes et al. (2025), Fig. 6, moment 0"); the PV diagram likewise
   (same slit through the archive cube, then Fig. 12). One colour bar per row with the
   palette and range read from the published colour bar. The noise, beam, channels and
-  clip are the observers'; the moments use a smooth-and-mask selection (Dame 2011).
-  Other targets without a cube we hold (Circinus): two columns, ours and theirs.
+  clip are the observers'; the moments use a smooth-and-mask selection (Dame 2011),
+  one function (`mockobs.moments`, 4.75 sigma, calibrated on the speck coverage of
+  Fig. 6) for the synthetic and the archive cube; every pixel the mask keeps is shown,
+  below the scale in its lowest colour, as in Fig. 6. PV diagrams are unmasked in all
+  columns, as Fig. 12. Other targets without a cube we hold (Circinus): two columns, ours and theirs.
 - Movies are labelled like figures: the model name with its parameters across the top
   (from `labels.py`; a restart suffix on the second line), the clock in $P_{\rm orb}$ at
   the right, axes with units, the frame (inertial or "corotating with the mode")

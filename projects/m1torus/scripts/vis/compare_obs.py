@@ -94,11 +94,12 @@ def main():
     c25 = L.REF["combes25"]
     ext = [xs[0], xs[-1], xs[0], xs[-1]]
 
-    # moments: masked where moment 0 is below the lowest colour (white there, as theirs)
-    show = m0 >= 0.05
+    # moments wherever the mask kept emission; below the lowest colour it shows as the
+    # lowest colour (black), as the faint specks of Combes et al. (2025), Fig. 6
+    show = m0 > 0
     real = np.load(CUBE_DIR / "ngc613_mask_moments.npz") if (CUBE_DIR / "ngc613_mask_moments.npz").exists() else None
     fig, axs = plt.subplots(3, 3, figsize=(14.5, 13), layout="constrained")
-    specs = [(np.where(m0 >= 0.04, m0, np.nan), "m0", "moment 0 [Jy/beam km/s]", "combes25_fig6_m0"),
+    specs = [(np.where(show, m0, np.nan), "m0", "moment 0 [Jy/beam km/s]", "combes25_fig6_m0"),
              (np.where(show, m1, np.nan), "m1", "moment 1 [km/s]", "combes25_fig6_m1"),
              (np.where(show, m2, np.nan), "m2", "moment 2 [km/s]", "combes25_fig6_m2")]
     for row, (img, key, lab, ref) in enumerate(specs):
@@ -106,7 +107,8 @@ def main():
         cmap, lo, hi = PAL[key]
         im = ax.imshow(img, origin="lower", extent=ext, cmap=cmap, vmin=lo, vmax=hi,
                        interpolation="nearest")
-        ax.set_xlim(xs[-1], xs[0])
+        ax.set_xlim(0.3, -0.3)
+        ax.set_ylim(-0.3, 0.3)
         # above the published range the top colour is near white like "no data": outline it
         over = np.nan_to_num(img, nan=-np.inf) > hi
         if over.any():
@@ -122,7 +124,7 @@ def main():
         ax = axs[row, 1]
         if real is not None:
             rimg = real[key]
-            rimg = np.where(real["m0"] >= (0.04 if key == "m0" else 0.05), rimg, np.nan)
+            rimg = np.where(real["m0"] > 0, rimg, np.nan)
             ax.imshow(rimg, origin="lower", extent=[real["east"][0], real["east"][-1],
                       real["north"][0], real["north"][-1]], cmap=cmap, vmin=lo, vmax=hi,
                       interpolation="nearest")
@@ -161,7 +163,7 @@ def main():
     ax.set_ylabel("velocity [km/s]")
     fig.colorbar(im, ax=list(axs), fraction=0.02, pad=0.01,
                  label=f"Jy/beam (all panels; levels of {c25}, Fig. 12)")
-    cfile = CUBE_DIR / "ngc613_cube_masked.npz"
+    cfile = CUBE_DIR / "ngc613_cube_win.npz"
     if cfile.exists():
         rc = np.load(cfile)
         e = rc["east"][::-1]                       # ascending east for the slit sampler
@@ -172,7 +174,7 @@ def main():
         axs[1].plot(0.15 + r, -vk, "r", 0.15 - r, vk, "r")
         axs[1].set(xlim=(0.3, 0), ylim=(-300, 300), xlabel="major axis position [arcsec]",
                    ylabel="velocity [km/s]")
-        axs[1].set_title(f"NGC 613 PV, same slit: {ALMA} (masked)", fontsize=8)
+        axs[1].set_title(f"NGC 613 PV, same slit: {ALMA}", fontsize=8)
     ax.set_title(rf"Synthetic CO(3-2) PV along PA ${t.pa - 360:.0f}^\circ$; red: Keplerian, "
                  r"$3.4\times10^7\,M_\odot$, $i = 50^\circ$", fontsize=9)
     panel_ref(axs[2], "combes25_fig12_pv", f"{c25}, Fig. 12")
