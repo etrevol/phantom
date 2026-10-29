@@ -345,3 +345,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   carries one shared colour bar. Synthetic noise is now periodic (no bright rim at the
   map edge). Particle movies of cloud runs colour by the density of the 32 nearest
   neighbours, since a fixed softening carries no density.
+- **Figure rules** (with the user): `FIGURES.md` and `scripts/vis/labels.py`. Every figure
+  and movie names the model it shows (Collisionless torus model, Colliding-cloud model,
+  Isothermal gas model, with their parameters in mathtext and the restart time), never
+  "paper", "ours" or a run id; published data are cited in full. `regen_all.sh`
+  regenerates every figure and movie of the finished runs.
+- **Moment 2 of the synthetic maps was wrong** (user's check: our noise specks were pink,
+  theirs black). A plain clip at 1.5 rms passes noise in ~7% of the channels over +-300
+  km/s, so a noise pixel had moment 2 ~ 150 km/s, and the noise also inflated the disc's
+  own moment 2. Now a smooth-and-mask selection (Dame 2011): noise specks have sigma ~ 0
+  as theirs, and the cold cloud disc of B6b has moment 2 ~ 10-20 km/s against the
+  observed 40-80 km/s. The earlier statement that the cloud model's moment 2 "resembles
+  the observed map" was the artefact: NGC 613's gas is hotter than the collapsed cloud
+  disc, which argues for the heating of the next step.

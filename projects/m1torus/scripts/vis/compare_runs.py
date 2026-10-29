@@ -21,7 +21,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
-import phantom_io as pio  # noqa: E402
+import phantom_io as pio
+import labels as L  # noqa: E402
 
 P_ORB = 2.0 * np.pi
 N_SEC = 1200
@@ -72,13 +73,16 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__,
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--runs", nargs="+", required=True)
-    ap.add_argument("--labels", default=None, help="comma separated, one per run")
+    ap.add_argument("--labels", default=None,
+                    help="comma separated, one per run; default: the parameters that differ")
     ap.add_argument("--window", default="110,150", help="saturated window, orbits")
     ap.add_argument("--out", default=None)
     a = ap.parse_args(argv)
 
     runs = [load(r) for r in a.runs]
-    labels = a.labels.split(",") if a.labels else [f"{d['n'] // 1024}k" for d in runs]
+    title, auto = L.legend_labels([Path(r) for r in a.runs])
+    labels = a.labels.split(",") if a.labels else auto
+    ref = L.REF["bannikova26"]
     t0, t1 = (float(x) for x in a.window.split(","))
     a1_paper = PAPER["A1"] / (N_PAPER - 1) * N_SEC
 
@@ -95,12 +99,12 @@ def main(argv=None):
                           lw=1.0, label=lab)
         ax[1, 1].plot(d["te"], (d["etot"] - d["etot"][0]) / abs(d["etot"][0]), color=c,
                       lw=1.0, label=lab)
-    ax[0, 0].axhline(a1_paper, color="k", ls=":", lw=1, label="paper, Table 2")
+    ax[0, 0].axhline(a1_paper, color="k", ls=":", lw=1, label=f"{ref}, Table 2")
     ax[0, 0].set(ylim=(3e-3, 0.8), ylabel=r"$A_1/\Sigma_0$",
                  title=r"Growth of the $m=1$ mode (dashed: noise $\sqrt{\pi/N}$)")
-    ax[0, 1].axhline(PAPER["r_c"], color="k", ls=":", lw=1, label="paper")
+    ax[0, 1].axhline(PAPER["r_c"], color="k", ls=":", lw=1, label=ref)
     ax[0, 1].set(ylabel=r"$|r_c|$", title="Central-mass offset")
-    ax[1, 0].axhspan(0.20, 0.25, color="0.5", alpha=0.15, label="paper, 0.20-0.25")
+    ax[1, 0].axhspan(0.20, 0.25, color="0.5", alpha=0.15, label=f"{ref}, 0.20-0.25")
     ax[1, 0].set(ylim=(0, 0.6), ylabel=r"$k = A_2/A_1$", title="Harmonic ratio (2-orbit mean)")
     ax[1, 1].set(ylabel=r"$\Delta E/|E_0|$", title="Energy conservation")
     for x in ax.flat:
@@ -109,8 +113,8 @@ def main(argv=None):
         x.axvspan(t0, t1, color="0.85", alpha=0.35, lw=0)
     for x in ax[1]:
         x.set_xlabel(r"$t\;[P_{\rm orb}]$")
-    fig.suptitle("m1torus 0.5-60-0.3: phantom runs against Bannikova et al. (2026), "
-                 f"shaded: saturated window {t0:.0f}-{t1:.0f}", fontweight="bold")
+    fig.suptitle(L.wrapped(title, 110) + f"\nagainst {ref}; shaded: window "
+                 + rf"${t0:.0f}$-${t1:.0f}\,P_{{\rm orb}}$", fontsize=12)
     fig.tight_layout()
     out = Path(a.out) if a.out else Path(a.runs[0]).resolve().parent / "compare_runs.png"
     fig.savefig(out, dpi=170, bbox_inches="tight")
@@ -118,7 +122,10 @@ def main(argv=None):
 
     rows = [(lab, summary(d, t0, t1)) for d, lab in zip(runs, labels)]
     print(f"window {t0:.0f}-{t1:.0f} orbits")
-    print(f"{'':12s}" + "".join(f"{lab:>9s}" for lab, _ in rows) + f"{'paper':>9s}")
+    print(f"{'':12s}" + "".join(f"{'run ' + str(i + 1):>9s}" for i in range(len(rows)))
+          + f"{'B+26':>9s}")
+    for i, (lab, _) in enumerate(rows):
+        print(f"  run {i + 1}: {lab}")
     paper = dict(onset=np.nan, tau=np.nan, A1=a1_paper, A2=PAPER["A2"] / (N_PAPER - 1) * N_SEC,
                  A3=PAPER["A3"] / (N_PAPER - 1) * N_SEC, k=PAPER["k"], Q3=PAPER["Q3"],
                  A3c=np.nan, Q3c=np.nan, r_c=PAPER["r_c"], r_tb=PAPER["r_tb"])

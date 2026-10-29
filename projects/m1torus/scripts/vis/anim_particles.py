@@ -28,7 +28,8 @@ from matplotlib.colors import LogNorm  # noqa: E402
 from matplotlib.lines import Line2D  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
-import phantom_io as pio  # noqa: E402
+import phantom_io as pio
+import labels  # noqa: E402
 
 P_ORB = 2.0 * np.pi
 HFACT = 1.2
@@ -52,7 +53,7 @@ def frame_data(path):
                 xc=(s["x"][0], s["y"][0], s["z"][0]) if s else (0.0, 0.0, 0.0))
 
 
-def build_figure(setup, n, tm, a1, rc, corotate=False):
+def build_figure(setup, n, tm, a1, rc, corotate=False, run=None):
     fig = plt.figure(figsize=(12.5, 7.6))
     ax_f = fig.add_axes([0.065, 0.31, 0.39, 0.62])
     ax_e = fig.add_axes([0.505, 0.31, 0.39, 0.62])
@@ -104,10 +105,13 @@ def build_figure(setup, n, tm, a1, rc, corotate=False):
     ax_r.set_ylim(0, max(0.03, 1.1 * np.nanmax(rc)))
     cursor = ax_s.axvline(tm[0], color="k", lw=0.9)
 
-    params = (rf"$N = {n:,}".replace(",", r"\,") + r",\;\;M_{\rm tor} = "
-              + f"{setup['M_tor']:g}" + r"\,M_c,\;\;e_{\max} = " + f"{setup['e_max']:g}"
-              + r",\;\;i_{\max} = " + f"{setup['i_max']:g}" + r"^\circ$")
-    fig.text(0.065, 0.955, params, ha="left", va="center", fontsize=11)
+    # the model name (FIGURES.md): name and parameters, and below how the run started
+    name, pars, suffix = labels.model_parts(run)
+    fig.text(0.065, 0.968, f"{name} ({', '.join(pars.values())})", ha="left", va="center",
+             fontsize=11)
+    if suffix:
+        fig.text(0.065, 0.942, (lambda u: u[0].upper() + u[1:])(suffix.lstrip(", ")), ha="left", va="center",
+                 fontsize=9.5, color="0.25")
     # the clock in three fixed pieces, digits of equal width, so nothing moves
     fig.text(0.80, 0.955, r"$t\,=$", ha="left", va="center", fontsize=11)
     clock = fig.text(0.868, 0.955, "", ha="right", va="center", fontsize=11)
@@ -180,7 +184,7 @@ def main(argv=None):
     tm = m1["time"] / P_ORB
     a1 = m1["A1"] / m1["sigma0"]
     rc = np.hypot(m1["xc"], m1["yc"])
-    art = build_figure(setup, n, tm, a1, rc, a.corotate)
+    art = build_figure(setup, n, tm, a1, rc, a.corotate, run)
 
     out = Path(a.out) if a.out else run / "figs"
     out.mkdir(parents=True, exist_ok=True)

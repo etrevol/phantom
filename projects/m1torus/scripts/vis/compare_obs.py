@@ -7,7 +7,9 @@ Ours on the left, theirs on the right, on the same field, colour scale and clip:
   <stem>_spectrum.png  integrated spectrum against their Fig. 13 (FWHM 144 km/s, Table 2)
 The reference crops come from ref_figures.py (results/m1torus/B/reference).
 
-    compare_obs.py DUMP [--phi DEG] [--label TEXT] [--out DIR]
+    compare_obs.py DUMP [--phi DEG] [--out DIR]
+
+The model is named from its run directory (labels.py, FIGURES.md).
 """
 import argparse
 from pathlib import Path
@@ -19,6 +21,7 @@ import numpy as np  # noqa: E402
 from matplotlib.colors import LinearSegmentedColormap, BoundaryNorm, ListedColormap  # noqa: E402
 
 import mockobs as mo  # noqa: E402
+import labels as L  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[4]
 REF = ROOT / "results" / "m1torus" / "B" / "reference"
@@ -65,7 +68,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("dump")
     ap.add_argument("--phi", type=float, default=None)
-    ap.add_argument("--label", default="")
+    ap.add_argument("--label", default="", help="ignored; the run directory names the model")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     t = mo.NGC613
@@ -79,7 +82,10 @@ def main():
     out = Path(a.out or Path(a.dump).parent / "mockobs")
     out.mkdir(parents=True, exist_ok=True)
     stem = Path(a.dump).name
-    tag = (a.label + ", " if a.label else "") + f"t = {p['time'] / (2 * np.pi):.0f} orbits, phi = {phi:.0f} deg"
+    model = L.wrapped(L.model_label(Path(a.dump).resolve().parent), 100)
+    tag = (model + "\n" + rf"$t = {p['time'] / (2 * np.pi):.0f}\,P_{{\rm orb}}$, "
+           + rf"viewing azimuth ${phi:.0f}^\circ$ from the torus $x$ axis")
+    c25 = L.REF["combes25"]
     ext = [xs[0], xs[-1], xs[0], xs[-1]]
 
     # moments: masked where moment 0 is below the lowest colour (white there, as theirs)
@@ -98,16 +104,16 @@ def main():
         beam(ax, t, xs)
         ax.set_xlabel("RA offset [arcsec]")
         ax.set_ylabel("Dec offset [arcsec]")
-        ax.set_title(f"synthetic, {lab.split(' [')[0]}", fontsize=9)
-        panel_ref(axs[row, 1], ref, f"Combes et al. (2025) Fig. 6, {lab.split(' [')[0]}",
+        ax.set_title(f"Synthetic CO(3-2), {lab.split(' [')[0]}", fontsize=9)
+        panel_ref(axs[row, 1], ref, f"{c25}, Fig. 6, {lab.split(' [')[0]}",
                   extent=[0.3, -0.3, -0.3, 0.3])
         # one scale for both panels: their palette and range, read from their colour bar
         fig.colorbar(im, ax=[axs[row, 0], axs[row, 1]], fraction=0.03, pad=0.02,
-                     label=lab + "\n(both panels; scale of Combes Fig. 6)")
+                     label=lab + f"\n(both panels; scale of {c25}, Fig. 6)")
     axs[0, 0].plot(*_xy(h, t), "wx", ms=9, mew=2)
-    fig.suptitle(f"NGC 613, CO(3-2) at 0.015 arcsec: {tag}\n"
-                 f"hole {h['offset_pc']:.1f} pc from the AGN at PA {h['pa']:.0f} deg "
-                 f"(observed 3 pc, NW)", fontsize=10)
+    fig.suptitle(f"NGC 613, CO(3-2) at 0.015 arcsec\n{tag}\n"
+                 rf"moment-0 hole {h['offset_pc']:.1f} pc from the AGN at PA ${h['pa']:.0f}^\circ$ "
+                 f"(observed: 3 pc to the NW)", fontsize=10)
     fig.savefig(out / f"{stem}_moments.png", dpi=110)
     plt.close(fig)
 
@@ -128,9 +134,10 @@ def main():
     ax.set_ylabel("velocity [km/s]")
     fig.colorbar(im, ax=list(axs), fraction=0.03, pad=0.02,
                  label="Jy/beam (both panels; levels of Combes Fig. 12)")
-    ax.set_title(f"synthetic PV, PA {t.pa - 360:.0f} deg; red: Kepler, 3.4e7 Msun, i = 50", fontsize=9)
-    panel_ref(axs[1], "combes25_fig12_pv", "Combes et al. (2025) Fig. 12")
-    fig.suptitle(f"NGC 613: {tag}", fontsize=10)
+    ax.set_title(rf"Synthetic CO(3-2) PV along PA ${t.pa - 360:.0f}^\circ$; red: Keplerian, "
+                 r"$3.4\times10^7\,M_\odot$, $i = 50^\circ$", fontsize=9)
+    panel_ref(axs[1], "combes25_fig12_pv", f"{c25}, Fig. 12")
+    fig.suptitle(f"NGC 613\n{tag}", fontsize=10)
     fig.savefig(out / f"{stem}_pv.png", dpi=110)
     plt.close(fig)
 
@@ -145,10 +152,10 @@ def main():
     axs[0].set_xlim(-500, 500)
     axs[0].set_xlabel("velocity [km/s]")
     axs[0].set_ylabel("flux [Jy]")
-    axs[0].set_title(f"synthetic, FWHM {fwhm:.0f} km/s (observed 144), peak {spec.max() * 1e3:.0f} mJy (observed 100)",
-                     fontsize=9)
-    panel_ref(axs[1], "combes25_fig13_spec", "Combes et al. (2025) Fig. 13, CO(3-2)")
-    fig.suptitle(f"NGC 613: {tag}", fontsize=10)
+    axs[0].set_title(f"Synthetic CO(3-2) spectrum: FWHM {fwhm:.0f} km/s (observed 144), "
+                     f"peak {spec.max() * 1e3:.0f} mJy (observed 100)", fontsize=9)
+    panel_ref(axs[1], "combes25_fig13_spec", f"{c25}, Fig. 13")
+    fig.suptitle(f"NGC 613\n{tag}", fontsize=10)
     fig.tight_layout()
     fig.savefig(out / f"{stem}_spectrum.png", dpi=110)
     plt.close(fig)

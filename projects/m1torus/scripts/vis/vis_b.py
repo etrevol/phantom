@@ -20,7 +20,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
-import phantom_io as pio  # noqa: E402
+import phantom_io as pio
+import labels as L  # noqa: E402
 import mockobs as mo  # noqa: E402
 
 P_ORB = 2 * np.pi
@@ -67,34 +68,34 @@ def main():
     ax2 = ax.twinx()
     ax2.plot(t1, np.hypot(m1["xc"], m1["yc"]), "C3", lw=0.8)
     ax2.set_ylabel("|r_c|", color="C3")
-    ax.set_title("m = 1 mode and black-hole offset", fontsize=10)
+    ax.set_title("The $m = 1$ mode and the black-hole offset", fontsize=10)
     ax = axs[0, 1]
-    ax.plot(s["t"], s["ediss"], "k.-", label="E_diss/|E0|")
+    ax.plot(s["t"], s["ediss"], "k.-", label=r"$E_{\rm diss}/|E_0|$")
     ax.plot(s["t"], s["macc"], "C1.-", label="mass fraction in the sink")
     ax.legend(fontsize=8)
-    ax.set_title("dissipation and inflow", fontsize=10)
+    ax.set_title("Dissipation and inflow", fontsize=10)
     ax = axs[1, 0]
-    ax.plot(s["t"], s["zr"], "k.-", label="median |z|/R")
-    ax.plot(s["t"], s["sz"], "C2.-", label="sigma_z / <v_phi>")
+    ax.plot(s["t"], s["zr"], "k.-", label=r"median $|z|/R$")
+    ax.plot(s["t"], s["sz"], "C2.-", label=r"$\sigma_z/\langle v_\phi\rangle$")
     ax.legend(fontsize=8)
-    ax.set_title("thickness", fontsize=10)
+    ax.set_title("Thickness", fontsize=10)
     ax = axs[1, 1]
     ax.fill_between(s["t"], s["r10"], s["r90"], color="0.85", label="10-90%")
     ax.plot(s["t"], s["r50"], "k.-", label="median R")
     ax.legend(fontsize=8)
     ax.set_ylabel("R [R_tor]")
-    ax.set_title("radial distribution", fontsize=10)
+    ax.set_title("Radial distribution", fontsize=10)
     ax = axs[2, 0]
     ax.plot(s["t"], s["hole_pc"], "k.-")
-    ax.axhline(3.0, color="r", ls="--", label="NGC 613: 3 pc")
+    ax.axhline(3.0, color="r", ls="--", label=f"NGC 613, {L.REF['combes25']}: 3 pc")
     ax.set_ylabel("hole offset [pc]")
     ax.legend(fontsize=8)
-    ax.set_title("synthetic NGC 613: moment-0 hole from the AGN", fontsize=10)
+    ax.set_title("Synthetic NGC 613: moment-0 hole from the AGN", fontsize=10)
     axs[2, 1].axis("off")
     for ax in axs[-1, :1]:
         ax.set_xlabel("t [orbits]")
     axs[1, 1].set_xlabel("t [orbits]")
-    fig.suptitle(run.name, fontsize=11)
+    fig.suptitle(L.wrapped(L.model_label(run), 110), fontsize=11)
     fig.tight_layout()
     fig.savefig(run / "figs" / "b_series.png", dpi=110)
     print(run / "figs" / "b_series.png")

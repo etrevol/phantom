@@ -24,6 +24,7 @@ import numpy as np  # noqa: E402
 from scipy.ndimage import gaussian_filter  # noqa: E402
 
 import mockobs as mo  # noqa: E402
+import labels as L  # noqa: E402
 from compare_obs import panel_ref  # noqa: E402
 
 
@@ -53,7 +54,7 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("dump")
     ap.add_argument("--phi", type=float, default=None)
-    ap.add_argument("--label", default="")
+    ap.add_argument("--label", default="", help="ignored; the run directory names the model")
     ap.add_argument("--out", default=None)
     a = ap.parse_args()
     t = mo.CIRCINUS
@@ -63,7 +64,9 @@ def main():
     out = Path(a.out or Path(a.dump).parent / "mockobs")
     out.mkdir(parents=True, exist_ok=True)
     stem = Path(a.dump).name
-    tag = (a.label + ", " if a.label else "") + f"t = {p['time'] / (2 * np.pi):.0f} orbits"
+    tag = (L.wrapped(L.model_label(Path(a.dump).resolve().parent), 110) + "\n"
+           + rf"$t = {p['time'] / (2 * np.pi):.0f}\,P_{{\rm orb}}$")
+    lr, iz = L.REF["lopezrodriguez26"], L.REF["izumi23"]
 
     # dust column, edge-on
     img, edges = column_map(p, t, phi)
@@ -73,17 +76,17 @@ def main():
     axs[0].set_xlim(edges[-1], edges[0])
     axs[0].set_xlabel("E offset [pc]")
     axs[0].set_ylabel("N offset [pc]")
-    axs[0].set_title(f"synthetic dust column, 2 pc beam; axis ratio {q:.2f} (their disc 3/5 = 0.6)",
+    axs[0].set_title(f"Synthetic dust column, 2 pc beam; axis ratio {q:.2f} (their disc 3/5 = 0.6)",
                      fontsize=9)
-    panel_ref(axs[1], "lr26_fig2f_700um", "Lopez-Rodriguez et al. (2026) Fig. 2f, ALMA 700 um")
-    panel_ref(axs[2], "lr26_fig3e_dust", "Fig. 3e, dust of the clumpy-torus fit")
-    fig.suptitle(f"Circinus: {tag}", fontsize=10)
+    panel_ref(axs[1], "lr26_fig2f_700um", rf"{lr}, Fig. 2f, ALMA 700 $\mu$m")
+    panel_ref(axs[2], "lr26_fig3e_dust", f"{lr}, Fig. 3e, dust of the clumpy-torus fit")
+    fig.suptitle(f"Circinus\n{tag}", fontsize=10)
     fig.tight_layout()
     fig.savefig(out / f"{stem}_circ_dust.png", dpi=110)
     plt.close(fig)
 
     # PV along the major axis, HCN-like beam 0.03 arcsec, velocities about systemic 446 km/s
-    tp = mo.Target(**{**t.__dict__, "beam_arcsec": 0.03, "pix_arcsec": 0.006, "field_arcsec": 0.3,
+    tp = mo.Target(**{**t.__dict__, "beam_arcsec": 0.03, "pix_arcsec": 0.012, "field_arcsec": 0.9,
                       "rms_mjy": 0.0, "clip_mjy": 0.0})
     cb = mo.cube(p, tp, phi)
     pvd = mo.pv(cb, tp, pa=tp.pa, halfwidth=tp.beam_arcsec)
@@ -93,12 +96,13 @@ def main():
     vk = np.sqrt(mo.G_PC * t.M_bh / (r * mo.pc_per_arcsec(t))) * np.sin(np.radians(t.inc))
     axs[0].plot(r, 446 + vk, "r", -r, 446 - vk, "r", lw=0.8)
     axs[0].set_ylim(300, 600)
-    axs[0].set_xlim(-0.3, 0.3)
+    axs[0].set_xlim(-0.9, 0.9)
     axs[0].set_xlabel("offset [arcsec]")
     axs[0].set_ylabel("velocity [km/s]")
-    axs[0].set_title("synthetic PV, major axis; red: Kepler, 1.7e6 Msun", fontsize=9)
-    panel_ref(axs[1], "izumi23_fig2c_pv", "Izumi et al. (2023) Fig. 2C (offsets to +-0.9 arcsec)")
-    fig.suptitle(f"Circinus: {tag}", fontsize=10)
+    axs[0].set_title(r"Synthetic PV along the major axis; red: Keplerian, $1.7\times10^6\,M_\odot$",
+                     fontsize=9)
+    panel_ref(axs[1], "izumi23_fig2c_pv", f"{iz}, Fig. 2C (offsets to $\\pm0.9$ arcsec)")
+    fig.suptitle(f"Circinus\n{tag}", fontsize=10)
     fig.tight_layout()
     fig.savefig(out / f"{stem}_circ_pv.png", dpi=110)
     plt.close(fig)
@@ -121,11 +125,11 @@ def main():
     axs[0].set_ylabel("sigma_z / v_phi")
     axs[0].set_ylim(0, 0.7)
     axs[0].set_xlim(0, 16)
-    axs[0].set_title("synthetic, all mass; accretion "
-                     + (f"{mdot:.2f} Msun/yr" if np.isfinite(mdot) else "n/a")
-                     + " (Izumi: 0.2-0.34 at 0.27 pc)", fontsize=9)
-    panel_ref(axs[1], "izumi23_fig2e_hr", "Izumi et al. (2023) Fig. 2E")
-    fig.suptitle(f"Circinus: {tag}", fontsize=10)
+    axs[0].set_title(r"$\sigma_z/v_\phi$ of all mass; accretion "
+                     + (rf"{mdot:.2f} $M_\odot\,$yr$^{{-1}}$" if np.isfinite(mdot) else "n/a")
+                     + f" ({iz}: 0.2-0.34 at 0.27 pc)", fontsize=9)
+    panel_ref(axs[1], "izumi23_fig2e_hr", f"{iz}, Fig. 2E")
+    fig.suptitle(f"Circinus\n{tag}", fontsize=10)
     fig.tight_layout()
     fig.savefig(out / f"{stem}_circ_hr.png", dpi=110)
     plt.close(fig)

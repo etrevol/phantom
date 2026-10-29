@@ -169,9 +169,24 @@ def cube(p, t: Target, phi, seed=1):
     return dict(cube=c, xs=xs, vs=vs, east=east_as, north=north_as, v=v, vunit=vunit)
 
 
-def moments(cb, t: Target):
+def moments(cb, t: Target, nsig=3.0):
+    """Moments 0-2 with a smooth-and-mask selection (Dame 2011).
+
+    A plain clip at 1.5 rms lets noise through in ~7% of the channels, scattered over
+    +-300 km/s, so a pixel of pure noise gets moment 2 ~ 150 km/s; in Combes et al. (2025)
+    Fig. 6 such specks are black (sigma ~ 0). The mask is the cube smoothed by one beam
+    and 1.5 channels above nsig times its own rms, grown by one beam and one channel;
+    inside it the channels above the clip count. Their exact recipe is not given; this is
+    the standard reconstruction.
+    """
     c, vs = cb["cube"], cb["vs"]
-    w = np.where(c > t.clip_mjy * 1e-3, c, 0.0)
+    pix = cb["xs"][1] - cb["xs"][0]
+    sb = t.beam_arcsec / FWHM / pix
+    sm = gaussian_filter(c, (1.5, sb, sb), mode="wrap")
+    rms = np.std(sm[:, :8, :])                       # an emission-free strip at the edge
+    mask = sm > nsig * rms
+    mask = gaussian_filter(mask.astype(float), (1.0, sb, sb)) > 0.05
+    w = np.where(mask & (c > t.clip_mjy * 1e-3), c, 0.0)
     m0 = w.sum(0) * t.dv
     with np.errstate(invalid="ignore", divide="ignore"):
         m1 = (w * vs[:, None, None]).sum(0) * t.dv / m0

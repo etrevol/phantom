@@ -29,7 +29,8 @@ import numpy as np  # noqa: E402
 from scipy.optimize import curve_fit  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
-import phantom_io as pio  # noqa: E402
+import phantom_io as pio
+import labels  # noqa: E402
 
 P_ORB = 2.0 * np.pi
 plt.rcParams.update({"font.size": 10, "axes.labelsize": 11, "xtick.direction": "in",
@@ -101,6 +102,7 @@ def main(argv=None):
         ax.set_yticks(np.arange(-1.5, 1.6, 0.5))
     axs[0].set_ylabel(r"$y/R_{\rm tor}$")
     fig.colorbar(sc, ax=axs, shrink=0.8, pad=0.01, label="$e$")
+    fig.suptitle(labels.wrapped(labels.model_label(run), 75), fontsize=10)
     fig.savefig(out / "ecc_maps.png", dpi=170)
     plt.close(fig)
 
@@ -123,6 +125,7 @@ def main(argv=None):
            ylabel=r"inclination $i$ [deg]", title=rf"$t = {last['t']:.0f}\,P_{{\rm orb}}$")
     ax.set_xticks(range(0, 361, 60))
     ax.legend(fontsize=8.5, loc="upper right", markerscale=6)
+    fig.suptitle(labels.wrapped(labels.model_label(run), 75), fontsize=10)
     fig.savefig(out / "incl_peri.png", dpi=170)
     plt.close(fig)
 
@@ -137,10 +140,11 @@ def main(argv=None):
     ax.plot(ee, ee / sig**2 * np.exp(-ee**2 / (2 * sig**2)), color="C3", lw=1.5,
             label=rf"Rayleigh, $\sigma = {sig:.3f}$")
     ax.plot(ee, ee / 0.27**2 * np.exp(-ee**2 / (2 * 0.27**2)), color="C3", ls=":", lw=1,
-            label=r"paper, $\sigma = 0.27$")
+            label=labels.REF["bannikova26"] + r", $\sigma = 0.27$")
     ax.set(xlabel="$e$", ylabel="$dN/de$ (normalised)",
            title=rf"$t = {last['t']:.0f}\,P_{{\rm orb}}$")
     ax.legend(fontsize=9, frameon=False)
+    fig.suptitle(labels.wrapped(labels.model_label(run), 75), fontsize=10)
     fig.savefig(out / "ecc_hist.png", dpi=170)
     plt.close(fig)
 
@@ -155,6 +159,7 @@ def main(argv=None):
             label=rf"$\Omega_p = {omega_p:.4f}\,\Omega_0$, period ${2*np.pi/omega_p/P_ORB:.0f}\,P_{{\rm orb}}$")
     ax.set(xlabel=r"$t/P_{\rm orb}$", ylabel=r"$\Phi_1$ (unwrapped) [deg]")
     ax.legend(fontsize=9, frameon=False)
+    fig.suptitle(labels.wrapped(labels.model_label(run), 75), fontsize=10)
     fig.savefig(out / "pattern.png", dpi=170)
     plt.close(fig)
 
@@ -197,6 +202,7 @@ def main(argv=None):
             xlim=(-180, 180))
     ax2.set_xticks(range(-180, 181, 60))
     ax2.legend(fontsize=9, frameon=False)
+    fig.suptitle(labels.wrapped(labels.model_label(run), 75), fontsize=10)
     fig.savefig(out / "corotating.png", dpi=170)
     plt.close(fig)
 

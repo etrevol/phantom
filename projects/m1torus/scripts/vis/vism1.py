@@ -21,7 +21,8 @@ import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / "common"))
-import phantom_io as pio  # noqa: E402
+import phantom_io as pio
+import labels  # noqa: E402
 
 P_ORB = 2.0 * np.pi
 N_PAPER = 131072
@@ -72,9 +73,9 @@ def main(argv=None):
     for amp, lab, c in ((a1, "A$_1$", "C0"), (a2, "A$_2$", "C3"), (a3, "A$_3$", "C2")):
         x.semilogx(tt, amp / s0, color=c, lw=1.2, label=lab)
     x.axhline(PAPER["A1"] / (N_PAPER - 1) * 1200, color="C0", ls=":", lw=1,
-              label="paper A$_1$ (Table 2)")
+              label=f"{labels.REF['bannikova26']}, Table 2")
     x.set_ylabel(r"$A_m/\Sigma_0$")
-    x.set_title("Mode amplitudes (Fig. 7)", fontweight="bold")
+    x.set_title("Mode amplitudes (as Bannikova et al. 2026, Fig. 7)", fontweight="bold")
     x.legend(fontsize=9)
 
     x = ax[0, 1]
@@ -82,12 +83,12 @@ def main(argv=None):
     x.plot(par.get("M_tor", 0.1) * m1["xtb"], par.get("M_tor", 0.1) * m1["ytb"],
            color="C0", lw=0.6, alpha=0.6, label=r"$M_{\rm tor} r_{tb}$")
     x.set_aspect("equal")
-    x.set_title("Central mass and torus barycentre (Fig. 3)", fontweight="bold")
+    x.set_title("Central mass and torus barycentre (as their Fig. 3)", fontweight="bold")
     x.legend(fontsize=9)
 
     x = ax[0, 2]
     x.plot(t, r_c, color="C1", lw=1, label=r"$|r_c|$")
-    x.axhline(PAPER["r_c"], color="C1", ls=":", lw=1, label="paper")
+    x.axhline(PAPER["r_c"], color="C1", ls=":", lw=1, label=labels.REF["bannikova26"])
     x.set_ylabel(r"$|r_c|$")
     x.set_title("Central-mass offset", fontweight="bold")
     x.legend(fontsize=9)
@@ -96,10 +97,10 @@ def main(argv=None):
     with np.errstate(divide="ignore", invalid="ignore"):
         x.plot(t, a2 / a1, color="C3", lw=1, label=r"$k = A_2/A_1$")
         x.plot(t, (a3 / a1) / (a2 / a1) ** 2, color="C2", lw=1, alpha=0.7, label=r"$Q_3$")
-    x.axhspan(0.20, 0.25, color="C3", alpha=0.12, label="paper k 0.20-0.25")
+    x.axhspan(0.20, 0.25, color="C3", alpha=0.12, label=f"{labels.REF['bannikova26']}, $k$ = 0.20-0.25")
     x.axhline(1.0, color="C2", ls=":", lw=1)
     x.set_ylim(0, 2)
-    x.set_title("Harmonic ratios (Fig. 18)", fontweight="bold")
+    x.set_title("Harmonic ratios (as their Fig. 18)", fontweight="bold")
     x.legend(fontsize=9)
 
     x = ax[1, 1]
@@ -107,12 +108,12 @@ def main(argv=None):
         te = ev["time"] / P_ORB
         x.semilogx(np.maximum(te, 1e-2), 2 * ev["ekin"] + ev["epot"], color="C2", lw=1)
         x.set_ylabel(r"$2E_{\rm kin}+E_{\rm pot}$ (whole system)")
-    x.set_title("Virial quantity (Fig. 4)", fontweight="bold")
+    x.set_title("Virial quantity (as their Fig. 4)", fontweight="bold")
 
     x = ax[1, 2]
     x.plot(t, m1["e_mean"], label=r"$\langle e\rangle$")
     x.plot(t, m1["e_sigma"], label=r"$\sigma_e$ (Rayleigh)")
-    x.axhline(0.27, color="C1", ls=":", lw=1, label=r"paper $\sigma_e$")
+    x.axhline(0.27, color="C1", ls=":", lw=1, label=labels.REF["bannikova26"] + r", $\sigma_e$")
     x2 = x.twinx()
     x2.plot(t, m1["i_mean"], color="C3", lw=0.8)
     x2.set_ylabel(r"$\langle i\rangle$ [deg]", color="C3")
@@ -125,9 +126,7 @@ def main(argv=None):
         x.set_xlabel(r"$t\;[P_{\rm orb}]$")
     ax[0, 0].set_xlabel(r"$t\;[P_{\rm orb}]$")
     ax[1, 1].set_xlabel(r"$t\;[P_{\rm orb}]$")
-    info = (f"N = {int(n)}, M_tor = {par.get('M_tor')}, e_max = {par.get('e_max')}, "
-            f"i_max = {par.get('i_max')}, R0 = {par.get('R0')}")
-    fig.suptitle(f"m1torus: {info}", fontsize=13, fontweight="bold")
+    fig.suptitle("The $m = 1$ mode\n" + labels.model_label(run), fontsize=13)
     fig.tight_layout()
     out = Path(a.out) if a.out else run / "figs"
     out.mkdir(parents=True, exist_ok=True)
@@ -137,7 +136,7 @@ def main(argv=None):
 
     scale = (N_PAPER - 1) / (n)          # particles per sector scale with N
     print(f"window {t0:.0f}-{t1:.0f} orbits, N = {int(n)} (paper amplitudes x {1/scale:.3f})")
-    print(f"{'':10s} {'ours':>9s} {'paper':>9s}")
+    print(f"{'':10s} {'model':>9s} {'B+26':>9s}")
     print(f"{'A1/S0':10s} {mean['A1']/mean['s0']:9.3f} {PAPER['A1']/(N_PAPER-1)*1200:9.3f}")
     print(f"{'A2/S0':10s} {mean['A2']/mean['s0']:9.3f} {PAPER['A2']/(N_PAPER-1)*1200:9.3f}")
     print(f"{'A3/S0':10s} {mean['A3']/mean['s0']:9.3f} {PAPER['A3']/(N_PAPER-1)*1200:9.3f}")
