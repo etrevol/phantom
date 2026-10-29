@@ -13,8 +13,8 @@ Problems flagged
   SLOWDOWN   recent rate below a third of the average (timestep collapse)
   ENERGY     |dE/E| > 1e-2 (integration has gone wrong)
   ACCRETED   particles lost to the central mass (> 0.1%)
-  ANGMOM     runs with colliding clouds, which radiate energy and feed the black hole by
-             design, in place of ENERGY and ACCRETED: |dL/L| > 1e-3
+  ANGMOM     runs with colliding clouds or isothermal gas, which radiate energy and feed
+             the black hole by design, in place of ENERGY and ACCRETED: |dL/L| > 1e-3
   LOG        NaN, ERROR or FATAL in run.log
   DISK       less than 20 GB free on the host drive
 """
@@ -85,7 +85,10 @@ def check(run: Path):
     n0, n = m1["n"][0], m1["n"][-1]
     # colliding clouds radiate energy and fall into the black hole by design: watch L,
     # which collisions and accretion keep, and report the radiated energy instead
-    clouds = float(pio.read_setup(run / "m1torus.in").get("r_cloud", 0) or 0) > 0
+    inp = pio.read_setup(run / "m1torus.in")
+    clouds = float(inp.get("r_cloud", 0) or 0) > 0
+    # isothermal gas (ieos 3 or 6) radiates and accretes by design, like the clouds
+    gas = str(inp.get("ieos", "")).strip() in ("3", "6")
     ediss = 0.0
     if clouds:
         dumps = sorted(run.glob("m1torus_[0-9][0-9][0-9][0-9][0-9]"))
@@ -98,7 +101,7 @@ def check(run: Path):
         problems.append(f"STALL({fmt_h(age)})")
     if np.isfinite(recent) and recent < rate / 3.0:
         problems.append("SLOWDOWN")
-    if clouds:
+    if clouds or gas:
         if dl > 1e-3:
             problems.append("ANGMOM")
     else:
