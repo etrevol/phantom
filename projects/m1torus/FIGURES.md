@@ -36,11 +36,19 @@ their own run names (their N and epsilon).
   $P_{\rm orb}$.
 - No run ids or directory names in figures or movies; file names may carry them.
 - Title: the subject on the first line, the model name on the second, then the time.
-- Synthetic observations: our map on the left ("Synthetic CO(3-2), moment 0"), the
-  published panel on the right on the same calibrated axes ("Combes et al. (2025),
-  Fig. 6, moment 0"), one colour bar for the pair with the palette and range read from
-  the published colour bar. The noise, beam, channels and clip are the observers'; the
-  moments use a smooth-and-mask selection (Dame 2011).
-- Movies: the model name across the top, the clock at the right; cloud runs colour by
-  the density of the 32 nearest neighbours.
+- Synthetic observations of NGC 613: three columns on the same calibrated axes - our
+  map ("Synthetic CO(3-2), moment 0"), the ALMA archive cube processed the same way
+  ("NGC 613, moment 0: ALMA 2019.1.00273.S archive cube, same processing"), the
+  published panel ("Combes et al. (2025), Fig. 6, moment 0"); the PV diagram likewise
+  (same slit through the archive cube, then Fig. 12). One colour bar per row with the
+  palette and range read from the published colour bar. The noise, beam, channels and
+  clip are the observers'; the moments use a smooth-and-mask selection (Dame 2011).
+  Other targets without a cube we hold (Circinus): two columns, ours and theirs.
+- Movies are labelled like figures: the model name with its parameters across the top
+  (from `labels.py`; a restart suffix on the second line), the clock in $P_{\rm orb}$ at
+  the right, axes with units, the frame (inertial or "corotating with the mode")
+  stated. No run ids in the frame. Every finished run gets its movie
+  (`anim_particles.py`; collisionless runs also `--corotate`), made when the run ends
+  and again by `regen_all.sh`. Cloud runs colour by the density of the 32 nearest
+  neighbours.
 - After a change of these rules, regenerate every figure and movie of the finished runs.

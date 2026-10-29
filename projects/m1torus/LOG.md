@@ -404,3 +404,23 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   0.10-0.18. The ratio scales as 1/sin i: the collisionless torus would match at
   i ~ 30 deg, the cloud discs only at i ~ 10-15 deg; B14 fits i and M_BH with the axis
   ratio of moment 0 as the second constraint.
+- **A6 to 400 orbits** (`20261028-144810-weak45-16k`, weak case `0.5-45-0.3`, 16k): no
+  m = 1 mode. Over 350-400 A1/S0 0.016-0.018 with A2 and A3 at the same level and the
+  noise floor of 16k at 0.014; |r_c| ~ 0.002. Bannikova et al. (2026), Fig. 14 has
+  A1/S0 ~0.04-0.05 already at 150 orbits and a clear rise by 300-400. Not confirmed at
+  16k. Plausible causes, none tested: the weak case is closer to the threshold and the
+  16k noise (and its relaxation) damps it; a different spread in i_max sampling. A6 to
+  1000 or at 64k would decide; not scheduled (optional in PLAN).
+- **B12 result** (heated clouds s 0.1, tau 0.1, sf_n 16, t 100-120): the mode survives
+  20 orbits, A1/S0 0.33 -> 0.20, r_c grows 0.022 -> 0.037; 41% of the clouds end in clump
+  sinks (N 9596/16384); E_diss 8.4 |E0| radiated and resupplied by the thermostat;
+  dL/L 9e-7. sigma_z/v_K ~0.09, |z|/R 0.06. On NGC 613 by the mask recipe moment 2 /
+  |moment 1| 0.15-0.21 against 0.55-0.6 observed: still too cold, and the moment-0 map
+  is faint because the sinks took the dense gas.
+- **B12 at s 0.3** (`20261029-194616-heated-s03-from-a3t100`) started 19:46, same
+  settings, ~8 orbits/h.
+- **Comparison figures in three columns**: synthetic map | NGC 613 from the archive cube
+  with the same mask, beam and palette | Combes et al. (2025) Fig. 6 (PV: same slit
+  through the archive cube, then Fig. 12). The archive column reproduces Fig. 6, which
+  checks the axes, palettes and recipe of the whole pipeline at once. Movie titles
+  shrink to end before the clock; movies labelled like figures (FIGURES.md).

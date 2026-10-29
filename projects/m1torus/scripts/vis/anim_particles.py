@@ -107,8 +107,13 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None):
 
     # the model name (FIGURES.md): name and parameters, and below how the run started
     name, pars, suffix = labels.model_parts(run)
-    fig.text(0.065, 0.968, f"{name} ({', '.join(pars.values())})", ha="left", va="center",
-             fontsize=11)
+    title = fig.text(0.065, 0.968, f"{name} ({', '.join(pars.values())})", ha="left",
+                     va="center", fontsize=11)
+    # a long name (heated clouds) shrinks to end before the clock
+    rend = fig.canvas.get_renderer()
+    while title.get_fontsize() > 8 and \
+            fig.transFigure.inverted().transform(title.get_window_extent(rend))[1, 0] > 0.79:
+        title.set_fontsize(title.get_fontsize() - 0.25)
     if suffix:
         fig.text(0.065, 0.942, (lambda u: u[0].upper() + u[1:])(suffix.lstrip(", ")), ha="left", va="center",
                  fontsize=9.5, color="0.25")

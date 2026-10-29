@@ -125,6 +125,11 @@ def main():
                mask=annuli(mask[1], mask[2], r, mask[0] > 0),
                gauss=annuli(v0, sig, r, np.isfinite(sig)))
     (out / "ngc613_cube_numbers.json").write_text(json.dumps(res, indent=1))
+    # the masked moments and the cube, for the comparison figures (compare_obs.py)
+    np.savez_compressed(out / "ngc613_mask_moments.npz", m0=mask[0], m1=mask[1], m2=mask[2],
+                        east=east, north=north, beam=beam)
+    np.savez_compressed(out / "ngc613_cube_masked.npz", cube=np.where(msk, c, 0.0).astype(np.float32),
+                        v=v, east=east, north=north, beam=beam, rms=rms)
 
     pal = np.load(HERE.parent / "vis" / "combes25_colours.npz")
     cm = {}

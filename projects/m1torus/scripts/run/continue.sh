@@ -28,6 +28,8 @@ log=$(printf 'm1torus%02d.log' $nn)
 sed -i -E "s|^( *dumpfile *= *)[^!]*(!.*)?$|\1$last   \2|; s|^( *tmax *= *)[^!]*(!.*)?$|\1$tmax   \2|; s|^( *logfile *= *)[^!]*(!.*)?$|\1$log   \2|" m1torus.in
 grep -q "logfile *= *$log" m1torus.in || { echo "logfile not set to $log" >&2; exit 1; }
 echo "$(date -Iseconds) continued from $last to $orbits orbits" >> continued.log
+# the rate of the earlier segment must not count for the new one
+rm -f .status_prev
 launch='export OMP_NUM_THREADS='$threads'; echo RUNNING > status
   if ./phantom m1torus.in >> run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
 if [[ $fg == yes ]]; then
