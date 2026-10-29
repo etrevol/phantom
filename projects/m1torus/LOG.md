@@ -389,3 +389,18 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   cube of NGC 613, because Combes' stated recipe (plain clip at 1.5 rms over +-300 km/s)
   is the one that inflated our own moment 2 by noise, while their black noise specks
   suggest a mask: from the paper alone the recipe of Fig. 6 cannot be settled.
+- **B13b, NGC 613 from the ALMA archive** (project 2019.1.00273.S, MOUS X3435, pipeline
+  cube spw25 = CO(3-2), 6.8 km/s channels, beam 0.0137 arcsec, rms 0.42 mJy/beam; SODA
+  cutout of 0.35 arcsec, `materials/data/alma_ngc613/`; `scripts/obs/ngc613_cube.py`,
+  `results/m1torus/B/ngc613_cube/`). Combes' stated recipe (clip at 0.6 mJy/beam over
+  +-300 km/s) gives a noise-dominated pink moment 2 everywhere, unlike their Fig. 6;
+  smooth-and-mask reproduces Fig. 6 (black specks, blue-cyan torus, green centre), so
+  Fig. 6 was masked and our synthetic maps are processed like the data. Numbers, annuli
+  0.02-0.05 and 0.05-0.1 arcsec: mask |m1| (p90) 77 and 59, m2 (median) 47 and 32 km/s,
+  ratio 0.61 and 0.54; one Gaussian per pixel (S/N > 5, few pixels) sigma 41 and 37,
+  centroid p90 63 and 60. The digitised Fig. 6 (ratio ~0.95) overstated it. NGC 613 is
+  dynamically warm, sigma/|v_proj| ~ 0.55-0.6; against our models by the same mask:
+  collisionless torus 0.35-0.40, heated clouds s 0.1 0.15-0.21, cold clouds and gas
+  0.10-0.18. The ratio scales as 1/sin i: the collisionless torus would match at
+  i ~ 30 deg, the cloud discs only at i ~ 10-15 deg; B14 fits i and M_BH with the axis
+  ratio of moment 0 as the second constraint.
