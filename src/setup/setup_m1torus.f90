@@ -26,14 +26,16 @@ module setup
 !   - np               : *number of torus particles*
 !   - eps_c            : *softening length of the central mass (0 = Kepler)*
 !   - eps_star         : *fixed Plummer-equivalent softening of the torus (0 = adaptive)*
+!   - r_cloud          : *particles are clouds of this radius that collide (0 = collisionless)*
+!   - e_rest           : *normal restitution coefficient of cloud collisions*
 !   - r_acc            : *accretion radius of the central mass*
 !   - iseed            : *random seed*
 !   - n_orbits         : *run length [orbits at R_tor]*
 !   - n_analysis_orbit : *analysis calls per orbit*
 !   - n_dumps_orbit    : *full dumps per orbit*
 !
-! :Dependencies: infile_utils, io, io_control, options, part, physcon,
-!   random, timestep, units
+! :Dependencies: cloudcollisions, infile_utils, io, io_control, options,
+!   part, physcon, random, timestep, units
 !
  implicit none
  public :: setpart
@@ -66,6 +68,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  use part,         only:istar,set_particle_type,nptmass,xyzmh_ptmass,vxyz_ptmass, &
                         ihacc,ihsoft,hsoft_nbody
  use options,      only:iexternalforce
+ use cloudcollisions, only:r_cloud
  use timestep,     only:tmax,dtmax
  use io_control,   only:nout,nfulldump
  use random,       only:ran2
@@ -109,6 +112,8 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  ! and height sin(i_max); phantom iterates it to its own value
  vol = 2.*pi*(2.*R0)*(2.*max(sin(i_max*pi/180.),R0))
  h0  = hfact*(pmass*vol/M_tor)**(1./3.)
+ ! a cloud is softened over its own radius unless eps_star says otherwise
+ if (r_cloud > 0. .and. eps_star <= 0.) eps_star = r_cloud
  if (eps_star > 0.) then
     hsoft_nbody = 1.4*eps_star
     h0 = hsoft_nbody
@@ -188,6 +193,7 @@ end subroutine setpart
 
 subroutine write_setupfile(filename)
  use infile_utils, only:write_inopt
+ use cloudcollisions, only:r_cloud,e_rest
  character(len=*), intent(in) :: filename
  integer, parameter :: iunit = 20
 
@@ -203,6 +209,8 @@ subroutine write_setupfile(filename)
  call write_inopt(np,'np','number of torus particles',iunit)
  call write_inopt(iseed,'iseed','random seed',iunit)
  call write_inopt(eps_star,'eps_star','fixed Plummer softening of the torus (0 = adaptive)',iunit)
+ call write_inopt(r_cloud,'r_cloud','particles are clouds of this radius that collide (0 = collisionless)',iunit)
+ call write_inopt(e_rest,'e_rest','normal restitution coefficient of cloud collisions',iunit)
  write(iunit,"(/,a)") '# central mass'
  call write_inopt(eps_c,'eps_c','softening length of the central mass (0 = Kepler)',iunit)
  call write_inopt(r_acc,'r_acc','accretion radius of the central mass',iunit)
@@ -217,6 +225,7 @@ end subroutine write_setupfile
 subroutine read_setupfile(filename,ierr)
  use infile_utils, only:open_db_from_file,inopts,read_inopt,close_db
  use io,           only:error
+ use cloudcollisions, only:r_cloud,e_rest
  character(len=*), intent(in)  :: filename
  integer,          intent(out) :: ierr
  integer, parameter :: iunit = 21
@@ -235,6 +244,8 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(iseed,'iseed',db,errcount=nerr)
  call read_inopt(eps_c,'eps_c',db,min=0.,errcount=nerr)
  call read_inopt(eps_star,'eps_star',db,min=0.,default=0.)
+ call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)
+ call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
  call read_inopt(r_acc,'r_acc',db,min=0.,errcount=nerr)
  call read_inopt(n_orbits,'n_orbits',db,min=0.,errcount=nerr)
  call read_inopt(n_analysis_orbit,'n_analysis_orbit',db,min=1,errcount=nerr)

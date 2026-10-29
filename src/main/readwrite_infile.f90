@@ -28,6 +28,7 @@ module readwrite_infile
 !
  use options,   only:iexternalforce
  use part,      only:hfact,tolh,hsoft_nbody
+ use cloudcollisions, only:r_cloud,e_rest,C_coll
  use dim,       only:do_radiation,nucleation,use_dust,use_dustgrowth,mhd_nonideal,compiled_with_mcfost,&
                      inject_parts,curlv,driving,track_lum,disc_viscosity,isothermal
  implicit none
@@ -108,6 +109,11 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
  call write_inopt(tolh,'tolh','tolerance on h-rho iterations',iwritein,exp=.true.)
  if (hsoft_nbody > 0.) call write_inopt(hsoft_nbody,'hsoft_nbody',&
     'fixed softening of star and dark-matter particles (0 = adaptive)',iwritein)
+ if (r_cloud > 0.) then
+    call write_inopt(r_cloud,'r_cloud','radius of star particles as colliding clouds (0 = no collisions)',iwritein)
+    call write_inopt(e_rest,'e_rest','normal restitution coefficient of cloud collisions',iwritein)
+    call write_inopt(C_coll,'C_coll','timestep factor for collisions, dt < C_coll r_cloud / v_max',iwritein)
+ endif
 
  call write_options_shock_capturing(iwritein)
  call write_options_damping(iwritein)
@@ -253,7 +259,8 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  use io,               only:warn
  use infile_utils,     only:inopts,read_inopt
  use options,          only:use_porosity
- use part,             only:hfact,tolh,hsoft_nbody
+ use part,             only:hfact,tolh,hsoft_nbody,accrete_stars
+ use cloudcollisions,  only:r_cloud,e_rest,C_coll
  use eos,              only:read_options_eos
  use io_control,       only:read_options_iocontrol
  use options,          only:read_options_output
@@ -298,6 +305,11 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  call read_inopt(tolh,'tolh',db,errcount=nerr,min=epsilon(tolh))
  if (tolh > 1.e-3) call warn(label,'tolh is quite large!')
  call read_inopt(hsoft_nbody,'hsoft_nbody',db,min=0.,default=0.)  ! absent = adaptive
+ call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)  ! absent = no collisions
+ call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
+ call read_inopt(C_coll,'C_coll',db,min=0.,max=1.,default=0.25)
+ ! a cloud that loses its angular momentum falls into the black hole
+ accrete_stars = (r_cloud > 0.)
 
  ! parse options internal to other code modules
  call read_options_iocontrol(db,nerr)

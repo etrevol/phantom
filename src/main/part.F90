@@ -401,6 +401,8 @@ module part
 
  real            :: hfact,Bextx,Bexty,Bextz,tolh
  real            :: hsoft_nbody = 0.  ! fixed softening of star and dark-matter particles, 0 = adaptive
+ real            :: ediss_coll = 0.   ! energy radiated in cloud collisions since t = 0
+ logical         :: accrete_stars = .false.  ! sinks swallow star particles (colliding clouds)
  integer         :: npart
  integer(kind=8) :: ntot
  integer         :: ideadhead = 0
@@ -1173,7 +1175,7 @@ end function get_ntypes_i8
 pure logical function is_accretable(itype)
  integer, intent(in)  :: itype
 
- if (itype==igas .or. (itype>=idust .and. itype<=idustlast)) then
+ if (itype==igas .or. (itype>=idust .and. itype<=idustlast) .or. (accrete_stars .and. itype==istar)) then
     is_accretable = .true.
  else
     is_accretable = .false.

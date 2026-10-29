@@ -131,6 +131,7 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
  use eos,             only:equationofstate
  use substepping,     only:substep,substep_gr,substep_sph_gr,substep_sph
  use ptmass,          only:ptmass_kick
+ use cloudcollisions, only:r_cloud,collide_clouds
  integer, intent(inout) :: npart
  integer, intent(in)    :: nactive
  real,    intent(in)    :: t,dtsph
@@ -140,7 +141,7 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
  real               :: timei,erri,errmax,v2i,errmaxmean
  real               :: vxi,vyi,vzi,eni,hdtsph,pmassi
  real               :: alphaloci,source,tdecay1,hi,rhoi,ddenom,spsoundi
- real               :: v2mean,hdti
+ real               :: v2mean,hdti,dtcoll
  real(kind=4)       :: t1,t2,tcpu1,tcpu2
  real               :: pxi,pyi,pzi,p2i,p2mean
  real               :: dti,time_now
@@ -733,6 +734,13 @@ subroutine step(npart,nactive,t,dtsph,dtextforce,dtnew)
        call ptmass_kick(nptmass,hdtsph,vxyz_ptmass,fxyz_ptmass_tree,xyzmh_ptmass,dsdt_ptmass,.true.)
     endif
     call bcast_mpi(vxyz_ptmass(:,1:nptmass))
+ endif
+
+ ! inelastic collisions of clouds, an impulsive kick after the step
+ if (r_cloud > 0.) then
+    if (ind_timesteps) call fatal('step','cloud collisions need global timesteps (IND_TIMESTEPS=no)')
+    call collide_clouds(npart,xyzh,vxyzu,iphase,massoftype,dtcoll)
+    dtnew = min(dtnew,dtcoll)
  endif
 
  ! MPI reduce summary variables
