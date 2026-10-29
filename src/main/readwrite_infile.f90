@@ -297,7 +297,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  call read_inopt(hfact,'hfact',db,errcount=nerr,min=1.,max=5.)
  call read_inopt(tolh,'tolh',db,errcount=nerr,min=epsilon(tolh))
  if (tolh > 1.e-3) call warn(label,'tolh is quite large!')
- call read_inopt(hsoft_nbody,'hsoft_nbody',db,min=0.)  ! optional, absent = adaptive
+ call read_inopt(hsoft_nbody,'hsoft_nbody',db,min=0.,default=0.)  ! absent = adaptive
 
  ! parse options internal to other code modules
  call read_options_iocontrol(db,nerr)
