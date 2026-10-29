@@ -4,6 +4,27 @@ The single tracked list of tasks of this project. Status: `[x]` done, `[~]` in p
 `[ ]` open. Each task has an acceptance check and a cost on this laptop (8 cores).
 Results and decisions, dated, go to [`LOG.md`](LOG.md); this file says what is left.
 
+## Goal and principles (agreed with the user 2026-10-29)
+
+Goal: a physical model of the molecular torus of NGC 613 that matches the ALMA data
+well (A, the reproduction of Bannikova et al. 2026, is done and is the starting point),
+and through it a model plus theory that predicts observations: predict a measurable
+signature for a case and check it against what the observations of that case show.
+Deliverables: a journal paper, a technical report (LaTeX), and the tools (the cloud
+collision module in phantom, the synthetic-observation pipeline, the fit to ALMA data).
+NGC 613 is approached in stages: cheap checks on existing data first, then a fit of
+the best physically grounded model if the checks justify it.
+
+Principles:
+- Physics over fit: a physically grounded model with an honest mismatch beats a tuned
+  one with a good match; parameters set by hand are named as such.
+- Novelty through the literature: before every conclusion, check what is known, from
+  downloaded papers; keep "ours" and "known" apart.
+- Our own measurements of the data: compare with the raw archive data (ALMA) processed
+  exactly like the models, rather than with published figures.
+- Time economy: a stop criterion before every run, cheap checks on existing data first,
+  no runs for their own sake.
+
 Ground truth is the paper and our own measurements. The side projects on this laptop
 (athena-torus, athena-vv, phantom-sgtorus) are reference only; of athena-collab only
 `artem-develop` counts as checked.
@@ -135,6 +156,10 @@ Units and observables (code: G = M_BH = R = 1):
 | B14 | [x] | fit of the viewing geometry: inclination 20-60 deg and M_BH 1.5-4e7 Msun against |moment 1|, moment 2, moment-0 axis ratio and hole offset, on the existing snapshots (no new runs) | what part of the gap is i and M_BH | 2-3 h; also on A5, A6, A7, A11: collisionless tori fit best (M_tor 0.3: chi2 12) |
 | B15 | [x] | if NGC 613 is hot: heated clouds at s 0.3 and 0.5 (mode survival at sigma/v ~ 0.5); clouds with rarer collisions, r_cloud for N0 ~ 0.5 and 1 (the paper's collisionless limit approached from the dissipative side) | survival of the mode and moment 2 / moment 1 against B13 | done 2026-10-29: s 0.3 drains (N0 2.6) or evaporates (N0 0.5); a hot torus that lasts needs N0 <~ 0.04 (LOG) |
 | B16 | [ ] | only if B15 fails: non-circular motions from feeding (inflow along the nuclear spiral) and outflow, a torus fed from outside | moment 2 and PV against Combes 2025 | days (overlaps C) |
+| B17 | [~] | literature on the dispersion of cloud tori: collisions damp it in orbits (Krolik & Begelman 1988), clumpy-torus covering numbers (Nenkova et al. 2008), tori as disc winds (Elitzur & Shlosman 2006), heated cloud models (Vollmer et al.), the molecular outflow of NGC 613 (Audibert et al. 2019; Combes et al. 2019, 2025) | what of B12-B15 is known and what is new; does an outflow take part of moment 2 | 1-2 h |
+| B18 | [~] | the ALMA data in depth: continuum subtraction of the pipeline cube against Combes Fig. 6 and 12 (the stripe at the AGN, their hotter central moment 2), the continuum image, total flux against their Table 2, HCO+(4-3) | why the archive cube and the published figures differ; which to trust for kinematics | 1-2 h |
+| B19 | [ ] | fit of the collisionless torus to the archive cube on initial states (phantomsetup, seconds each): i_max, e_max, M_tor, R_0 with i and M_BH; one full run of the best (ask first) for the mode and the evolved maps | best physically grounded model and its mismatch | ~1 h + one run ~2 h |
+| B20 | [ ] | prediction and check: a measurable signature of the model (e.g. black-hole offset from the torus centre, lopsided moment 0, PV asymmetry) for a case with observations, predicted before looking | the prediction against the data | open |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.
