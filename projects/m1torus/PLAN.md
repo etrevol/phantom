@@ -75,28 +75,56 @@ within 1%).
 - Gravity by tree, adaptive softening between torus particles (h ~ 0.08), leapfrog with
   individual steps; the paper: direct summation, eps = 0.01, Hermite.
 
-## B. Dissipation (after A)
+## B. Dissipation: the molecular torus as gas (after A)
 
-A fraction f_gas of the torus particles becomes SPH gas, the rest stays collisionless. At
-what f_gas does the mode die, and where does the gas go? Design (B1, LOG 2026-10-27): gas
-locally isothermal with H/R = 0.1, the effective turbulent sound speed of Hopkins &
-Quataert (2010); no explicit viscosity, angular momentum moves by the resolved
-gravitational torques and shocks (shock viscosity with its switch); gas self-gravity on;
-the sink accretes gas only, r_acc = 0.05. SPH is the frequent-collision limit of a cloud
-ensemble; slower collisions would need sticky particles, which phantom lacks.
+Question: the paper applies its collisionless torus to the molecular torus of NGC 613
+(Sect. 9.2) and blames its 5.8 pc against the observed 3 pc on dissipation between clouds,
+left for future work. Does a torus of colliding clouds, modelled as SPH gas, form and keep
+an m = 1 mode, and do its synthetic maps look like the ALMA maps? Targets and their
+numbers: LOG 2026-10-29. Main target NGC 613 (Combes et al. 2025), second Circinus
+(Izumi et al. 2023; Lopez-Rodriguez et al. 2026; Tristram et al. 2022); M31 optional.
+Design kept from B1: no explicit viscosity, shock viscosity with its switch, gas
+self-gravity on, the sink accretes gas only, r_acc = 0.05. Changed: the torus is gas,
+not a small gas fraction of a stellar torus, and the sound speed is an open decision (B3).
+
+Units and observables (code: G = M_BH = R = 1):
+
+| | NGC 613 | Circinus |
+|---|---|---|
+| M_BH [Msun] | 3.4e7 (range 2.5-3.7e7) | 1.7e6 maser, 2.0e6 HCN |
+| R = 1 is | 8 pc, the torus radius | 2.5 pc, half the 5 x 3 pc dust disc |
+| v unit, P(R = 1) | 135 km/s, 0.36 Myr | 54 km/s, 0.28 Myr |
+| M_gas / M_BH | 0.27-0.56 at Galactic alpha_CO, ~0.1 if alpha_CO is 3-5 times lower, as often in centres | < 0.5 (dynamical mass 3e6 within 2 pc) |
+| thickness | unknown (i = 50 deg from the oval, assuming a circular torus) | dense gas h/r < 0.1-0.3, sigma ~ 15 km/s |
+| stability | Q ~ (H/R)(M_BH/M_gas): 0.3 at H/R 0.1, M 0.3 | Q < 1 at r > 1 pc (Izumi) |
+| asymmetry | hole r = 0.5 pc at 3 pc NW of the AGN (0.375 R); AGN in emission; two spirals | Keplerian side stronger on the blue side |
+| beam | 0.015 arcsec = 1.2 pc = 0.15 R | ~2 pc = 0.8 R (ALMA 700 um); AMI 1.9 pc |
+| other | PV on PA -20 deg; flux 15.4 Jy km/s for 9.7e6 Msun; stars within 10 pc 2.7e6 | inflow 0.2-0.34 Msun/yr at 0.27 pc = 0.005-0.009 in code units |
 
 | id | status | task | acceptance | cost |
 |---|---|---|---|---|
-| B1 | [x] | design with the user | decision in LOG | - |
-| B2 | [ ] | moddump: f_gas of the particles to gas, each split into lighter gas particles (N_gas ~ 32k); control run of the gas without the torus | dE/E as in A2; the control gives the numerical inflow; cost per orbit | 1 h |
-| B3 | [ ] | scan f_gas = 0.05, 0.1, 0.3 from the A3 dump at t = 100, ~50 orbits each | stellar A1/S0 and r_c against f_gas | 3 x 2-3 h |
-| B4 | [ ] | at the threshold f_gas: c_s = 0.3 v_K; one beta-cooling run (Gammie 2001); one run from t = 0 | does the threshold depend on the gas model; does the mode form at all | 3 x 2-4 h |
-| B5 | [ ] | where the gas goes: disc radius, eccentricity, alignment with the mode, inflow to the sink | figures, LOG; compare with Hopkins & Quataert (2010, 2011) | - |
+| B1 | [x] | design with the user (2026-10-27) | decision in LOG | - |
+| B2 | [x] | targets and their numbers (2026-10-29) | LOG; papers in `materials/papers/` | - |
+| B3 | [ ] | decide the gas thermodynamics with the user: a thin massive disc has Q < 1 and fragments, which isothermal SPH cannot follow without sinks | decision in LOG | - |
+| B4 | [ ] | code: gas option of `setup_m1torus` through `set_disc` (sink-centred locally isothermal `ieos = 6`, enclosed-mass rotation); moddump turning star particles into split gas particles; `mockobs.py` (units, projection at i and PA, cube with the beam, moments 0-2, PV, hole offset, A1 of moment 0); `ref_figures.py` (crops of the published figures with calibrated axes); digitised Combes Fig. 6 moment 0 | a disc at Q >= 2 stays axisymmetric 5 orbits; mock of an axisymmetric Keplerian disc gives the Keplerian PV curve and no hole offset | 1-2 days |
+| B5 | [ ] | tests: gas-only control (numerical inflow), cost per orbit, N_gas 32k against 64k | inflow far below the run values; cost known | 2-4 h |
+| B6 | [ ] | NGC 613 disc: equilibrium gas disc r 0.1-1.2, M_gas = 0.1 and 0.3, model from B3, seeded by noise only, 50-100 orbits | does m = 1 grow, how fast against the torus life of ~10 orbits (Combes) | 2 x TBD |
+| B7 | [ ] | the paper's torus as gas: all particles to gas at t = 0 (M_tor 0.1 and 0.3, pairs of A3 and A11) and from A3 at t = 100 | does dissipation keep, weaken or kill the mode; how the thick torus settles | 3 x TBD |
+| B8 | [ ] | comparison figures, ours left and theirs right: NGC 613 moments 0, 1, 2 (Combes Fig. 6), PV (Fig. 12), hole offset over time against 0.375 R, A1(R) of moment 0 against the digitised map; Circinus column map edge-on at PA 50 deg against Lopez-Rodriguez Figs. 2 and 3e, PV against Izumi Fig. 2, inflow at 0.27 pc | figures, LOG, handbook | 1 day |
+| B9 | [ ] | optional, M31: f_gas = 0.01 from A3 at t = 100 (gas of stellar mass loss, Chang et al. 2007) | does the stellar mode notice the gas | 2-3 h |
+
+Not in B: the AMI images at 3.8-4.8 um (Lopez-Rodriguez Fig. 1) trace AGN-heated dust and
+need radiative transfer (RADMC-3D or HyperCAT); AGN feedback, which may make the hole
+itself (Garcia-Burillo et al. 2024); feeding from the nuclear spiral. Synthetic maps take
+line emission proportional to gas column (optically thin, uniform excitation); CO(3-2) is
+partly thick, so moment 0 is compared in shape, not in peak value.
 
 Viscosity and dissipation options in phantom: local note `projects/m1torus/CLAUDE.md`.
-Literature (in `materials/papers/`): Hopkins & Quataert 2010, 2011; Hopkins et al. 2012;
-Krolik & Begelman 1988; Gammie 2001; Meru & Bate 2011; Lodato & Price 2010; Hönig 2019;
-Combes et al. 2019.
+Literature (in `materials/papers/`): Combes et al. 2019, 2025; Izumi et al. 2023;
+Tristram et al. 2022; Lopez-Rodriguez et al. 2026; Gamez Rosas et al. 2025;
+Garcia-Burillo et al. 2024; Pereira-Santaella et al. 2026; Adams, Ruden & Shu 1989;
+Chang et al. 2007; Hopkins & Quataert 2010, 2011; Hopkins et al. 2012; Krolik & Begelman
+1988; Gammie 2001; Meru & Bate 2011; Lodato & Price 2010; Hönig 2019.
 
 ## C. Nested gas disc (after B)
 

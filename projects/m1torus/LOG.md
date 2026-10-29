@@ -126,3 +126,43 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **A6 and the paper's Fig. 14.** The weak case 0.5-45-0.3 grows slowly in the paper: A1
   rises from t ~ 50 and saturates (A1/S0 ~ 0.09) only at t ~ 500-1000, about 0.04-0.05
   at t = 150. A6 is at the noise floor at t = 81; it goes on to 1000 orbits after 150.
+
+## 2026-10-29
+
+- **A11 start** (`20261029-100846-mtor03-16k`, M_tor = 0.3; the paper ran 0.1, 0.06, 0.01
+  only). The Keplerian start is far from equilibrium at this mass: m = 2 grows to A2/S0
+  0.37 by t = 3.8 and decays by t = 8, the torus relaxes to <a> 1.14, <e> 0.36.
+- **B, what the targets are** (papers in `materials/papers/`). Observed molecular tori:
+  R 6-27 pc, M(H2) 0.7-3.9e7 Msun (Combes et al. 2019), thin where seen edge-on (NGC 1672
+  axis ratio 6.5-10), clumpy, warped, slightly lopsided (Combes et al. 2025). NGC 613: ring
+  R = 8 pc, M(H2) 1.0-1.4e7, M_BH 3.4-4.5e7, so M_gas/M_BH 0.2-0.4 before the X_CO
+  uncertainty; bulge mass within 10 pc 2.7e6: the torus is gas, the stars a small
+  spheroid. Hole 0.5 pc offset 3 pc from the AGN (0.375 R), two nascent spirals; Combes
+  estimates a torus life of a few Myr (P = 0.29 Myr at 8 pc). Circinus: dust disk 5 x 3 pc
+  fit by clumpy models with ~4 clouds along an equatorial ray (Lopez-Rodriguez et al.
+  2026), so clouds collide every ~1/(2 pi N0 H/R) ~ 0.4 orbits at H/R = 0.1: collisional.
+  The paper itself attributes its 5.8 pc against 3 pc for NGC 613 to cloud dissipation and
+  defers it (Sect. 9.2). Gas analogue: m = 1 instabilities of discs with M_D/M_* ~ 0.1-1
+  grow on the outer dynamical time and move the star off the centre of mass (Adams, Ruden
+  & Shu 1989). Stellar nuclei (M31): gas comes from stellar mass loss of the eccentric
+  disc (Chang et al. 2007). Alternative for central holes: AGN feedback (Garcia-Burillo
+  et al. 2024). Design consequences not yet agreed.
+- **B, checks of the numbers.** Combes et al. (2025) quote 250 km/s at 1 pc and i = 50 deg
+  for NGC 613, which gives 2.5e7 Msun, not their 3.4e7 (M-sigma 3.7e7): M_BH 2.5-3.7e7.
+  Their gas mass is 1.0e7 (Table 3), 1.4e7 (text), 0.97e7 within 0.2 arcsec (Table 2),
+  all at the Galactic alpha_CO = 4.36; in galaxy centres alpha_CO is often several times
+  lower, so M_gas/M_BH spans ~0.1-0.5. i = 50 deg comes from the oval assuming a circular
+  torus; an eccentric torus would bias it. The AGN sits in emission (the HCO+ peak is at
+  the core) and the hole of 0.5 pc lies 3 pc away, so the hole is a void on one side of
+  a lopsided disc, not a central cavity around the black hole: the paper's reading of the
+  offset as the torus barycentre is doubtful, and B compares maps, not barycentres.
+  Moment 2 reaches 300 km/s on the major axis by beam smearing, so the true dispersion is
+  unknown; a mock map smeared the same way is the fair comparison. Stability: a uniform
+  Keplerian disc has Q ~ (H/R)(M_BH/M_gas); NGC 1672 (M_gas/M_BH 0.04, H/R 0.10-0.15)
+  gives Q 2.3-3.4, NGC 613 at H/R 0.1 gives Q ~ 0.3, a fragmenting disc. Circinus (Izumi
+  et al. 2023): M_BH 2.0e6 from HCN, dense gas h/r ~ 0.1, sigma ~ 15 km/s, Q < 1 beyond
+  1 pc, Keplerian emission stronger on the blue side, inflow 0.2-0.34 Msun/yr at 0.27 pc,
+  ten times the viscous estimate; Tristram et al. (2022): thin cold disc, dynamical mass
+  ~3e6 within 2 pc. phantom offers `set_disc` with the enclosed-mass correction of the
+  rotation, `ieos = 6` (locally isothermal about the sink; `ieos = 3` is about the origin,
+  wrong once the black hole moves) and sink creation.
