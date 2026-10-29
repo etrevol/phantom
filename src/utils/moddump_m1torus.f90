@@ -18,7 +18,11 @@ module moddump
 !                   and sets the sink accretion radius to r_acc: the fluid limit of
 !                   colliding clouds
 !   hor   = value   H/R of the gas for mode = gas
-!   r_acc = value   accretion radius for mode = gas
+!   r_acc = value   accretion radius for mode = gas or clouds
+!   mode  = clouds  makes the torus particles colliding clouds of radius r_cloud
+!                   (softened over it) with restitution e_rest, and sets the sink
+!                   accretion radius to r_acc: collisions switched on in an evolved torus
+!   r_cloud, e_rest = values for mode = clouds
 !
 ! :References: None
 !
@@ -26,7 +30,8 @@ module moddump
 !
 ! :Runtime parameters: None
 !
-! :Dependencies: eos, externalforces, infile_utils, options, part
+! :Dependencies: cloudcollisions, eos, externalforces, infile_utils,
+!   options, part
 !
  implicit none
  character(len=*), parameter, public :: moddump_flags = ''
@@ -37,6 +42,8 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  use part,           only:nptmass,xyzmh_ptmass,vxyz_ptmass,ihsoft,ihacc,igas,istar,&
                            set_particle_type,iphase,iamtype
  use eos,            only:ieos,polyk,qfacdisc,isink
+ use part,           only:hsoft_nbody,accrete_stars
+ use cloudcollisions, only:r_cloud,e_rest
  use options,        only:iexternalforce
  use externalforces, only:mass1,accradius1,iext_star
  use infile_utils,   only:open_db_from_file,inopts,read_inopt,close_db
@@ -59,6 +66,8 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  call read_inopt(eps_c,'eps_c',db,errcount=ierr)
  call read_inopt(hor,'hor',db,min=0.,default=0.15)
  call read_inopt(r_acc,'r_acc',db,min=0.,default=0.05)
+ call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.01)
+ call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
  call close_db(db)
 
  select case(trim(mode))
@@ -93,8 +102,14 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
     xyzmh_ptmass(ihacc,1) = r_acc
     print "(a,i8,a,f6.3,a,f6.3)",' moddump_m1torus: ',npartoftype(igas),' particles to gas, H/R = ', &
           hor,', r_acc = ',r_acc
+ case('clouds')
+    hsoft_nbody   = 1.4*r_cloud
+    accrete_stars = .true.
+    xyzmh_ptmass(ihacc,1) = r_acc
+    print "(a,f6.3,a,f5.2,a,f6.3)",' moddump_m1torus: clouds of radius ',r_cloud,', e_rest = ', &
+          e_rest,', r_acc = ',r_acc
  case default
-    stop 'moddump_m1torus: mode must be fixed, soften or gas'
+    stop 'moddump_m1torus: mode must be fixed, soften, gas or clouds'
  end select
 
 end subroutine modify_dump
