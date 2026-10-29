@@ -29,6 +29,16 @@ PANELS = {
     # Fig. 12: PV along PA -20 deg, 0.3 arcsec strip; Fig. 13: integrated spectrum
     "combes25_fig12_pv": ("2026_combes_2509.08635v2", 8, (855, 150, 1545, 710), "full"),
     "combes25_fig13_spec": ("2026_combes_2509.08635v2", 8, (915, 970, 1185, 1195), "full"),
+    # Circinus, Lopez-Rodriguez et al. (2026), Fig. 2f ALMA 700 um dust, Fig. 2l HCN(3-2),
+    # Fig. 3d 700 um with the clumpy-torus contours, Fig. 3e its dust distribution
+    # (AASTeX pages, 1700 x 2200 px); 2 pc bars in the panels
+    "lr26_fig2f_700um": ("2026_lopez-rodriguez_2506.08077v1", 4, (575, 490, 865, 775), "2 pc bar"),
+    "lr26_fig2l_hcn": ("2026_lopez-rodriguez_2506.08077v1", 4, (1278, 812, 1562, 1090), "2 pc bar"),
+    "lr26_fig3d_700um": ("2026_lopez-rodriguez_2506.08077v1", 6, (1040, 425, 1305, 705), "2 pc bar"),
+    "lr26_fig3e_dust": ("2026_lopez-rodriguez_2506.08077v1", 6, (1305, 425, 1565, 705), "2 pc bar"),
+    # Izumi et al. (2023), Fig. 2C major-axis PV of [CI] and HCN(3-2), Fig. 2E sigma/V_rot
+    "izumi23_fig2c_pv": ("2023_izumi_2305.03993v2", 11, (1092, 140, 1604, 667), "full"),
+    "izumi23_fig2e_hr": ("2023_izumi_2305.03993v2", 11, (827, 680, 1604, 1100), "full"),
 }
 
 
