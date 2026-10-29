@@ -275,3 +275,8 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   sits on the sink (0.3-0.5 pc, one pixel), the cavity of the accretion radius, with no
   offset. A7 at t = 148: A1/S0 0.345, |r_c| 0.013 = (0.06/0.1) x 0.022: the paper's
   self-similar scaling holds from below, while A11 breaks it from above.
+- **moddump mode = clouds**: switches collisions on in an evolved torus (r_cloud, e_rest,
+  r_acc, softening 1.4 r_cloud). Checked on A3 at t = 100 (0.1 orbit, `B/tests/`): the
+  new .in carries r_cloud, e_rest, C_coll and hsoft_nbody; the mode is in place
+  (A1/S0 0.35). Next in the B slot after B6: this restart for 20 orbits (does the mode
+  survive collisions?), then the fluid runs B8.
