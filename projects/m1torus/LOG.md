@@ -385,3 +385,7 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   NGC 613's torus is dynamically hot (sigma/v ~ 0.5-1 for i = 25-50 deg) or its moment 2
   carries non-circular motions. A fit over i and M_BH plus heated runs at s 0.3 (and
   higher if needed) will separate the two.
+- **Plan for the hotness gap** (with the user): PLAN B13-B16. First B13b, the ALMA archive
+  cube of NGC 613, because Combes' stated recipe (plain clip at 1.5 rms over +-300 km/s)
+  is the one that inflated our own moment 2 by noise, while their black noise specks
+  suggest a mask: from the paper alone the recipe of Fig. 6 cannot be settled.
