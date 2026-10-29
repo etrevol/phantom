@@ -203,3 +203,6 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   against the observed 3 pc. Caveats: one seed, the start is far from equilibrium at this
   mass, the mode may still grow. dE/E 3.0e-3 and dL/L 6.1e-3 grow linearly, three and
   fifteen times A3; cause not yet checked. `results/m1torus/A/runs/compare_mtor.png`.
+- **A7 start** (`20261029-122207-mtor006-16k`, M_tor = 0.06, 16k, 250 orbits; the paper's
+  Fig. 6 runs to t = 1400, ~220 orbits). Tests the self-similar claim r_c ~ M_tor with
+  r_tb fixed from below, after A11 broke it from above.
