@@ -206,3 +206,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **A7 start** (`20261029-122207-mtor006-16k`, M_tor = 0.06, 16k, 250 orbits; the paper's
   Fig. 6 runs to t = 1400, ~220 orbits). Tests the self-similar claim r_c ~ M_tor with
   r_tb fixed from below, after A11 broke it from above.
+- **B4, collision module** (branch `m1torus/sticky`, `src/main/cloud_collisions.f90`). Pairs
+  from a sorted grid of 2 r_cloud cells, impulse along the line of centres with
+  restitution e_rest, lost energy in `ediss_coll` and the dump header; global timesteps,
+  dt < C_coll r_cloud / v_max; sinks accrete clouds when collisions are on. Unit tests
+  (`scripts/test/run_test_cloudcollisions.sh`): head-on and oblique pairs exact to 1e-14 in
+  v, p, L and E + E_diss; collision rate of 20k elastic clouds in a box with walls
+  1.00, 1.03, 1.00 of n sigma <v_rel> (three seeds; free streaming without walls gave
+  0.89, a thinning box). r_cloud = 0 reproduces master bit for bit. In phantom (4k clouds,
+  r_cloud 0.02, sink softened 0.05): e = 1 keeps E to 4e-5 over 1.5 orbits and L to 2e-6;
+  e = 0.5 closes E + E_diss to 1.2e-4 until clouds reach the sink, whose mergers remove
+  energy phantom does not tally; L stays to 1e-5 with 352 clouds accreted. Two traps:
+  without accretion a plunging cloud forced 1e-9 substeps (now sinks swallow clouds), and
+  a central clump deepens phantom's tree beyond 2 maxp nodes at small N: build with
+  NCELLSMAX=1048576.
