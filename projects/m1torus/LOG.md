@@ -826,3 +826,7 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   tree code violates Newton's third law, "implying the loss of total-momentum
   conservation" (phantom's case). Berczik et al. (2013): phi-GPU uses 4th-8th order
   Hermite with hierarchical block time steps.
+- **B30 start**: the intermediate torus e_max 0.6, i_max 56, R0 0.42 (between B25
+  0.70-52-0.53 and A3 0.5-60-0.3), M_tor 0.1, 16k, A3 numerics. Criteria set before:
+  at t = 100 stop if A1/S0 < 0.04 and not rising; otherwise run to saturation (10-orbit
+  mean changes < 10% over 20 orbits), at most 250 orbits.
