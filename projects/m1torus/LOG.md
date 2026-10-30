@@ -688,3 +688,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   45 deg showed none, unlike the paper's 128k), so then 64k (~12 h) is proposed, not a
   conclusion. Stop criterion: at t = 100, A1/S0 < 0.04 (3x the 16k noise) and not
   rising over 80-100: stop.
+- **B25 at t = 100 (criterion: continue).** A1/S0 0.017, 0.020, 0.028, 0.030, 0.030,
+  0.027, 0.025 at t 10-90 (10-orbit means; A6 at 45 deg flat at ~0.02, A3 at 60 deg
+  0.086 by 50 and 0.30 by 80): a slow rise faded at 70-90, then t 90-100 mean 0.032
+  (max 0.063, 0.051 at 100.6), r_c 0.0014-0.0021: below 0.04 but rising, so the run
+  goes on to 150 as set. dE/E 7.8e-4, dL/L 1.8e-3 (slow drift, e_max 0.7 brings more
+  particles near the black hole).
