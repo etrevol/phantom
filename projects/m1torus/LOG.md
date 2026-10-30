@@ -1086,3 +1086,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   to the maximum), B36 interferometric filtering in the mock pipeline, B37 NGC 1672 on
   equal footing (if the thick torus with the mode does not fit, find or build another
   model), B38 figures of the representative runs.
+- **B34, black-hole position of NGC 613 (first pass).** Channel centroids of the fast CO
+  (80 < |v| < 300 km/s, beam-smoothed channels above 4 sigma; maser-disc method, r ~
+  1/(v - v0)^2 along the major axis): black hole (-3 +- 4, +3 +- 7) mas, PA 7 +- 8, v0
+  +15 +- 15 km/s; blue/red midpoints at matched |v| (+2..+4, +1..+3) mas; moment-2 peak
+  (-2.5, +5); moment-1 disc fit (-1.6, +10.6). The kinematic estimates gather at (0 +- 5,
+  +4 +- 4) mas; the continuum peak (+10, +2.5) sits ~10 mas (0.8 pc) east of them, ~2
+  sigma. No VLBI maser position of NGC 613 found (alphaXiv search). Lopsidedness about
+  centres in that region: A1 0.11-0.15, offset 0.6-0.8 pc toward PA 332-7 (about (0, +5):
+  0.113, 0.59 pc, PA 350); only the moment-1 disc centre gives 0.04. So NGC 613 stays
+  lopsided against the no-mode level (0.02) for every kinematic centre but one, at A1
+  ~0.11-0.17 and PA N to NW, weaker than B31's 0.167 about the continuum. The fast blue
+  gas at -150 km/s 40 mas NW, on the receding side, belongs to the moment-2 ridge
+  (PA ~310): non-circular gas (an inner stream or the outflow base), not rotation.
