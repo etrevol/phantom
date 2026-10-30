@@ -38,20 +38,16 @@ Where B stands: collisional cloud tori cannot stay hot for long whatever heats t
 restitution gives a stable balance with sigma ~ v_A); the collisionless torus fits the
 archive cube best once its size is free (R_tor ~6.6 pc, i ~60, M_dyn ~1.4e7) but lacks
 the central component (40% of the CO within 4 pc, round core) and drives e_max to 1.
-Order (the user's choice 2026-10-30, after B19-B26: consolidate before predicting;
-no 64k run for now):
-1. B27: the black-hole mass, ours 2-2.5 times below Combes et al. (2025) in both
-   galaxies (1.5 vs 3.4e7, 1.9 vs 4.5e7): their PV method on our models, PV metrics in
-   the fit.
-2. B28: extended mass in the potential (stars, gas) where the rotation rises outward
-   (NGC 1672, 107 -> 127 km/s at 1.6-6 pc); it also sets the precession of the mode.
-3. B29: the m = 1 tension in NGC 613: m0 A1 0.17 against A2, A3 ~0.10 within 0.1
-   arcsec and a torus centroid ~1 pc from the continuum AGN, closer to the strong mode
-   (A3: r_tb ~0.24 R) than to the weak one of the fitted torus (B25: 0.17 pc); torus
-   mass, orbit parameters, or another cause (feeding, clumps, outflow).
-4. B20 only then, blind: predictions written before looking, for quantities not yet
-   seen (HCO+(4-3), other galaxies with high-resolution archive data).
-5. Write-up after the model: A10 report with the B chapters; papers decided later.
+Order (the user's choice 2026-10-30, after B25-B30): B27-B30 done (masses, extended
+mass, the m = 1 of NGC 613: a slow mode of moderate strength is consistent, the
+strength not pinned).
+1. B20: blind prediction on HCO+(4-3), not yet looked at: predictions from the fitted
+   tori (A3, B30, B25 at their CO views), written and committed before the HCO+ cube is
+   processed; then measured with the same pipeline.
+2. B31: the lopsidedness (A1, torus-AGN offset) as fit metrics with errors from noise
+   and clump realisations; the strength of the mode re-estimated.
+3. Discussion with the user: how the results go into the paper (one or two papers).
+4. Write-up after the model: A10 report with the B chapters.
 
 ## A. Reproduction of the collisionless mode
 
@@ -181,7 +177,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B17 | [x] | literature on the dispersion of cloud tori: collisions damp it in orbits (Krolik & Begelman 1988), clumpy-torus covering numbers (Nenkova et al. 2008), tori as disc winds (Elitzur & Shlosman 2006), heated cloud models (Vollmer et al.), the molecular outflow of NGC 613 (Audibert et al. 2019; Combes et al. 2019, 2025) | what of B12-B15 is known and what is new; does an outflow take part of moment 2 | 1-2 h |
 | B18 | [x] | the ALMA data in depth: continuum subtraction of the pipeline cube against Combes Fig. 6 and 12 (the stripe at the AGN, their hotter central moment 2), the continuum image, total flux against their Table 2, HCO+(4-3) | why the archive cube and the published figures differ; which to trust for kinematics | 1-2 h |
 | B19 | [x] | fit of the collisionless torus to the archive cube on initial states (phantomsetup, seconds each): i_max, e_max, M_tor, R_0 with i and M_BH; one full run of the best (ask first) for the mode and the evolved maps | best physically grounded model and its mismatch | done 2026-10-30: torus region, R_tor 5.9 pc, i 48, M_dyn 1.5e7, chi2 1.8/dof |
-| B20 | [ ] | prediction and check: a measurable signature of the model (e.g. black-hole offset from the torus centre, lopsided moment 0, PV asymmetry) for a case with observations, predicted before looking | the prediction against the data | open |
+| B20 | [~] | prediction and check: a measurable signature of the model (e.g. black-hole offset from the torus centre, lopsided moment 0, PV asymmetry) for a case with observations, predicted before looking | the prediction against the data | open |
 | B21 | [x] | heating by partially elastic collisions in the shear (Krolik & Begelman 1988, Sect. IVb): clouds with e_rest 0.9, no thermostat, from A3 at t = 100; extreme first, stop at t = 103 if the torus flattens as B6b; then 0.7-0.8 for the threshold and 20 orbits with the mode and synthetic maps | does a cloud torus heat itself to sigma ~ 0.3-0.5 v_K, and the e threshold against KB88 eq. 24 | done: constant e has no balance (0.5 collapses, 0.9 runs away); next a speed-dependent e (KB88 eq. 25), ask the user |
 | B22 | [x] | the molecular outflow of NGC 613 (Audibert et al. 2019) added kinematically to the synthetic cube: how much of the nuclear moment 2 and the PV wing it explains | moment 2 at the nucleus and PV against the archive cube | done 2026-10-30: the outflow does not set the annulus moment 2; feeding needs the drained gas to leave |
 | B23 | [x] | magnetised clouds: restitution from the collision speed (KB88 eq. 25, `v_alfven`), no thermostat, from A3 at t = 100; v_A 0.2 first, stop criterion at t = 103 | a stable hot torus (sigma ~0.25-0.4 v_K predicted), then the mode and the synthetic maps against the archive cube | done 2026-10-30: v_A 0.2 bound but cold (sigma_z 0.11), v_A 0.6 at sigma_z 0.28 drains and evaporates |
@@ -192,6 +188,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B28 | [x] | extended mass (stellar cluster, gas) in the generator potential and in phantom (external potential) where the rotation rises outward (NGC 1672) | rotation profile shape; its effect on the precession and the mode | done 2026-10-30: none needed in NGC 613; marginal in NGC 1672, whose rising |m1| is the outer decoupled gas |
 | B29 | [~] | NGC 613 m = 1 tension: m0 A1 0.17 > A2, A3 ~0.10, torus centroid ~1 pc from the AGN; which torus (M_tor, e_max, i_max) or which other cause gives it | a model of the observed lopsidedness or a reason it is not the slow mode | ~2-4 h |
 | B30 | [x] | intermediate torus 0.6-56-0.42 (e_max, i_max, R0), M_tor 0.1, 16k, to saturation | kinematics (40 numbers) and the m = 1 lopsidedness of NGC 613 together | done 2026-10-30: saturated A1/S0 ~0.17; chi2 49.6 + m = 1 1.2: best of the three, by Delta chi2 3-5 |
+| B31 | [ ] | lopsidedness metrics (m0 A1, torus centroid offset and direction about the AGN) in the fit, errors from noise and clump realisations | the mode strength with an honest uncertainty | ~2 h |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.
