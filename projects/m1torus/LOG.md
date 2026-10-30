@@ -611,3 +611,29 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   r < 0.4 pc, to be set against the inflow rate that feeds NGC 613 and its weak AGN
   (not yet checked, speculative). The intermediate v_A 0.3-0.4 would give the hottest
   torus that stays bound (one 20-min test).
+- **Correction to B18**: H13CN(4-3) lies at ~+395 km/s from CO(3-2) (Audibert et al.
+  2019, Fig. 15); the "red wing to +500 km/s" at the AGN is largely that line, not CO.
+  The CO wings are -400..-150 and +150..+300 km/s.
+- **B22, outflow and fast nuclear gas** (Audibert et al. 2019: CO wings -400..-90 and
+  +80..+300 km/s in a 0.28 arcsec aperture, 8% of the nuclear flux, blue north, red
+  south along the radio jet at PA 12, opposite to the torus rotation; M_out 2e6 Msun,
+  7-27 Msun/yr). In the archive cube at 0.015 arcsec the fast gas sits in the centre:
+  blue 0.34, red 0.60 Jy km/s within 0.05 arcsec against 5.3 in -150..+150 (~15%), no
+  clear north-south split (outflow and Keplerian rotation within ~2 pc mixed). Added
+  to the model cubes as a nuclear blob (size 0.015 arcsec, the measured fluxes and
+  velocity ranges) it leaves moment 2 in 0.02-0.05 and 0.05-0.1 arcsec unchanged (A3
+  24/22, A11 28/23; chi2 26 -> 25.5, 12.3 -> 11.5). The data agree: the archive moment 2
+  is 39/25 km/s with the velocity window cut to +-300, +-200 or +-150 km/s alike. So the
+  annulus moment 2 of NGC 613 is the width of the bulk line, not the outflow
+  (established for these metrics). Also: 40% of the CO flux within 0.1 arcsec lies
+  within 0.05 arcsec (4 pc); the model tori (R_tor 8 pc, cavity) put little there.
+- **Feeding, orders of magnitude.** Model drain into r < 0.4 pc (torus 1e7 Msun, Combes
+  et al. 2025, Table 2; P_orb 0.36 Myr at M_BH 3.4e7): B12 0.56, v_A 0.2 1.35, s 0.3
+  thermostat 1.8, v_A 0.6 2.8 Msun/yr (x0.77 at M_BH 2e7). The AGN accretes
+  L/(eta c^2) = 3e-4 to 7e-3 Msun/yr (L_AGN 1.7-4e42 erg/s, eta 0.1-0.01; Audibert et
+  al. 2019): 100-4000 times less. Inflow from the torques (gas loses its angular
+  momentum in one rotation at 25-100 pc) is not given as a rate; with 1e7-1e8 Msun in
+  the spiral and T_rot ~2 Myr it is ~5-50 Msun/yr (speculative). A hot collisional
+  torus could then be fed, but the gas it drains cannot go into the black hole: it
+  must pile up within 0.4 pc, form stars or leave in the outflow (7-27 Msun/yr, same
+  order): an inflow -> torus -> outflow circulation, speculative and untested.
