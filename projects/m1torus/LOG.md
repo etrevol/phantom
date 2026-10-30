@@ -845,3 +845,22 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   are consistent with a slow m = 1 mode of moderate strength (A1/S0 ~0.1-0.35), whose
   orientation (fitted from the kinematics) puts the torus NW of the black hole as
   observed; the strength is not pinned by these metrics (plausible).
+- **B20 pre-registration (written before the HCO+ data are opened).** The pipeline has
+  no HCO+(4-3) cube: spw27 holds the line but only its continuum image was made
+  ("products mitigated", an atmospheric line, QA2); the file named
+  ngc613_hcop43_spw21 is the Cont2 window 353.23-355.04 GHz, which holds HCO+ (354.98
+  GHz at 1481 km/s) only for v > -51 km/s, the receding half. With the user: test on
+  that half. Prediction (models at their CO-fitted views, noise-free, HCO+ emissivity
+  ~ density^q with q 0.5-2, CO ~ mass, density from 32 neighbours; v +20..+300 km/s,
+  centroids within 0.1 arcsec about the black hole; `results/m1torus/B/b20_hcop/
+  prediction.txt`): the HCO+ minus CO centroid shift is 0.14-0.36 pc toward PA 144-158
+  with no mode (A6), 0.19-0.51 pc toward 159-162 for the weak mode (B25), 0.05-0.19 pc
+  toward 174-206 for the intermediate (B30), 0.11-0.42 pc toward 225-258 for the strong
+  (A3); the CO receding-half centroid itself lies 3.3-3.9 pc from the black hole toward
+  PA 334-340. Density weighting alone pulls the receding half inward (PA ~150-160);
+  the mode adds a transverse part, so the direction, not the size, separates them.
+  Measurement: the same velocity range and centroid radius, smooth-and-mask moment 0 at
+  4.75 sigma for both lines, the AGN at the continuum peak (E +0.0100, N +0.0025
+  arcsec), the error from noise realisations at the measured HCO+ rms. Decision: if
+  |shift| >= 2 sigma, PA 170-260 favours a moderate or strong mode, PA 140-165 no or
+  a weak mode; otherwise inconclusive.
