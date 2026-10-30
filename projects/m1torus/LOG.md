@@ -210,7 +210,7 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   from a sorted grid of 2 r_cloud cells, impulse along the line of centres with
   restitution e_rest, lost energy in `ediss_coll` and the dump header; global timesteps,
   dt < C_coll r_cloud / v_max; sinks accrete clouds when collisions are on. Unit tests
-  (`scripts/test/run_test_cloudcollisions.sh`): head-on and oblique pairs exact to 1e-14 in
+  (`scripts/test/run_test.sh`): head-on and oblique pairs exact to 1e-14 in
   v, p, L and E + E_diss; collision rate of 20k elastic clouds in a box with walls
   1.00, 1.03, 1.00 of n sigma <v_rel> (three seeds; free streaming without walls gave
   0.89, a thinning box). r_cloud = 0 reproduces master bit for bit. In phantom (4k clouds,
@@ -975,3 +975,20 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   hot and compact while it traces the mode. Criteria as b4 (bound-gas R90 > 3, unbound
   > 10%, gas A1 < 3x noise for 5 orbits, < 30% clouds left), else 15 orbits (t = 115;
   ~7 orbits per hour at this r_cl).
+- **Cloud inflow coded** (`src/main/inject_cloudfeed.f90`, build with
+  `SRCINJECT=inject_cloudfeed.f90`, run with `run.sh --maxp N`): clouds (star type) enter
+  on a ring feed_r (width feed_dr) at feed_mdot [M_BH per orbit at R_tor], with
+  feed_frot v_K, dispersion feed_s v_K, orbits tilted up to feed_inc. Point-symmetric
+  pairs, so the feeding adds no m = 1 and no centre-of-mass shift. Unit test
+  (`scripts/test/run_test.sh test_cloudfeed`): counts, ring, speeds, tilts, pair symmetry,
+  mean rate, dispersion pass. Smoke run (A3 t = 100, half gas, feed_mdot 0.05, 0.3
+  orbit, 2 threads): 2458 clouds injected, exactly the set rate; no errors.
+  `twocomp.py --rmax` keeps the gas within a radius, to leave out clouds still falling in.
+- **Inflow rates in the literature (for the feeding run).** NGC 613: gravity torques
+  between 25 and 100 pc remove the gas angular momentum in one rotation (9.5 Myr),
+  efficient inflow to the centre; outflow 2e6 Msun, 7-27 Msun/yr inside 25 pc (Audibert
+  et al. 2019, Sect. 5). Circinus: inflow 0.2-0.34 Msun/yr at 0.27 pc, most of it
+  blown out (Izumi et al. 2023). Collisional tori driven by external accretion: thick at
+  0.3-3 Msun/yr (Vollmer, Beckert & Davies 2008). In code units for NGC 613 (M 1.5e7,
+  R_tor 6 pc, orbit 0.36 Myr) feed_mdot = 0.024 Mdot[Msun/yr]: 0.3 Msun/yr = 0.0072,
+  which renews the 0.05 M_BH of gas in ~7 orbits, the spreading time of b4.

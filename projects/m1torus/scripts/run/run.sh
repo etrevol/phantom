@@ -13,6 +13,8 @@
 # --make VAR=VALUE passes a build flag (e.g. IND_TIMESTEPS=no; it forces a rebuild).
 # --mod key=value (with --restart) passes the dump through moddump_m1torus first, e.g.
 # --mod mode=fixed (sink -> fixed point mass) or --mod mode=soften --mod eps_c=0.05.
+# --maxp N caps the particle arrays of a run that adds particles (cloud inflow): with
+# injection phantom allocates 5.2M otherwise; kept in ./maxp for continue.sh.
 set -euo pipefail
 
 name=run
@@ -21,6 +23,7 @@ kind=runs
 threads=8          # 8 physical cores; 16 hyperthreads are no faster
 fg=no
 restart=
+maxp=
 make_opts=()
 mod_opts=()
 in_opts=()
@@ -34,6 +37,7 @@ while [[ $# -gt 0 ]]; do
     --in) in_opts+=("$2"); shift 2 ;;
     --make) make_opts+=("$2"); shift 2 ;;
     --mod) mod_opts+=("$2"); shift 2 ;;
+    --maxp) maxp=$2; shift 2 ;;
     --restart) restart=$(cd "$(dirname "$2")" && pwd)/$(basename "$2"); shift 2 ;;
     --) shift; break ;;
     *) echo "unknown option $1" >&2; exit 2 ;;
@@ -54,6 +58,7 @@ export SYSTEM=${SYSTEM:-gfortran}
 mkdir -p "$dir"
 cp "$root/bin/phantom" "$root/bin/phantomsetup" "$root/bin/phantommoddump" "$dir/"
 cd "$dir"
+[[ -n $maxp ]] && echo "$maxp" > maxp
 
 # replace key = value in an input file; a key that is not there is an error, since
 # phantom would ignore it silently
@@ -72,7 +77,10 @@ if [[ -n $restart ]]; then
     cp m1torus.in src.in
     printf '%s\n' "${mod_opts[@]}" | sed 's/=/ = /' > moddump_m1torus.opts
     rm m1torus.in
-    ./phantommoddump "src_$num" "m1torus_$num" > setup.log 2>&1 \
+    # an .in from a build without the new options (e.g. inflow) is rewritten with
+    # their defaults on the first call; the second call then goes through
+    md() { ./phantommoddump "src_$num" "m1torus_$num" ${maxp:+--maxp=$maxp} > setup.log 2>&1; }
+    md || { grep -q "try again using revised input file" setup.log && md; } \
       || { echo FAILED > status; tail -20 setup.log; exit 1; }
     rm "src_$num" src.in
   else
@@ -99,12 +107,13 @@ cat > provenance.json <<EOF
   "setup_opts": "${setup_opts[*]:-}",
   "restart": "${restart}",
   "mod_opts": "${mod_opts[*]:-}",
+  "maxp": "${maxp}",
   "in_opts": "${in_opts[*]:-}"
 }
 EOF
 
 launch='export OMP_NUM_THREADS='$threads'; echo RUNNING > status
-  if ./phantom m1torus.in > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
+  if ./phantom m1torus.in $([[ -f maxp ]] && echo --maxp=$(cat maxp)) > run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
 if [[ $fg == yes ]]; then
   bash -c "$launch"
   echo "$(cat status): $dir"

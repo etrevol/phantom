@@ -3,7 +3,10 @@
 in a two-component torus, per dump: amplitude A1/S0 and phase about the black hole,
 the gas dispersion, unbound share and spread (stop criteria of LOG 2026-10-30).
 
-    twocomp.py RUN_DIR [--every 2]
+    twocomp.py RUN_DIR [--every 2] [--rmax 1.6]
+
+--rmax keeps the gas within that radius of the black hole (runs with inflow: the clouds
+still falling in from feed_r would dilute the torus numbers).
 """
 import argparse
 import sys
@@ -21,7 +24,7 @@ def mode(x, w):
     return 2 * abs(z), np.degrees(np.angle(z)) % 360
 
 
-def row(path):
+def row(path, rmax=np.inf):
     d = pio.read_dump(path)
     g, s = d["gas"], d["sinks"]
     it = g["itype"]
@@ -34,6 +37,8 @@ def row(path):
     out = dict(t=d["header"]["time"] / (2 * np.pi))
     for name, k in (("stars", 5), ("gas", 4)):
         sel = live & (it == k)
+        if k == 4:
+            sel &= np.linalg.norm(x, axis=1) < rmax
         xs, vs = x[sel], v[sel]
         a1, ph = mode(xs, np.ones(len(xs)))
         r = np.linalg.norm(xs, axis=1)
@@ -52,10 +57,11 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("run")
     ap.add_argument("--every", type=int, default=2)
+    ap.add_argument("--rmax", type=float, default=np.inf)
     a = ap.parse_args()
     dumps = sorted(Path(a.run).glob("m1torus_[0-9][0-9][0-9][0-9][0-9]"))[::a.every]
     for p in dumps:
-        r = row(p)
+        r = row(p, a.rmax)
         st, ga = r["stars"], r["gas"]
         dph = (ga["phase"] - st["phase"] + 180) % 360 - 180
         print(f"t {r['t']:6.1f} | stars A1 {st['A1']:.3f} phase {st['phase']:5.0f} sz {st['sz']:.2f} | "

@@ -2,7 +2,7 @@
 ! a head-on and an oblique pair (velocities, momentum, angular momentum, energy),
 ! pairs that must not collide, and the collision rate of elastic clouds in a box
 ! against kinetic theory, n sigma <v_rel> N / 2.
-! Build and run: projects/m1torus/scripts/test/run_test_cloudcollisions.sh
+! Build and run: projects/m1torus/scripts/test/run_test.sh
 program test_cloudcollisions
  use part,            only:istar,isetphase,maxtypes,ediss_coll,eheat_coll,esf_coll,nptmass,&
                             xyzmh_ptmass,vxyz_ptmass,ispinx,ispinz,nsinkproperties

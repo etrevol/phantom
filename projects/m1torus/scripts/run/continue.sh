@@ -31,7 +31,7 @@ echo "$(date -Iseconds) continued from $last to $orbits orbits" >> continued.log
 # the rate of the earlier segment must not count for the new one
 rm -f .status_prev
 launch='export OMP_NUM_THREADS='$threads'; echo RUNNING > status
-  if ./phantom m1torus.in >> run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
+  if ./phantom m1torus.in $([[ -f maxp ]] && echo --maxp=$(cat maxp)) >> run.log 2>&1; then echo COMPLETED > status; else echo FAILED > status; fi'
 if [[ $fg == yes ]]; then
   bash -c "$launch"; echo "$(cat status): $run"
 else
