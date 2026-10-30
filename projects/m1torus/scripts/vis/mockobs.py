@@ -203,8 +203,9 @@ def moments(cb, t: Target, nsig=4.75, rms=None):
     return m0, m1, m2
 
 
-def pv(cb, t: Target, pa=None, halfwidth=None):
-    """Position-velocity slice along PA through the AGN, summed over the slit width."""
+def pv(cb, t: Target, pa=None, halfwidth=None, centre=(0.0, 0.0)):
+    """Position-velocity slice along PA through the AGN (or centre = (east, north)
+    [arcsec] on the map), summed over the slit width."""
     pa = t.pa if pa is None else pa
     hw = t.pv_halfwidth_arcsec if halfwidth is None else halfwidth
     xs = cb["xs"]
@@ -213,8 +214,8 @@ def pv(cb, t: Target, pa=None, halfwidth=None):
     offs = np.arange(-hw, hw + 1e-9, ds)
     out = np.zeros((len(cb["vs"]), len(xs)))
     for o in offs:
-        e = xs * np.sin(th) + o * np.cos(th)
-        nn = xs * np.cos(th) - o * np.sin(th)
+        e = centre[0] + xs * np.sin(th) + o * np.cos(th)
+        nn = centre[1] + xs * np.cos(th) - o * np.sin(th)
         ie = (e - xs[0]) / ds
         jn = (nn - xs[0]) / ds
         for iv in range(len(cb["vs"])):

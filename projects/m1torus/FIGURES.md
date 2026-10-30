@@ -16,6 +16,7 @@ implementation differs from Bannikova et al. (2026) and is not "the paper".
 | colliding (sticky) clouds | Colliding-cloud model | M_tor, N, e (or "magnetised, $v_{\rm A} = ...\,v_{\rm K}(R_{\rm tor})$" when e follows the collision speed), r_cl |
 | SPH gas converted from the torus | Isothermal gas model | M_tor, N, H/R |
 | SPH gas disc set up as a disc | Isothermal gas-disc model | M_tor, N, R range, H/R |
+| collisionless stars plus colliding gas clouds | Two-component model | as clouds, plus "gas clouds f%, collisionless stars"; with inflow "inflow $\dot M = ...\,M_c\,P_{\rm orb}^{-1}$ at ...$\,R_{\rm tor}$" |
 | clouds with the thermostat (and clump sinks) | Heated colliding-cloud model | as clouds, plus the thermostat floor $\sigma_{R,z} \geq s\,v_{\rm K}$ ($\sigma_{R,\phi,z}$ for runs before 2026-10-29 21:00), $\tau_{\rm heat}$ if not 1, the clump size that makes a sink |
 
 A run restarted from another model says so: "..., collisions from t = 100 P_orb of the
@@ -53,5 +54,6 @@ their own run names (their N and epsilon).
   stated. No run ids in the frame. Every finished run gets its movie
   (`anim_particles.py`; collisionless runs also `--corotate`), made when the run ends
   and again by `regen_all.sh`. Cloud runs colour by the density of the 32 nearest
-  neighbours.
+  neighbours. Two-component runs colour the stars by density and draw the gas clouds in
+  one colour (magenta) over them; their stars-and-gas time series is `vis_twocomp.py`.
 - After a change of these rules, regenerate every figure and movie of the finished runs.

@@ -64,6 +64,12 @@ def model_parts(run):
     elif r_cloud > 0:
         heat = _num(inp.get("heat_s", 0) or 0)
         name = "Heated colliding-cloud model" if heat > 0 else "Colliding-cloud model"
+        # part of the particles stay collisionless stars (moddump frac_clouds < 1)
+        opts = run / "moddump_m1torus.opts"
+        frac = _num(pio.read_setup(opts).get("frac_clouds", 1) or 1) if opts.exists() else 1.0
+        if frac < 1:
+            name = "Two-component model"
+            pars["f"] = "gas clouds " + _math(rf"{100 * frac:g}\%") + ", collisionless stars"
         va = _num(inp.get("v_alfven", 0) or 0)
         if va > 0:     # magnetised clouds: e set by the collision speed (KB88 eq. 25)
             pars["e"] = "magnetised, " + _math(r"v_{\rm A} = " + _fmt(va) + r"\,v_{\rm K}(R_{\rm tor})")
@@ -78,6 +84,10 @@ def model_parts(run):
             tau = _num(inp.get("heat_tau", 1) or 1)
             if abs(tau - 1.) > 1e-9:
                 pars["tau"] = _math(r"\tau_{\rm heat} = " + _fmt(tau) + r"\,P_{\rm loc}")
+        feed = _num(inp.get("feed_mdot", 0) or 0)
+        if feed > 0:
+            pars["feed"] = ("inflow " + _math(r"\dot M = " + _fmt(feed) + r"\,M_c\,P_{\rm orb}^{-1}")
+                            + " at " + _math(_fmt(_num(inp.get("feed_r", 2))) + r"\,R_{\rm tor}"))
         nsf = int(_num(inp.get("sf_n", 0) or 0))
         if nsf > 0:
             pars["sf"] = "sinks from clumps of " + _math(f"{nsf + 1}") + " clouds"
@@ -107,7 +117,7 @@ def model_parts(run):
             t0 = pio.read_dump(dump)["header"]["time"] / P_ORB
             when = _math(f"t = {t0:.0f}" + r"\,P_{\rm orb}")
             what = {"Colliding-cloud model": "collisions", "Heated colliding-cloud model": "collisions",
-                    "Isothermal gas model": "gas"}.get(name)
+                    "Isothermal gas model": "gas", "Two-component model": "gas"}.get(name)
             suffix = (f", {what} from {when} of the collisionless model" if what
                       else f", restarted at {when}")
     return name, pars, suffix

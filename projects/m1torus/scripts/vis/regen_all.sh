@@ -41,14 +41,17 @@ rm -f "$A/compare_mtor.png" "$A/compare_mtor006.png"     # superseded by compare
 py compare_obs.py "$c/m1torus_00100" --out "$root/results/m1torus/B/compare_A3"
 
 # dissipative runs: time series, mode panels, synthetic maps of the last dump
+# finished = completed, failed or stopped by a criterion; INVALID runs are left out
 for d in "$B"/2*; do
-  [[ -f $d/status ]] && grep -qE "COMPLETED|FAILED" "$d/status" || continue
+  [[ -f $d/status ]] && grep -qE "^(COMPLETED|FAILED|STOPPED)" "$d/status" || continue
   last=$(ls "$d"/m1torus_[0-9][0-9][0-9][0-9][0-9] | tail -1)
   t1=$(python3 -c "import sys; sys.path.insert(0,'$root/projects/common'); import phantom_io as p; print(round(p.read_dump('$last')['header']['time']/6.2831853))")
   py vis_b.py --run "$d"
   py vism1.py --run "$d" --window "$((t1 - 3)),$t1"
   py compare_obs.py "$last"
   py compare_circinus.py "$last"
+  # two-component runs (stars as dark-matter type): stars and gas over time
+  [[ -f $d/moddump_m1torus.opts ]] && grep -q frac_clouds "$d/moddump_m1torus.opts" && py vis_twocomp.py --run "$d"
   echo "B $(basename "$d")"
 done
 
@@ -62,7 +65,7 @@ for r in "${!WIN[@]}"; do
   echo "movie A $r"
 done
 for d in "$B"/2*; do
-  [[ -f $d/status ]] && grep -qE "COMPLETED|FAILED" "$d/status" || continue
+  [[ -f $d/status ]] && grep -qE "^(COMPLETED|FAILED|STOPPED)" "$d/status" || continue
   py anim_particles.py --run "$d"
   echo "movie B $(basename "$d")"
 done

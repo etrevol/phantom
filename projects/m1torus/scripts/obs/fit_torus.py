@@ -61,14 +61,21 @@ MISS = 25.                      # chi2 of an annulus the model leaves empty
 SIG_PV = 20.                    # error of a PV velocity percentile [km/s] (~3 channels)
 POS = (0.1, 0.2, 0.35, 0.5, 0.7, 0.9)   # PV positions along the major axis [x outer annulus edge]
 DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
-               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5)
+               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5,
+               dx=0., dy=0., dv=0., pa=np.nan)
+# geometry of the data: black hole at (dx, dy) [arcsec east, north] of the map centre,
+# systemic velocity dv [km/s] above the adopted one, sky PA of the model (nan: galaxies.py);
+# the data metrics are taken about that centre and velocity, the model's about its own
+GEO = ("dx", "dy", "dv", "pa")
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
               R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.),
-              f_ext=(0.0, 5.0), beta=(0.5, 3.0))
+              f_ext=(0.0, 5.0), beta=(0.5, 3.0),
+              dx=(-0.03, 0.03), dy=(-0.03, 0.03), dv=(-60., 60.), pa=(None, None))
 GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --galaxy
 _noise = {}
 _snap = {}
+_data = {}
 
 
 def extend(p, f_ext, beta):
@@ -214,13 +221,13 @@ def metrics(m0, m1, m2, east, north, kind="profiles"):
     return np.array(share + v1 + v2 + [ba])
 
 
-def pv_metrics(cb, t):
+def pv_metrics(cb, t, centre=(0.0, 0.0), dv=0.0):
     """Velocity percentiles (10th, 90th) of the flux in the major-axis PV diagram (slit one
     beam wide) at +-POS x the outer annulus edge: the rotation curve, its asymmetry and the
     line wings, robust to noise (PV smoothed by one beam and 1.5 channels, kept above 4
     sigma, sigma from the median absolute deviation)."""
-    pvd = mo.pv(cb, t, pa=t.pa, halfwidth=t.beam_arcsec / 2)
-    xs, vs = cb["xs"], cb["vs"]
+    pvd = mo.pv(cb, t, pa=t.pa, halfwidth=t.beam_arcsec / 2, centre=centre)
+    xs, vs = cb["xs"], cb["vs"] - dv
     sm = gaussian_filter(pvd, (1.5, t.beam_arcsec / mo.FWHM / t.pix_arcsec))
     sig = 1.4826 * np.median(np.abs(sm - np.median(sm)))
     out = []
@@ -257,19 +264,32 @@ def chi2(mod, obs, kind="profiles"):
     return float(c)
 
 
-def observed(kind):
-    d = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_mask_moments.npz")
-    m = metrics(d["m0"], d["m1"], d["m2"], d["east"], d["north"], "basic" if kind == "basic" else "profiles")
+def observed(kind, geo=None):
+    """The data metrics, about the black hole at (dx, dy) with systemic offset dv and the
+    model's sky PA when geo (a parameter dict) is given, else about the map centre."""
+    if GAL not in _data:
+        d = dict(np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_mask_moments.npz"))
+        c = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_cube_win.npz")
+        # ascending east for the slit sampler, as compare_obs.py
+        cb = dict(cube=c["cube"][:, :, ::-1].astype(float), xs=c["east"][::-1], vs=c["v"])
+        _data[GAL] = (d, cb)
+    d, cb = _data[GAL]
+    g = dict(dx=0., dy=0., dv=0., pa=np.nan)
+    g.update({k: geo[k] for k in GEO if geo and k in geo})
+    m = metrics(d["m0"], d["m1"] - g["dv"], d["m2"], d["east"] - g["dx"], d["north"] - g["dy"],
+                "basic" if kind == "basic" else "profiles")
     if kind != "profiles+pv":
         return m
-    c = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_cube_win.npz")
-    # ascending east for the slit sampler, as compare_obs.py
-    cb = dict(cube=c["cube"][:, :, ::-1].astype(float), xs=c["east"][::-1], vs=c["v"])
-    return np.r_[m, pv_metrics(cb, target())]
+    t = target()
+    if np.isfinite(g["pa"]):
+        t = replace(t, pa=float(g["pa"]))
+    return np.r_[m, pv_metrics(cb, t, centre=(g["dx"], g["dy"]), dv=g["dv"])]
 
 
 def model_metrics(par, src, kind):
     t = replace(target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
+    if np.isfinite(par.get("pa", np.nan)):
+        t = replace(t, pa=float(par["pa"]))
     if src in ("torus", "torus+disc"):
         p = extend(torus(par["R0"], par["e_max"], par["i_max"]), par["f_ext"], par["beta"])
         if src == "torus+disc":
@@ -292,6 +312,8 @@ def model_metrics(par, src, kind):
 
 def objective(x, names, fixed, src, kind, obs):
     par = dict(fixed, **dict(zip(names, x)))
+    if any(k in names for k in GEO) or any(par[k] != 0 for k in ("dx", "dy", "dv")) or np.isfinite(par["pa"]):
+        obs = observed(kind, par)
     return chi2(model_metrics(par, src, kind)[0], obs, kind)
 
 
@@ -436,14 +458,16 @@ def main():
     src = a.model if a.model in ("torus", "torus+disc") else str(Path(a.model.split(":", 1)[1]).resolve())
     allowed = {"torus": ["R0", "e_max", "i_max", "R_pc", "inc", "logM", "f_ext", "beta"],
                "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"]
-               }.get(src, ["R_pc", "inc", "logM", "az"])
-    names = a.free.split(",") if a.free else allowed
+               }.get(src, ["R_pc", "inc", "logM", "az"]) + list(GEO)
+    names = a.free.split(",") if a.free else [n for n in allowed if n not in GEO]
     assert set(names) <= set(allowed), f"free parameters of this model: {allowed}"
     fixed = {k: v for k, v in DEFAULT.items()}
     for kv in a.fix:
         k, v = kv.split("=")
         fixed[k] = float(v)
     bnd = dict(BOUNDS)
+    pa0 = GALAXIES[GAL]["pa"]
+    bnd["pa"] = (pa0 - 45., pa0 + 45.)
     for kv in a.bounds:
         k, v = kv.split("=")
         bnd[k] = tuple(map(float, v.split(":")))
@@ -464,6 +488,7 @@ def main():
     delta = max(res.fun / dof, 1.0)          # Delta chi2 for errors rescaled to chi2/dof = 1
     near = fv <= res.fun + delta
     ranges = {n: [float(X[near, i].min()), float(X[near, i].max())] for i, n in enumerate(names)}
+    obs = observed(a.metrics, best)           # the data about the fitted centre
     edge = [n for i, n in enumerate(names)
             if min(res.x[i] - bounds[i][0], bounds[i][1] - res.x[i]) < 0.02 * (bounds[i][1] - bounds[i][0])]
     summary = dict(model=src, metrics=a.metrics, n_numbers=len(obs), free=names, chi2=float(res.fun),
@@ -485,6 +510,9 @@ def main():
         label += rf"extended mass $f_{{\rm ext}} = {best['f_ext']:.2f}$, $\beta = {best['beta']:.1f}$; "
     label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "
               rf"$M_{{\rm BH}} = {10 ** best['logM'] / 1e7:.2f}\times10^7\,M_\odot$")
+    if any(k in names for k in GEO):
+        label += (rf"; centre $({1e3 * best['dx']:+.0f}, {1e3 * best['dy']:+.0f})$ mas, "
+                  rf"$\Delta v_{{\rm sys}} = {best['dv']:+.0f}$ km/s, PA ${best['pa'] if np.isfinite(best['pa']) else pa0:.0f}^\circ$")
     figures(out, best, src, a.metrics, obs, X, fv, names, bounds, label)
     print(json.dumps(summary, indent=1))
     if edge:

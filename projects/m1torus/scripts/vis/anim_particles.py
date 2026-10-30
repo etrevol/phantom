@@ -4,7 +4,8 @@
 Each particle is coloured by its own density, rho = m (h_fact/h)^3 from its smoothing
 length (from its 32nd neighbour when the softening is fixed, as for colliding clouds),
 on the logarithmic scale of the paper's density maps (1e-4 to 1e-1 M_c R_tor^-3);
-dense particles are drawn last. Marked: the central mass, the torus barycentre and the
+dense particles are drawn last. In two-component runs the stars are coloured so and the gas clouds drawn
+in one colour over them. Marked: the central mass, the torus barycentre and the
 m = 1 mode (arrow along its phase, length proportional to A_1/Sigma_0). A strip below
 follows A_1/Sigma_0 and |r_c| with a cursor at the frame time.
 
@@ -34,6 +35,8 @@ import labels  # noqa: E402
 P_ORB = 2.0 * np.pi
 HFACT = 1.2
 LIM = 2.0
+ISTAR, IDARK = 4, 5      # gas clouds and collisionless stars of two-component runs
+GAS = "#d81bd8"
 NORM = LogNorm(1e-4, 1e-1)
 CMAP = "turbo"
 ARROW_FULL = 1.6        # arrow length at the paper's saturated A_1/Sigma_0 = 0.368
@@ -49,11 +52,11 @@ def frame_data(path):
     g, s, hdr = d["gas"], d["sinks"], d["header"]
     keep = g["h"] > 0
     return dict(t=hdr["time"] / P_ORB, x=g["x"][keep], y=g["y"][keep], z=g["z"][keep],
-                h=g["h"][keep],
+                h=g["h"][keep], itype=g["itype"][keep],
                 xc=(s["x"][0], s["y"][0], s["z"][0]) if s else (0.0, 0.0, 0.0))
 
 
-def build_figure(setup, n, tm, a1, rc, corotate=False, run=None):
+def build_figure(setup, n, tm, a1, rc, corotate=False, run=None, twocomp=False):
     fig = plt.figure(figsize=(12.5, 7.6))
     ax_f = fig.add_axes([0.065, 0.31, 0.39, 0.62])
     ax_e = fig.add_axes([0.505, 0.31, 0.39, 0.62])
@@ -81,6 +84,9 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None):
     cb.set_label(r"$\rho\;[M_c\,R_{\rm tor}^{-3}]$")
     cb.ax.tick_params(direction="out")
 
+    # two-component runs: the gas clouds in one colour over the stars' density map
+    gas_f = ax_f.scatter([], [], s=size, color=GAS, lw=0, alpha=0.55, rasterized=True, zorder=4)
+    gas_e = ax_e.scatter([], [], s=size, color=GAS, lw=0, alpha=0.55, rasterized=True, zorder=4)
     bh_f, = ax_f.plot([], [], "o", color="k", ms=5, zorder=6)
     bh_e, = ax_e.plot([], [], "o", color="k", ms=5, zorder=6)
     tb_f, = ax_f.plot([], [], "x", color="k", ms=7, mew=1.6, zorder=6)
@@ -89,6 +95,8 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None):
                       label="torus barycentre"),
                Line2D([], [], color="crimson", lw=2, marker=">", ms=6,
                       label=r"$m=1$: phase $\Phi_1$, length $\propto A_1/\Sigma_0$")]
+    if twocomp:
+        handles.append(Line2D([], [], ls="", marker="o", color=GAS, ms=5, label="gas clouds"))
     ax_f.legend(handles=handles, loc="lower left", fontsize=8.5, frameon=True,
                 framealpha=0.85, edgecolor="0.7", handlelength=1.6, borderpad=0.5)
 
@@ -121,7 +129,7 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None):
     fig.text(0.80, 0.955, r"$t\,=$", ha="left", va="center", fontsize=11)
     clock = fig.text(0.868, 0.955, "", ha="right", va="center", fontsize=11)
     fig.text(0.873, 0.955, r"$P_{\rm orb}$", ha="left", va="center", fontsize=11)
-    return dict(fig=fig, ax_f=ax_f, sc_f=sc_f, sc_e=sc_e, bh_f=bh_f, bh_e=bh_e,
+    return dict(fig=fig, ax_f=ax_f, sc_f=sc_f, sc_e=sc_e, gas_f=gas_f, gas_e=gas_e, bh_f=bh_f, bh_e=bh_e,
                 tb_f=tb_f, cursor=cursor, clock=clock, arrow=None)
 
 
@@ -145,6 +153,12 @@ def draw(art, path, pmass, tm, a1, m1, corotate=False):
         fr["x"], fr["y"] = cr * fr["x"] - sr * fr["y"], sr * fr["x"] + cr * fr["y"]
         xc = fr["xc"]
         fr["xc"] = (cr * xc[0] - sr * xc[1], sr * xc[0] + cr * xc[1], xc[2])
+    gas = (fr["itype"] == ISTAR) & np.any(fr["itype"] == IDARK)
+    if gas.any():
+        art["gas_f"].set_offsets(np.c_[fr["x"][gas], fr["y"][gas]])
+        art["gas_e"].set_offsets(np.c_[fr["x"][gas], fr["z"][gas]])
+        for key in ("x", "y", "z", "h"):
+            fr[key] = fr[key][~gas]
     rho = density(fr, pmass)
     order = np.argsort(rho)
     x, y, z, c = fr["x"][order], fr["y"][order], fr["z"][order], rho[order]
@@ -189,7 +203,8 @@ def main(argv=None):
     tm = m1["time"] / P_ORB
     a1 = m1["A1"] / m1["sigma0"]
     rc = np.hypot(m1["xc"], m1["yc"])
-    art = build_figure(setup, n, tm, a1, rc, a.corotate, run)
+    art = build_figure(setup, n, tm, a1, rc, a.corotate, run,
+                       twocomp=np.any(pio.read_dump(dumps[0])["gas"]["itype"] == IDARK))
 
     out = Path(a.out) if a.out else run / "figs"
     out.mkdir(parents=True, exist_ok=True)
