@@ -918,3 +918,6 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   with the stars underneath the gas keeps 0.27. Plausible: the Hopkins et al. picture
   works here, the collisionless stars carry the mode and the colliding gas traces it.
   Next (b2): v_A 0.2, gas cooling to a bound state, to see if the tracing lasts.
+- **B32(b2) start**: as B32(b) with v_A 0.2 (gas balance sigma_z ~0.11, bound in B23).
+  Same stop criteria (gas unbound > 5% or R90 > 4; gas A1 < 3x noise for 5 orbits while
+  the stars keep theirs), else 20 orbits.
