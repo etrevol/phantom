@@ -969,3 +969,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   this model is too cold and too spread. Candidate readings: the observed gas is young
   (freshly supplied by the inflow, not yet cooled and spread), or its clouds collide far
   less than here (lower viscosity and cooling).
+- **B32(b5) start, with the user (rarer collisions; inflow feeding to be coded next)**:
+  A3 at t = 100, frac_clouds 0.5, r_cl 0.0044 (~5 times fewer collisions, N0 ~0.5),
+  v_A 0.4 (warmer), r_acc 0.05. Expectation: weaker viscosity and cooling keep the gas
+  hot and compact while it traces the mode. Criteria as b4 (bound-gas R90 > 3, unbound
+  > 10%, gas A1 < 3x noise for 5 orbits, < 30% clouds left), else 15 orbits (t = 115;
+  ~7 orbits per hour at this r_cl).
