@@ -876,3 +876,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   size is ~2 times the largest prediction (0.42), ~1 sigma. Caveats: 2.4 sigma with
   thermal noise only (clumps not included), HCO+ ~ density^q assumed, half the line.
   Plausible, not established.
+- **B31, lopsidedness with realisation errors** (`scripts/obs/b31_lopsided.py`,
+  `results/m1torus/B/b31_lopsided.json`): within 0.1 arcsec about the black hole, m0 A1
+  (0.02-0.1 arcsec), centroid offset and PA; models at their CO-fitted views, 5
+  snapshots x 3 azimuths (+-10 deg about the fitted one, relative to the mode phase)
+  with own noise seeds; data error from 40 noise realisations. NGC 613: A1 0.167 +-
+  0.014, offset 0.97 +- 0.07 pc, PA 316 +- 4. No mode (A6, B30 view) A1 0.019, 0.09 pc,
+  chi2 208; weak (B25) 0.057, 0.31 pc, PA 321, chi2 76 (total with kinematics 120);
+  intermediate (B30) 0.125, 0.71 pc, PA 308, chi2 12.0 (total 61.6); strong (A3) 0.211,
+  1.23 pc, PA 310, chi2 10.7 (total 65.0). The data lie between B30 and A3 in both A1
+  and offset: interpolated saturated strength A1/S0 ~0.25 (a torus with i_max ~57-58
+  deg). The errors hold noise and particle shot noise only, not the clumps of the real
+  gas (data A2, A3 ~0.10): the exclusion of no mode survives an error of 0.05, the
+  strength is better quoted as ~0.15-0.35.

@@ -188,7 +188,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B28 | [x] | extended mass (stellar cluster, gas) in the generator potential and in phantom (external potential) where the rotation rises outward (NGC 1672) | rotation profile shape; its effect on the precession and the mode | done 2026-10-30: none needed in NGC 613; marginal in NGC 1672, whose rising |m1| is the outer decoupled gas |
 | B29 | [~] | NGC 613 m = 1 tension: m0 A1 0.17 > A2, A3 ~0.10, torus centroid ~1 pc from the AGN; which torus (M_tor, e_max, i_max) or which other cause gives it | a model of the observed lopsidedness or a reason it is not the slow mode | ~2-4 h |
 | B30 | [x] | intermediate torus 0.6-56-0.42 (e_max, i_max, R0), M_tor 0.1, 16k, to saturation | kinematics (40 numbers) and the m = 1 lopsidedness of NGC 613 together | done 2026-10-30: saturated A1/S0 ~0.17; chi2 49.6 + m = 1 1.2: best of the three, by Delta chi2 3-5 |
-| B31 | [ ] | lopsidedness metrics (m0 A1, torus centroid offset and direction about the AGN) in the fit, errors from noise and clump realisations | the mode strength with an honest uncertainty | ~2 h |
+| B31 | [x] | lopsidedness metrics (m0 A1, torus centroid offset and direction about the AGN) in the fit, errors from noise and clump realisations | the mode strength with an honest uncertainty | done 2026-10-30: no mode and weak mode excluded; strength A1/S0 ~0.25 (0.15-0.35) |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.
