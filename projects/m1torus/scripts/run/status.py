@@ -14,7 +14,8 @@ Problems flagged
   ENERGY     |dE/E| > 1e-2 (integration has gone wrong)
   ACCRETED   particles lost to the central mass (> 0.1%)
   ANGMOM     runs with colliding clouds or isothermal gas, which radiate energy and feed
-             the black hole by design, in place of ENERGY and ACCRETED: |dL/L| > 1e-3
+             the black hole by design, in place of ENERGY and ACCRETED: |dL/L| > 1e-3;
+             with inflow, dL less the injected angular momentum (tolerance + 2% of it)
   LOG        NaN, ERROR or FATAL in run.log
   DISK       less than 20 GB free on the host drive
 """
@@ -101,8 +102,19 @@ def check(run: Path):
         problems.append(f"STALL({fmt_h(age)})")
     if np.isfinite(recent) and recent < rate / 3.0:
         problems.append("SLOWDOWN")
+    # inflow (inject_cloudfeed) adds L_z = mdot f_rot sqrt(r_feed) <cos i> per orbit:
+    # compare L with that, within 2% of the injected part
+    feed = float(inp.get("feed_mdot", 0) or 0)
+    dl_tol = 1e-3
+    if feed > 0 and ev:
+        inc = np.radians(float(inp.get("feed_inc", 0) or 0))
+        cos_i = np.sin(inc) / inc if inc > 0 else 1.0
+        dl_feed = (feed * (ev["time"][-1] - ev["time"][0]) / P_ORB * float(inp.get("feed_frot", 1))
+                   * np.sqrt(float(inp.get("feed_r", 2))) * cos_i / ev["angtot"][0])
+        dl = abs(ev["angtot"][-1] / ev["angtot"][0] - 1.0 - dl_feed)
+        dl_tol += 0.02 * dl_feed
     if clouds or gas:
-        if dl > 1e-3:
+        if dl > dl_tol:
             problems.append("ANGMOM")
     else:
         if de > 1e-2:
