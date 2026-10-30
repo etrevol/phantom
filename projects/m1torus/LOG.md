@@ -1035,3 +1035,39 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   (2026), who note the 1672 value exceeds the M-sigma 2.5e7. (4) No quantitative
   dynamical model of the NGC 613 torus found in a recency search. Confidence: plausible
   (one index; papers outside it or in preparation can exist).
+- **Archive data, second careful look (2026-10-31; scratch scripts, to be turned into
+  tools).** NGC 613: (1) The black-hole position is not settled. Continuum peak (+10.0,
+  +2.5) mas has S/N 5.8 only (other 5-sigma pixels at (-10, -10)); a disc fit to moment 1
+  over 0.02-0.1 arcsec puts the kinematic centre at (-1.6, +10.6) mas (half-sample spread
+  1 mas), 1.2 pc from the continuum toward PA 305; the moment-2 peak at (-2.5, +5); the
+  midpoint of the blue (-200..-120) and red (+120..+200 km/s) emission centroids at (+1.9,
+  +0.9). (2) The lopsidedness depends on the centre: A1 0.167, 0.97 pc, PA 316 about the
+  continuum; 0.175, 0.92 pc, PA 355 about the phase centre; 0.042, 0.19 pc about the
+  kinematic centre. In the mode models (A3, B30, B25, A6 at their fitted views) the same
+  disc fit puts the kinematic centre on the black hole (0.1-0.2 pc, random direction)
+  while their centroid offsets reach 1.2 pc: the mode does not shift the kinematic centre.
+  So either the black hole is near the kinematic centre and the torus is nearly symmetric
+  about it, or it is at the continuum and the data hold a kinematic shift no model makes.
+  The B31 exclusion of "no mode" assumed the continuum peak is the black hole; it is
+  conditional, and the m = 1 evidence in NGC 613 drops from established to plausible.
+  (3) Kinematic PA ~6 deg (Combes 340, our models fixed at 340), i ~41 from moment 1, v
+  ~ R^-0.25 over 2-8 pc, residual rms 18.5 km/s against 6-7 in the models: structured
+  non-circular motions (a red blob at the centre, blue blobs W and S). (4) Moment 2 peaks
+  in a ridge ~10 pc long along PA ~130/310 through the centre. Spectra within a beam of
+  the centre span -200..+500 km/s (H13CN(4-3) at +395 blends in): gas inside ~1 pc
+  (Keplerian 460 km/s at 0.3 pc for 1.5e7) or an outflow; no model has it. (5) Negative
+  bowls of -0.4..-0.6 mJy/beam over 100-300 km/s around the torus: missing short spacings
+  (MRS 0.24 arcsec); the mock pipeline does not filter. (6) Per-number chi2 audit of the
+  best fits: the innermost moment-2 (data 59 km/s, models 36-45; chi2 10-11), the PV at
+  +0.02 (data fully receding, models cross zero: the centre offset; 7-9), at -0.01 (data
+  -120, models -73; 5.5), the axis ratio (0.86 vs 0.69; 3) and the outer flux share carry
+  ~35 of the 40-57: geometry and the nucleus, not the torus body.
+  NGC 1672: (7) kinematic centre (+7, 0) mas, v_sys offset -17..-28 km/s from the
+  catalogue value, local kinematic PA 58 -> 69 -> 55 deg from 0.03 to 0.28 arcsec (the
+  warp of Combes et al.); the PV along PA 70 rises (v ~ R^0.1), no high velocities at the
+  centre: a ring with an inner hole or an extended mass; terminal velocity ~150 km/s at
+  0.07 arcsec gives M(<3.9 pc) <~ 2e7, so 4.5e7 overshoots the PV everywhere (our fit
+  1.15-1.3e7). (8) Strongly lopsided: A1 0.27, centroid offset 1.4-1.5 pc toward PA
+  240-243, the same about the kinematic or the phase centre; the SW half carries ~2x the
+  NE flux. A thin, warped, lopsided disc: a second m = 1 case, less centre-dependent than
+  NGC 613, in a geometry the thick-torus mode does not cover.
