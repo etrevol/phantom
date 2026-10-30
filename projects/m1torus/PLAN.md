@@ -38,16 +38,17 @@ Where B stands: collisional cloud tori cannot stay hot for long whatever heats t
 restitution gives a stable balance with sigma ~ v_A); the collisionless torus fits the
 archive cube best once its size is free (R_tor ~6.6 pc, i ~60, M_dyn ~1.4e7) but lacks
 the central component (40% of the CO within 4 pc, round core) and drives e_max to 1.
-Order (the user's choice 2026-10-30, after B25-B30): B27-B30 done (masses, extended
-mass, the m = 1 of NGC 613: a slow mode of moderate strength is consistent, the
-strength not pinned).
-1. B20: blind prediction on HCO+(4-3), not yet looked at: predictions from the fitted
-   tori (A3, B30, B25 at their CO views), written and committed before the HCO+ cube is
-   processed; then measured with the same pipeline.
-2. B31: the lopsidedness (A1, torus-AGN offset) as fit metrics with errors from noise
-   and clump realisations; the strength of the mode re-estimated.
-3. Discussion with the user: how the results go into the paper (one or two papers).
-4. Write-up after the model: A10 report with the B chapters.
+Order (agreed with the user 2026-10-30 evening, after B20 and B31; discussion first):
+1. B32 (path 2): does the slow mode live in a torus of colliding clouds? The mode-bearing
+   torus with magnetised collisions (v_A tuned to sigma of the torus), how long the mode
+   lasts and at what dispersion: the physical self-consistency of the picture.
+2. Path 1: the NGC 613 claim made robust: a torus of strength ~0.25 (i_max ~57) at 16k,
+   then 64k; lopsidedness errors with clumpy gas; the NGC 1672 no-mode check.
+3. Path 3: other galaxies with high-resolution ALMA archive data, blind predictions.
+4. Paths 4-5: full HCO+ cube from the raw data; the black-hole mass against the
+   literature; the A10 report.
+Literature to check first (novelty): m = 1 lopsided modes in nuclear discs (Tremaine
+1995, 2001; Hopkins & Quataert 2010 a, b), Beckert & Duschl 2004.
 
 ## A. Reproduction of the collisionless mode
 
