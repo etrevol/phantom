@@ -754,3 +754,11 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   (e_max 0.12): the data prefer ~1.5e7 at i ~ 48 (plausible; chi2 rests on the adopted
   errors). The data PV is asymmetric (approaching side faster, -120..-140 km/s at
   0.01-0.05 arcsec, receding 40-100), the model symmetric.
+- **B27, NGC 1672 with PV** (core 0.01-0.12 arcsec, 43 numbers): M_BH free 1.3e7, i 74,
+  i_max 2 (at the bound), e_max 0.44, R_tor 9.9 pc, chi2 102.5 (2.8 per dof); M_BH fixed
+  at their 4.5e7: chi2 218 (Delta 116), only with i 22. Both galaxies prefer ~1.3-1.5e7,
+  2.3-3 times below Combes et al. (2025). NGC 1672 still misses the outward-rising
+  |moment 1|: a point mass cannot give it. B28 started: `extend()` in the generator,
+  M(<r) = M_BH [1 + f_ext (r/R_tor)^beta], velocities scaled by sqrt(M(<r)/M_BH)
+  (exact for circular orbits); f_ext, beta free. Figure title fixed (axis ratio index
+  with PV metrics).

@@ -61,13 +61,24 @@ MISS = 25.                      # chi2 of an annulus the model leaves empty
 SIG_PV = 20.                    # error of a PV velocity percentile [km/s] (~3 channels)
 POS = (0.1, 0.2, 0.35, 0.5, 0.7, 0.9)   # PV positions along the major axis [x outer annulus edge]
 DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
-               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0.)
+               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5)
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
-              R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.))
+              R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.),
+              f_ext=(0.0, 5.0), beta=(0.5, 3.0))
 GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --galaxy
 _noise = {}
 _snap = {}
+
+
+def extend(p, f_ext, beta):
+    """Extended mass (stars, gas) with the black hole: M(<r) = M_BH [1 + f_ext (r/R_tor)^beta];
+    beta = 3 - gamma for a density ~ r^-gamma. Velocities scale by sqrt(M(<r)/M_BH): exact
+    for circular orbits, approximate for eccentric ones."""
+    if f_ext > 0:
+        r = np.linalg.norm(p["x"], axis=1)
+        p["v"] = p["v"] * np.sqrt(1. + f_ext * r ** beta)[:, None]
+    return p
 
 
 def target():
@@ -260,7 +271,7 @@ def observed(kind):
 def model_metrics(par, src, kind):
     t = replace(target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
     if src in ("torus", "torus+disc"):
-        p = torus(par["R0"], par["e_max"], par["i_max"])
+        p = extend(torus(par["R0"], par["e_max"], par["i_max"]), par["f_ext"], par["beta"])
         if src == "torus+disc":
             # same particle mass: the disc takes f_d of the N clouds from the torus
             nd = int(round(par["f_d"] * N))
@@ -347,7 +358,8 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
             ax.plot(rc, m[k * n:(k + 1) * n], "s--", color="C3", label="best model, same processing")
             ax.set(xlabel="radius [arcsec]", ylabel=lab)
         axs[0].legend(fontsize=8, frameon=False)
-        fig.suptitle(f"{label}\nmoment-0 axis ratio: {GALAXIES[GAL]['name']} {obs[-1]:.2f}, model {m[-1]:.2f}; "
+        iba = 3 * n
+        fig.suptitle(f"{label}\nmoment-0 axis ratio: {GALAXIES[GAL]['name']} {obs[iba]:.2f}, model {m[iba]:.2f}; "
                      rf"$\chi^2 = {chi2(m, obs, kind):.1f}$ for {len(obs)} numbers", fontsize=10)
         fig.savefig(out / "profiles.png", dpi=130)
         plt.close(fig)
@@ -422,7 +434,7 @@ def main():
     if a.edges:
         EDGES = tuple(map(float, a.edges.split(",")))
     src = a.model if a.model in ("torus", "torus+disc") else str(Path(a.model.split(":", 1)[1]).resolve())
-    allowed = {"torus": ["R0", "e_max", "i_max", "R_pc", "inc", "logM"],
+    allowed = {"torus": ["R0", "e_max", "i_max", "R_pc", "inc", "logM", "f_ext", "beta"],
                "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"]
                }.get(src, ["R_pc", "inc", "logM", "az"])
     names = a.free.split(",") if a.free else allowed
@@ -469,6 +481,8 @@ def main():
                       rf"$\sigma/v_{{\rm K}} = {best['h_d']:.2f}$, tilt ${best['tilt_d']:.0f}^\circ$;\n")
     else:
         label = L.wrapped(L.model_label(F.last_dump(src).parent), 110) + "\n"
+    if best.get("f_ext", 0) > 0:
+        label += rf"extended mass $f_{{\rm ext}} = {best['f_ext']:.2f}$, $\beta = {best['beta']:.1f}$; "
     label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "
               rf"$M_{{\rm BH}} = {10 ** best['logM'] / 1e7:.2f}\times10^7\,M_\odot$")
     figures(out, best, src, a.metrics, obs, X, fv, names, bounds, label)
