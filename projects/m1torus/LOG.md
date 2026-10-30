@@ -907,3 +907,14 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   before: gas unbound > 5% or gas R90 > 4 (evaporation); the gas m = 1 below 3x its
   noise for 5 orbits while the stars keep theirs (the gas loses the mode); otherwise
   20 orbits (t = 120). Check at t = 105.
+- **B32(b) result, v_A 0.4, stopped at t = 105 by the criterion** (gas unbound 5.2% at
+  t = 102, 9.7% and R90 9.5 at 105). Stars A1 0.352, 0.368, 0.348, 0.374, 0.381, 0.399
+  over t 100-105 (kept and slightly grown); gas A1 0.378, 0.283, 0.276, 0.254, 0.286,
+  0.265 (noise 0.035-0.039, ~7 sigma), its phase 3-17 deg behind the stars'. The gas
+  traces the stellar mode while colliding. Gas sigma_z/v_K 0.32 -> 0.26 (cooling towards
+  the v_A 0.4 balance), 18% of the clouds into the black hole in 5 orbits, ~2% per orbit
+  unbound: the evaporating tail of B23 again, while the gas cools from the hot start.
+  The all-gas torus from the same A3 state (B23) lost the mode to 0.18-0.22 in 3 orbits;
+  with the stars underneath the gas keeps 0.27. Plausible: the Hopkins et al. picture
+  works here, the collisionless stars carry the mode and the colliding gas traces it.
+  Next (b2): v_A 0.2, gas cooling to a bound state, to see if the tracing lasts.
