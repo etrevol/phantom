@@ -992,3 +992,27 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   0.3-3 Msun/yr (Vollmer, Beckert & Davies 2008). In code units for NGC 613 (M 1.5e7,
   R_tor 6 pc, orbit 0.36 Myr) feed_mdot = 0.024 Mdot[Msun/yr]: 0.3 Msun/yr = 0.0072,
   which renews the 0.05 M_BH of gas in ~7 orbits, the spreading time of b4.
+- **B32(b5) result, half gas, r_cl 0.0044, v_A 0.4, stopped at t = 104** (bound-gas R90
+  3.35 > 3). The gas stays warm (sigma_z 0.33 -> 0.28) and traces the stellar mode
+  (phase within 7 deg, A1 0.28-0.36 against noise 0.023), but spreads faster than b4 (R90b
+  1.4 -> 3.35 in 4 orbits) and 5% is unbound. Reading: the viscosity of a colliding
+  ensemble is nu ~ (sigma^2/Omega) tau/(1 + tau^2) (Goldreich & Tremaine 1978), tau the
+  collisions per orbit, largest at tau ~ 1; b5 has tau ~ 0.5 and sigma ~0.29 (nu ~0.034),
+  b4 settled at tau ~ 2.5 and sigma 0.14 (nu ~0.007). Rarer collisions keep the gas warm
+  but spread it faster: a warm gas torus lives ~ 1/nu Omega ~ 5 orbits unless it is fed.
+  Gas at t = 104 fitted to NGC 613: chi2 75.5 (2.1 per dof; R_tor 6.65 pc, i 44.6, M_BH
+  1.32e7, nothing at a bound), between b4 (130) and the collisionless tori (44-54).
+  Lopsidedness at that view: A1 0.129, offset 0.74 pc (data 0.167, 0.97) but PA 100
+  (data 316); with the azimuth held to 220-300: chi2 85.6, A1 0.133, offset 0.80 pc, PA
+  350 +- 108 (the gas centroid direction is not stable between snapshots); kinematic plus
+  m = 1 ~ 88 against 51 for B30. Warm gas fits better than cool gas, still worse than the
+  collisionless torus.
+- **B32(c) start, with the user: inflow 0.3 Msun/yr nearly in the plane.** Restart of
+  A3 at t = 100, half gas, collisions of b5 (r_cl 0.0044, v_A 0.4, warm), r_acc 0.05;
+  inflow feed_mdot 0.0072 (0.3 Msun/yr for NGC 613), feed_r 2, feed_dr 0.2, feed_frot
+  0.71 (angular momentum of a circular orbit at R_tor, so the clouds settle there),
+  feed_s 0.1, feed_inc 15; maxp 50000; 25 orbits (t = 125). Expected: the torus gas within
+  r < 1.6 levels off at ~ Mdot t_spread ~ 0.03 M_BH, warm. Stop: gas (r < 1.6) A1 < 3x
+  noise over 5 orbits, stars A1 < 0.1, or alive particles > 47000. Success, read at the
+  end: torus gas steady (+-20% over the last 5 orbits), sigma_z >= 0.25, phase within 30
+  deg of the stars, and a fit to NGC 613 with kinematic + m = 1 chi2 <~ 60.
