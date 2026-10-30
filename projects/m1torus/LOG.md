@@ -708,3 +708,19 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   edge (60 against 51 km/s) and keeps the central moment 2 low (42 against 59). At
   A1/S0 0.05 the lopsidedness is not visible in the maps. `fit_torus.py`: snapshot
   labels and tags read from the run of the dump.
+- **B26, NGC 1672** (the other galaxy of 2019.1.00273.S; Combes et al. 2025: D 11.4 Mpc,
+  torus 14 pc, 0.2e7 Msun, edge-on, PA 70, M_BH 4.5e7). Archive cube (MOUS X3439, spw25,
+  cutout 0.5 arcsec, `materials/data/alma_ngc1672/`), moments by the same recipe with a
+  +-450 km/s window (`alma_moments.py`, registry `galaxies.py`, `fit_torus.py --galaxy`).
+  A thin bright core +-0.1 arcsec (5.5 pc) at PA ~65, east receding, and fainter gas to
+  0.3 arcsec rotating at another PA (decoupled, as Combes note). Fit to 0.3 arcsec mixes
+  both (chi2 50/19, rotation shape wrong). Fit to the core (0.01-0.12 arcsec, 19
+  numbers): R0 0.83, e_max 0.03 (0.02-0.30, at the lower bound), i_max 21 (13-22),
+  R_tor 9.3 pc, i 67 (66-70), M_BH 1.9e7; chi2 12.5 (0.96 per dof). Moment-0 share and
+  moment 2 match closely; |moment 1| rises outward in the data (107 -> 127 km/s at
+  1.6-6 pc) and falls in the model: mass beyond the point mass (gas, stars) at a few pc.
+  Two regimes (plausible): NGC 613 a hot torus of eccentric orbits (e_max 0.7, i_max 52),
+  NGC 1672 a cold disc of near-circular orbits (e_max <~ 0.3, i_max ~20), what our
+  colliding clouds become once cooled. The slow mode needs a thick eccentric torus
+  (paper; our thin control A5): prediction for B20, no slow m = 1 mode in NGC 1672, a
+  weak one possible in NGC 613.
