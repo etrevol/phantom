@@ -31,22 +31,27 @@ Ground truth is the paper and our own measurements. The side projects on this la
 
 Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits 12 h). Ask the user before anything over 30 min.
 
-## Roadmap (2026-10-30, after B12-B23 and B19; order to be set with the user)
+## Roadmap (agreed with the user 2026-10-30)
 
 Where B stands: collisional cloud tori cannot stay hot for long whatever heats them
 (known since KB88 for damping; our three heating laws quantify it; a speed-dependent
 restitution gives a stable balance with sigma ~ v_A); the collisionless torus fits the
 archive cube best once its size is free (R_tor ~6.6 pc, i ~60, M_dyn ~1.4e7) but lacks
 the central component (40% of the CO within 4 pc, round core) and drives e_max to 1.
-Candidate steps:
-1. B19b: fit with physical bounds (e_max <= 0.7, M_BH within the literature 0.7-4e7).
+Order (the user's choice: torus plus disc; then the run, the prediction and other
+galaxies; publications not decided yet; the report after the model):
+1. B19b: torus fit with physical bounds (e_max <= 0.7, M_BH within the literature
+   0.7-4e7): how much the match loses without near-radial orbits.
 2. B24: torus plus a central disc fitted together (disc radius, mass share, thickness).
-3. B25: phantom run of the best physically grounded model (~2 h, ask): does the mode
-   grow, the evolved maps against the archive cube (three columns).
+3. B25: phantom run of the best physically grounded model (~2 h, ask, stop criterion):
+   does the mode grow, the evolved maps against the archive cube (three columns).
 4. B20: prediction and check of an m = 1 signature seen by ALMA (lopsided moment 0,
    cavity offset against the AGN, PV asymmetry); the black-hole offset itself
    (~0.002 arcsec) is far below the beam.
-5. Write-up: A10 report and the paper outline.
+5. B26: the same pipeline on other tori of Combes et al. (2025) from the archive of
+   project 2019.1.00273.S, so the conclusion does not rest on one galaxy.
+6. Write-up after the model: A10 report with the B chapters; the paper structure
+   (one or two papers) is decided later.
 
 ## A. Reproduction of the collisionless mode
 
@@ -180,6 +185,9 @@ Units and observables (code: G = M_BH = R = 1):
 | B21 | [x] | heating by partially elastic collisions in the shear (Krolik & Begelman 1988, Sect. IVb): clouds with e_rest 0.9, no thermostat, from A3 at t = 100; extreme first, stop at t = 103 if the torus flattens as B6b; then 0.7-0.8 for the threshold and 20 orbits with the mode and synthetic maps | does a cloud torus heat itself to sigma ~ 0.3-0.5 v_K, and the e threshold against KB88 eq. 24 | done: constant e has no balance (0.5 collapses, 0.9 runs away); next a speed-dependent e (KB88 eq. 25), ask the user |
 | B22 | [x] | the molecular outflow of NGC 613 (Audibert et al. 2019) added kinematically to the synthetic cube: how much of the nuclear moment 2 and the PV wing it explains | moment 2 at the nucleus and PV against the archive cube | done 2026-10-30: the outflow does not set the annulus moment 2; feeding needs the drained gas to leave |
 | B23 | [x] | magnetised clouds: restitution from the collision speed (KB88 eq. 25, `v_alfven`), no thermostat, from A3 at t = 100; v_A 0.2 first, stop criterion at t = 103 | a stable hot torus (sigma ~0.25-0.4 v_K predicted), then the mode and the synthetic maps against the archive cube | done 2026-10-30: v_A 0.2 bound but cold (sigma_z 0.11), v_A 0.6 at sigma_z 0.28 drains and evaporates |
+| B24 | [ ] | torus plus central disc fitted together to the archive cube (`fit_torus.py` with a disc component: radius, mass share, thickness) | the central moment-0 share, central moment 2 and the round core without near-radial orbits | ~1 h code, fits 10 min each |
+| B25 | [ ] | phantom run of the best physically grounded model, stop criterion, three-column maps | does the mode grow in an NGC 613-like torus; evolved maps against the archive cube | ~2 h (ask) |
+| B26 | [ ] | other tori of Combes et al. (2025), archive cubes of 2019.1.00273.S, same processing and fit | the conclusion beyond one galaxy | per galaxy ~1-2 h |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.
