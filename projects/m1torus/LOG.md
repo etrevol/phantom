@@ -941,3 +941,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   gas was driven by a few receding clouds); on mode loss as before; if fewer than 30%
   of the clouds remain (drained); else at t = 140. Then gas-only synthetic maps against
   the archive cube.
+- **B32(b3) result, v_A 0.3, stopped at t = 103** (bound-gas R90 3.40 > 3, unbound 4.3%):
+  the gas kept the stellar mode (A1 0.31-0.37, phase 8-10 deg behind) but the warm gas
+  (sigma_z 0.26) spread within 3 orbits: collisional viscosity of hot gas, as in
+  B12-B23, not prevented by the stellar torus. The cooler gas of v_A 0.2 spreads more
+  slowly and traces the mode better: the viable regime is the cool one.
+- **Gas mass and alpha_CO.** Teng et al. (2023, ApJ 950; arXiv 2304.04732): in barred
+  galaxy centres alpha_CO is 4-15 times below Galactic. Our dynamical limit (B28): the
+  extended mass within R_tor of NGC 613 is <~ 0.09 M_BH ~ 1.3e6 Msun, so Combes' gas
+  mass 1e7 (Galactic alpha_CO) needs alpha_CO >~ 7.5 times lower, inside Teng's range.
+  A torus of ~0.1 M_BH is consistent with the data; its gas share is not fixed by them
+  and may be most of it. Decisive tuned test, with the user: half of the torus as gas.
+- **B32(b4) start**: A3 at t = 100, frac_clouds 0.5 (8192 clouds, 8192 stars), v_A 0.2,
+  r_cl 0.01, r_acc 0.05; criteria of b3 (bound-gas R90 > 3, unbound > 10%, gas A1 < 3x
+  noise for 5 orbits, < 30% clouds left), else 20 orbits.
