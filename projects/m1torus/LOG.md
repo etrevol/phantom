@@ -694,3 +694,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   (max 0.063, 0.051 at 100.6), r_c 0.0014-0.0021: below 0.04 but rising, so the run
   goes on to 150 as set. dE/E 7.8e-4, dL/L 1.8e-3 (slow drift, e_max 0.7 brings more
   particles near the black hole).
+- **B25 result** (`20261030-103953-ngc613-best-16k`, 0.70-52-0.53, M_tor 0.1, 16k, 150
+  orbits; dE/E 1.1e-3, dL/L 2.7e-3). A slow m = 1 mode grows, weak and late: the phase
+  of m = 1 runs with the orbits (noise) until t ~ 78 and then locks (pattern speed
+  0.0096 Omega_0, period 104 orbits; A3 locked at t ~ 42); the 4151 orbits with e >=
+  0.5 have their pericentres at Phi_1 + 179 deg (A3 180); A1/S0 0.05-0.06 over 120-150
+  and still rising (A3 0.35 saturated), A2, A3 at the noise (0.014-0.015), r_c 0.001 ->
+  0.004 (A3 0.022), Poisson-kernel k 0.065 (broad clump). A real but weak mode at 16k
+  (phase lock and pericentre alignment, not noise); its saturated amplitude needs a
+  longer run. On NGC 613 at the fitted view (R_tor 5.9 pc, i 48, M_BH 1.5e7, azimuth
+  fitted 329): chi2 25.6 for 16 numbers against 18.3 for the phase-mixed initial torus:
+  the evolved torus is more concentrated at 0.03-0.05 arcsec, rotates too fast at the
+  edge (60 against 51 km/s) and keeps the central moment 2 low (42 against 59). At
+  A1/S0 0.05 the lopsidedness is not visible in the maps. `fit_torus.py`: snapshot
+  labels and tags read from the run of the dump.

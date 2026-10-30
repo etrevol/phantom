@@ -357,7 +357,7 @@ def main():
         k, v = kv.split("=")
         bnd[k] = tuple(map(float, v.split(":")))
     bounds = [bnd[n] for n in names]
-    tag = src.replace("+", "_") if src in ("torus", "torus+disc") else Path(src).parent.name + "_" + Path(src).name
+    tag = src.replace("+", "_") if src in ("torus", "torus+disc") else F.last_dump(src).parent.name + "_" + F.last_dump(src).name
     out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{tag}_{a.metrics}")
     out.mkdir(parents=True, exist_ok=True)
     obs = observed(a.metrics)
@@ -389,7 +389,7 @@ def main():
             label += (rf"central disc: $R_d = {best['R_d']:.2f}\,R_{{\rm tor}}$, {100 * best['f_d']:.0f}% of the mass, "
                       rf"$\sigma/v_{{\rm K}} = {best['h_d']:.2f}$, tilt ${best['tilt_d']:.0f}^\circ$;\n")
     else:
-        label = L.wrapped(L.model_label(Path(src).parent), 110) + "\n"
+        label = L.wrapped(L.model_label(F.last_dump(src).parent), 110) + "\n"
     label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "
               rf"$M_{{\rm BH}} = {10 ** best['logM'] / 1e7:.2f}\times10^7\,M_\odot$")
     figures(out, best, src, a.metrics, obs, X, fv, names, bounds, label)
