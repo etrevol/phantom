@@ -637,3 +637,25 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   torus could then be fed, but the gas it drains cannot go into the black hole: it
   must pile up within 0.4 pc, form stars or leave in the outflow (7-27 Msun/yr, same
   order): an inflow -> torus -> outflow circulation, speculative and untested.
+- **B19, fit of collisionless tori.** (1) A grid of 36 phase-mixed tori (R0, e_max,
+  i_max) x torus radius 3-8 pc x i 20-60 x M_BH 1.5-3.75e7 on the 5 numbers of B14:
+  nearly every torus reaches chi2 < 5 once the radius is free (best 0.3 at R_tor 4 pc,
+  i 20, M_BH 3.75e7, both grid edges); evolved runs agree (A5, A6 chi2 0.4 at 5.5 pc,
+  i 20): 6 free parameters for 5 numbers is degenerate; robust only that 3-5.5 pc beats
+  8 pc. The generator matches the evolved A6 in the outer annulus and the shape, not in
+  the inner one (400 orbits of self-gravity widened a to 0.69-1.45 and e to 0.65).
+  (2) `fit_torus.py` rewritten (the user asked for an efficient, convenient search):
+  differential evolution over continuous parameters on all cores, free/fixed/bounds
+  from the command line, a torus or a snapshot as the model, 19 numbers (share of
+  moment 0, |moment 1| p90 and moment 2 median in six annuli 0.01-0.15 arcsec, axis
+  ratio), a binned cube with the noise drawn once and the field cropped (0.3 s per
+  evaluation, metrics within ~1% of mockobs.cube), intervals from all evaluations,
+  bound warnings, figures of profiles, parameter pairs and maps. (3) Result, 19
+  numbers: R0 0.53, e_max 0.94 (at the bound 0.95; 0.80 at the bound 0.8 before),
+  i_max 49, R_tor 6.6 pc, i 60, M_BH (dynamical) 1.4e7; chi2 30 (2.3 per degree of
+  freedom). The radial profiles of moment-0 share, rotation and moment 2 follow the data
+  except moment 2 inside 0.025 arcsec (43 against 59 km/s); the axis ratio stays 0.51
+  against 0.90 (half of chi2). The fit drives e_max towards 1, near-radial orbits that
+  put gas into the central 2-4 pc where NGC 613 has 40% of its CO: a torus alone lacks
+  a central component (physically such orbits would be swallowed). Next candidate: a
+  nested central disc (task C) with the torus.
