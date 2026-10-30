@@ -103,7 +103,8 @@ def check(run: Path):
     if np.isfinite(recent) and recent < rate / 3.0:
         problems.append("SLOWDOWN")
     # inflow (inject_cloudfeed) adds L_z = mdot f_rot sqrt(r_feed) <cos i> per orbit:
-    # compare L with that, within 2% of the injected part
+    # compare L with that, within 2% of the injected part plus 3 sigma of the random
+    # number of pairs (equal-mass particles, m = M_tor / np)
     feed = float(inp.get("feed_mdot", 0) or 0)
     dl_tol = 1e-3
     if feed > 0 and ev:
@@ -112,7 +113,10 @@ def check(run: Path):
         dl_feed = (feed * (ev["time"][-1] - ev["time"][0]) / P_ORB * float(inp.get("feed_frot", 1))
                    * np.sqrt(float(inp.get("feed_r", 2))) * cos_i / ev["angtot"][0])
         dl = abs(ev["angtot"][-1] / ev["angtot"][0] - 1.0 - dl_feed)
-        dl_tol += 0.02 * dl_feed
+        stp = pio.read_setup(run / "m1torus.setup")
+        m_cl = float(stp.get("M_tor", 0.1)) / float(stp.get("np", 16384))
+        pairs = max(feed * (ev["time"][-1] - ev["time"][0]) / P_ORB / (2.0 * m_cl), 1.0)
+        dl_tol += dl_feed * (0.02 + 3.0 / np.sqrt(pairs))
     if clouds or gas:
         if dl > dl_tol:
             problems.append("ANGMOM")
