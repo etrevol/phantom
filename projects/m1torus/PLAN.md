@@ -191,7 +191,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B27 | [x] | black-hole mass: our fits 2-2.5 x below Combes et al. (2025) in both galaxies; their PV method (peak projected velocity at ~1 pc) applied to our models, PV metrics added to the fit | the source of the factor and a consistent M_BH | done 2026-10-30: M_BH 1.4-1.5e7 (NGC 613), 1.15-1.3e7 (NGC 1672); Combes masses disfavoured |
 | B28 | [x] | extended mass (stellar cluster, gas) in the generator potential and in phantom (external potential) where the rotation rises outward (NGC 1672) | rotation profile shape; its effect on the precession and the mode | done 2026-10-30: none needed in NGC 613; marginal in NGC 1672, whose rising |m1| is the outer decoupled gas |
 | B29 | [~] | NGC 613 m = 1 tension: m0 A1 0.17 > A2, A3 ~0.10, torus centroid ~1 pc from the AGN; which torus (M_tor, e_max, i_max) or which other cause gives it | a model of the observed lopsidedness or a reason it is not the slow mode | ~2-4 h |
-| B30 | [~] | intermediate torus 0.6-56-0.42 (e_max, i_max, R0), M_tor 0.1, 16k, to saturation | kinematics (40 numbers) and the m = 1 lopsidedness of NGC 613 together | ~2-3 h |
+| B30 | [x] | intermediate torus 0.6-56-0.42 (e_max, i_max, R0), M_tor 0.1, 16k, to saturation | kinematics (40 numbers) and the m = 1 lopsidedness of NGC 613 together | done 2026-10-30: saturated A1/S0 ~0.17; chi2 49.6 + m = 1 1.2: best of the three, by Delta chi2 3-5 |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.

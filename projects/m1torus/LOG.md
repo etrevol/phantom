@@ -830,3 +830,18 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   0.70-52-0.53 and A3 0.5-60-0.3), M_tor 0.1, 16k, A3 numerics. Criteria set before:
   at t = 100 stop if A1/S0 < 0.04 and not rising; otherwise run to saturation (10-orbit
   mean changes < 10% over 20 orbits), at most 250 orbits.
+- **B30 result** (`20261030-164437-ngc613-mid-16k`, 0.6-56-0.42, M_tor 0.1, 16k):
+  a coherent slow mode, A1/S0 0.038, 0.061, 0.093, 0.135, 0.164, 0.170 at t 30-80,
+  stopped by the saturation criterion at t = 96.5 (0.166 -> 0.181); pericentres of the
+  3210 orbits with e >= 0.5 at Phi_1 + 176 deg, pattern period 68 orbits, A2/A1 0.15,
+  Poisson k 0.124. Fitted to NGC 613 like A3 and B25 (profiles + PV, free R_pc, inc,
+  logM, azimuth): chi2 49.6 (1.38 per dof), R_tor 6.0 pc, i 49 (Combes 50), M_BH 1.48e7,
+  azimuth 230; at that view the torus centroid lies 0.74 pc from the black hole toward
+  PA 310, A1 0.13 (data 0.96 pc toward 316, A1 0.17).
+- **Correction to the B29 comparison**: the m = 1 terms were not squared for B25. With
+  errors 0.05 in A1 and 0.3 pc in the offset the totals are B30 49.6 + 1.2 = 50.8,
+  B25 44.0 + 9.8 = 53.8, A3 54.3 + 1.6 = 55.9 (not 72 for B25). The intermediate torus is
+  best overall, but by Delta chi2 3-5, within what the adopted errors decide: the data
+  are consistent with a slow m = 1 mode of moderate strength (A1/S0 ~0.1-0.35), whose
+  orientation (fitted from the kinematics) puts the torus NW of the black hole as
+  observed; the strength is not pinned by these metrics (plausible).
