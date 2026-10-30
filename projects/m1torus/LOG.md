@@ -784,3 +784,19 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   same mode orientation reproduces the PV asymmetry and the moment-0 offset (plausible;
   a ~3% chance alignment within 6 deg). B25 t = 225 fitted the same way for a fair
   comparison: running.
+- **The authors' eps test (their R_SMBH(t), canonical model, 64k/128k, eps 1e-2, 1e-3,
+  1e-4, to 1000 orbits).** All runs grow and saturate alike (R ~0.022 by ~100 orbits);
+  for eps 1e-3 and 1e-4 a slow oscillation of R appears after ~250 orbits, growing in
+  time, larger for smaller eps, and at 1e-4 larger for 128k than 64k. Its period, ~54
+  orbits by counting peaks, equals the pattern period of the mode (A3: 0.0186 Omega_0,
+  54 orbits). |A e^{i Omega_p t} + B| with a non-rotating B oscillates exactly at the
+  pattern period with half-range |B|: most likely B is the drift of the system
+  barycentre if R_SMBH is measured from the origin (momentum not exactly conserved
+  with individual time steps; a drift of ~0.007 over 1000 orbits needs a momentum
+  error ~1e-6 of M v_K, far below their 1e-3 energy error). Our runs show the
+  mechanism at that size: the barycentre (M_c x_c + M_tor x_tb)/(1 + M_tor) drifts
+  from the origin by ~1e-3 by 150 orbits (A3, A4, B25) and 2.5e-3 by 400 (A6); measured
+  from the barycentre, the slow peak-to-peak of |r_c| drops (A3 0.0022 -> 0.0015, A4
+  0.0039 -> 0.0031, B25 0.0019 -> 0.0006). Our analysis_m1torus also measures x_c from
+  the origin. Tests proposed for the authors: total momentum and barycentre of all
+  their runs; R_SMBH from the instantaneous barycentre; the phase of the maxima.
