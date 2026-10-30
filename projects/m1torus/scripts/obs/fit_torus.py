@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""B19: fit a collisionless torus (or a run's snapshot) to NGC 613 in the ALMA archive cube.
+"""B19, B26: fit a collisionless torus (or a run's snapshot) to a galaxy in its ALMA archive cube.
 
 Model sources
   torus      phase-mixed torus from the Keplerian elements of setup_m1torus.f90 (a uniform
@@ -49,6 +49,7 @@ ROOT = HERE.parents[3]
 sys.path.insert(0, str(HERE))
 sys.path.insert(0, str(HERE.parent / "vis"))
 import fit_geometry as F  # noqa: E402
+from galaxies import GALAXIES  # noqa: E402
 import labels as L  # noqa: E402
 import mockobs as mo  # noqa: E402
 
@@ -62,9 +63,30 @@ DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
               R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.))
-CROP = 0.18                     # half-size of the field the metrics need [arcsec]
+GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --galaxy
 _noise = {}
 _snap = {}
+
+
+def target():
+    """The galaxy's Target: distances and numbers from galaxies.py, beam, channels and
+    noise of its archive cube, total flux of its masked moment 0 within the field."""
+    g = GALAXIES[GAL]
+    out = Path(g["out"])
+    c = np.load(out / f"{GAL}_cube_win.npz")
+    pix = float(abs(c["north"][1] - c["north"][0]))
+    if GAL == "ngc613":
+        flux = 15.4 * g["m_gas"] / 9.7e6       # Combes et al. (2025), Table 2, as mockobs.NGC613
+    else:
+        d = np.load(out / f"{GAL}_mask_moments.npz")
+        E, Nn = np.meshgrid(d["east"], d["north"])
+        bpix = np.pi * float(d["beam"]) ** 2 / (4 * np.log(2)) / pix ** 2
+        flux = float(np.nansum(np.where(np.hypot(E, Nn) < g["field"], d["m0"], 0.0)) / bpix)
+    return replace(mo.NGC613, name=g["name"], R_pc=g["R_pc"], M_bh=g["M_bh"], D_Mpc=g["D_Mpc"], inc=g["inc"],
+                   pa=g["pa"], beam_arcsec=float(c["beam"]), pix_arcsec=pix,
+                   dv=float(np.median(np.diff(c["v"]))), vmax=g["window"], rms_mjy=float(c["rms"]) * 1e3,
+                   clip_mjy=g["clip_mjy"], field_arcsec=max(g["field"], EDGES[-1] + 0.05),
+                   jy_kms_per_msun=flux / g["m_gas"], m_gas=g["m_gas"])
 
 
 def torus(R0, e_max, i_max, n=N, seed=1):
@@ -148,8 +170,8 @@ def fast_cube(p, t, phi):
     c *= 2 * np.pi * sig_beam ** 2                      # Jy/beam
     nz, rms = noise(t, c.shape)
     c += nz
-    # the metrics need |x| < 0.15 arcsec only: crop, the noise level is known
-    k = np.abs(xs) <= CROP
+    # the metrics need |x| < the outer annulus only: crop, the noise level is known
+    k = np.abs(xs) <= EDGES[-1] + 0.03
     return dict(cube=c[:, k][:, :, k], xs=xs[k], vs=vs, rms=rms)
 
 
@@ -194,12 +216,12 @@ def chi2(mod, obs, kind="profiles"):
 
 
 def observed(kind):
-    d = np.load(F.CUBE_DIR / "ngc613_mask_moments.npz")
+    d = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_mask_moments.npz")
     return metrics(d["m0"], d["m1"], d["m2"], d["east"], d["north"], kind)
 
 
 def model_metrics(par, src, kind):
-    t = replace(F.target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
+    t = replace(target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
     if src in ("torus", "torus+disc"):
         p = torus(par["R0"], par["e_max"], par["i_max"])
         if src == "torus+disc":
@@ -268,11 +290,11 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
         fig, axs = plt.subplots(1, 3, figsize=(13, 4), layout="constrained")
         for ax, (k, lab) in zip(axs, ((0, "share of moment 0"), (1, r"$|$moment 1$|$, 90th percentile [km/s]"),
                                       (2, "moment 2, median [km/s]"))):
-            ax.plot(rc, obs[k * n:(k + 1) * n], "ko-", label="NGC 613, ALMA 2019.1.00273.S archive cube")
+            ax.plot(rc, obs[k * n:(k + 1) * n], "ko-", label=f"{GALAXIES[GAL]['name']}, ALMA 2019.1.00273.S archive cube")
             ax.plot(rc, m[k * n:(k + 1) * n], "s--", color="C3", label="best model, same processing")
             ax.set(xlabel="radius [arcsec]", ylabel=lab)
         axs[0].legend(fontsize=8, frameon=False)
-        fig.suptitle(f"{label}\nmoment-0 axis ratio: NGC 613 {obs[-1]:.2f}, model {m[-1]:.2f}; "
+        fig.suptitle(f"{label}\nmoment-0 axis ratio: {GALAXIES[GAL]['name']} {obs[-1]:.2f}, model {m[-1]:.2f}; "
                      rf"$\chi^2 = {chi2(m, obs, kind):.1f}$ for {len(obs)} numbers", fontsize=10)
         fig.savefig(out / "profiles.png", dpi=130)
         plt.close(fig)
@@ -302,8 +324,9 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
         plt.close(fig)
     # maps: the best model next to the archive cube, palettes of Combes et al. (2025)
     from compare_obs import PAL
-    d = np.load(F.CUBE_DIR / "ngc613_mask_moments.npz")
+    d = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_mask_moments.npz")
     mm = mo.moments(cb, t, rms=cb.get("rms"))
+    lim = EDGES[-1]
     fig, axs = plt.subplots(2, 3, figsize=(13, 8.5), layout="constrained")
     for col, key in enumerate(("m0", "m1", "m2")):
         cmap, lo, hi = PAL[key]
@@ -312,8 +335,9 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
             ax = axs[row, col]
             im = ax.imshow(np.where(m0 > 0, img, np.nan), origin="lower", cmap=cmap, vmin=lo, vmax=hi,
                            extent=[ex[0], ex[-1], east[0], east[-1]], interpolation="nearest")
-            ax.set(xlim=(0.15, -0.15), ylim=(-0.15, 0.15), xlabel="RA offset [arcsec]", ylabel="Dec offset [arcsec]")
-            ax.set_title(("best model" if row == 0 else "NGC 613, archive cube") + f", moment {col}", fontsize=9)
+            ax.set(xlim=(lim, -lim), ylim=(-lim, lim), xlabel="RA offset [arcsec]", ylabel="Dec offset [arcsec]")
+            ax.set_title(("best model" if row == 0 else f"{GALAXIES[GAL]['name']}, archive cube") + f", moment {col}",
+                         fontsize=9)
         fig.colorbar(im, ax=list(axs[:, col]), orientation="horizontal", fraction=0.04,
                      label=("moment 0 [Jy/beam km/s]", "moment 1 [km/s]", "moment 2 [km/s]")[col])
     fig.suptitle(label, fontsize=10)
@@ -323,6 +347,7 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--galaxy", default="ngc613", choices=sorted(GALAXIES))
     ap.add_argument("--model", default="torus")
     ap.add_argument("--free", default=None, help="comma list; default all of the model source")
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
@@ -339,7 +364,8 @@ def main():
     if a.check:
         check()
         return
-    global EDGES
+    global EDGES, GAL
+    GAL = a.galaxy
     if a.edges:
         EDGES = tuple(map(float, a.edges.split(",")))
     src = a.model if a.model in ("torus", "torus+disc") else str(Path(a.model.split(":", 1)[1]).resolve())
@@ -358,7 +384,7 @@ def main():
         bnd[k] = tuple(map(float, v.split(":")))
     bounds = [bnd[n] for n in names]
     tag = src.replace("+", "_") if src in ("torus", "torus+disc") else F.last_dump(src).parent.name + "_" + F.last_dump(src).name
-    out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{tag}_{a.metrics}")
+    out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{GAL}_{tag}_{a.metrics}")
     out.mkdir(parents=True, exist_ok=True)
     obs = observed(a.metrics)
     print(f"model {src}, free {names}, metrics {a.metrics} ({len(obs)} numbers)")
