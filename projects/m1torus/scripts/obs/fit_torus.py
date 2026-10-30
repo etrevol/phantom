@@ -167,7 +167,15 @@ def metrics(m0, m1, m2, east, north, kind="profiles"):
         k = s & (m0 > 0) & np.isfinite(m1) & np.isfinite(m2)
         v1.append(np.percentile(np.abs(m1[k]), 90) if k.sum() > 20 else np.nan)
         v2.append(np.median(m2[k]) if k.sum() > 20 else np.nan)
-    ba = F.metrics(m0, m1, m2, east, north)[4]
+    # axis ratio within the outer edge of the annuli (intensity-weighted second moments)
+    w = np.where((r < EDGES[-1]) & (m0 > 0), m0, 0.0)
+    if w.sum() > 0:
+        xe, yn = (w * E).sum() / w.sum(), (w * N_).sum() / w.sum()
+        cxy = (w * (E - xe) * (N_ - yn)).sum()
+        lam = np.linalg.eigvalsh([[(w * (E - xe) ** 2).sum(), cxy], [cxy, (w * (N_ - yn) ** 2).sum()]])
+        ba = float(np.sqrt(lam[0] / lam[1]))
+    else:
+        ba = np.nan
     return np.array(share + v1 + v2 + [ba])
 
 
@@ -256,7 +264,7 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
     # profiles: data against the best model
     if kind == "profiles":
         n = len(EDGES) - 1
-        rc = 0.5 * (np.array(EDGES[:-1]) + np.array(EDGES[1:]))
+        rc = 0.5 * (np.array(EDGES[:-1]) + np.array(EDGES[1:]))  # annulus centres
         fig, axs = plt.subplots(1, 3, figsize=(13, 4), layout="constrained")
         for ax, (k, lab) in zip(axs, ((0, "share of moment 0"), (1, r"$|$moment 1$|$, 90th percentile [km/s]"),
                                       (2, "moment 2, median [km/s]"))):
@@ -320,6 +328,7 @@ def main():
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
     ap.add_argument("--bounds", nargs="*", default=[], help="name=lo:hi")
     ap.add_argument("--metrics", default="profiles", choices=("profiles", "basic"))
+    ap.add_argument("--edges", default=None, help="annulus edges [arcsec], e.g. 0.01,0.025,0.04,0.06,0.08,0.1")
     ap.add_argument("--maxiter", type=int, default=40)
     ap.add_argument("--popsize", type=int, default=12)
     ap.add_argument("--workers", type=int, default=8)
@@ -330,6 +339,9 @@ def main():
     if a.check:
         check()
         return
+    global EDGES
+    if a.edges:
+        EDGES = tuple(map(float, a.edges.split(",")))
     src = a.model if a.model in ("torus", "torus+disc") else str(Path(a.model.split(":", 1)[1]).resolve())
     allowed = {"torus": ["R0", "e_max", "i_max", "R_pc", "inc", "logM"],
                "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"]

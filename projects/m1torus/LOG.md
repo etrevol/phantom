@@ -665,3 +665,18 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   `fit_torus.py --model torus+disc` adds a central disc of clouds (radius R_d, mass
   share f_d, dispersion h_d v_K, tilt about the sky major axis so its inclination is
   inc + tilt_d; checked: axis ratio |cos(inc + tilt)| to 0.01).
+- **B24, torus plus central disc** (bounded torus, 10 parameters, 4920 evaluations,
+  14 min): chi2 30.3 against 35.6 for the torus alone, worse per degree of freedom
+  (3.4 against 2.7); the "disc" is wide (0.58 R_tor), hot (0.27 v_K), its tilt
+  unconstrained (-19..66 deg). The moment-0 share profile, central annuli included, is
+  already matched by the bounded torus alone (R0 0.66 reaches 0.34 R_tor): the "missing
+  central component" read off the unbounded fit was wrong; the disc is dropped
+  (Occam). The real residuals, with or without the disc: |moment 1| too high at
+  0.06-0.13 arcsec, moment 2 ~20% low, axis ratio 0.55 against 0.90.
+- **B19, the torus region only** (`--edges 0.01,...,0.1`, 16 numbers; beyond 0.1 arcsec
+  ~ 8 pc the data hold the nuclear spiral and inflow we do not model): R0 0.53, e_max
+  0.70 (the physical bound), i_max 52, R_tor 5.9 pc (5.7-6.6), i 48 (44-51; Combes et
+  al. 2025: 50), M_dyn 1.5e7; chi2 18.3 (1.8 per dof). Moment-0 share and rotation
+  follow the data within the errors; moment 2 stays ~15% low (inner annulus 44 against
+  59 km/s) and the core is less round (0.70 against 0.86). Candidate for B25: torus
+  0.70-52-0.53 (e_max, i_max, R0).
