@@ -934,3 +934,10 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   requirement that the observed (gas) torus be nearly collisionless. Open: lifetime over
   tens of orbits; the gas dispersion that matches NGC 613 (v_A 0.4 gave sigma_z ~0.26 but
   evaporated ~2% per orbit); synthetic maps of the gas tracer against the archive cube.
+- **B32(b3) start**: two components as before, v_A 0.3 (gas warmer, closer to NGC 613),
+  40 orbits (t 100-140). Criteria set before, changed from B32(b) with reasons: stop on
+  evaporation if the 90th-percentile radius of the bound gas exceeds 3 or the unbound
+  share exceeds 10% (a few per cent lost would be replaced by inflow; the R90 of all
+  gas was driven by a few receding clouds); on mode loss as before; if fewer than 30%
+  of the clouds remain (drained); else at t = 140. Then gas-only synthetic maps against
+  the archive cube.

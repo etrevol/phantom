@@ -42,7 +42,8 @@ def row(path):
         kk = (R > 0.5) & (R < 1.5)
         vk = np.sqrt(M / R[kk])
         out[name] = dict(n=int(sel.sum()), A1=a1, phase=ph, unbound=float(np.mean(E > 0)),
-                         R90=float(np.percentile(R, 90)), sz=float(np.std(vs[kk, 2] / vk)),
+                         R90=float(np.percentile(R, 90)), R90b=float(np.percentile(R[E < 0], 90)),
+                         sz=float(np.std(vs[kk, 2] / vk)),
                          noise=2 / np.sqrt(max(sel.sum(), 1)))
     return out
 
@@ -59,7 +60,7 @@ def main():
         dph = (ga["phase"] - st["phase"] + 180) % 360 - 180
         print(f"t {r['t']:6.1f} | stars A1 {st['A1']:.3f} phase {st['phase']:5.0f} sz {st['sz']:.2f} | "
               f"gas n {ga['n']:5d} A1 {ga['A1']:.3f} (noise {ga['noise']:.3f}) phase-stars {dph:+5.0f} "
-              f"sz {ga['sz']:.2f} unbound {ga['unbound']:.3f} R90 {ga['R90']:.2f}")
+              f"sz {ga['sz']:.2f} unbound {ga['unbound']:.3f} R90 {ga['R90']:.2f} R90b {ga['R90b']:.2f}")
 
 
 if __name__ == "__main__":
