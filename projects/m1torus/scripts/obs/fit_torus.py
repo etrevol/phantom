@@ -58,6 +58,8 @@ SIZE = 0.05                     # particle size [R_tor] of generated tori (h/1.4
 EDGES = (0.01, 0.025, 0.04, 0.06, 0.08, 0.11, 0.15)    # annuli [arcsec]
 SIG = dict(m0=0.2, m1=0.15, m2=0.15, ba=0.1)  # log errors (m0, m1, m2) and absolute (b/a)
 MISS = 25.                      # chi2 of an annulus the model leaves empty
+SIG_PV = 20.                    # error of a PV velocity percentile [km/s] (~3 channels)
+POS = (0.1, 0.2, 0.35, 0.5, 0.7, 0.9)   # PV positions along the major axis [x outer annulus edge]
 DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
                R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0.)
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
@@ -201,10 +203,39 @@ def metrics(m0, m1, m2, east, north, kind="profiles"):
     return np.array(share + v1 + v2 + [ba])
 
 
+def pv_metrics(cb, t):
+    """Velocity percentiles (10th, 90th) of the flux in the major-axis PV diagram (slit one
+    beam wide) at +-POS x the outer annulus edge: the rotation curve, its asymmetry and the
+    line wings, robust to noise (PV smoothed by one beam and 1.5 channels, kept above 4
+    sigma, sigma from the median absolute deviation)."""
+    pvd = mo.pv(cb, t, pa=t.pa, halfwidth=t.beam_arcsec / 2)
+    xs, vs = cb["xs"], cb["vs"]
+    sm = gaussian_filter(pvd, (1.5, t.beam_arcsec / mo.FWHM / t.pix_arcsec))
+    sig = 1.4826 * np.median(np.abs(sm - np.median(sm)))
+    out = []
+    for sgn in (1, -1):
+        for f in POS:
+            k = int(np.argmin(np.abs(xs - sgn * f * EDGES[-1])))
+            w = np.where(sm[:, k] > 4 * sig, sm[:, k], 0.0)
+            if w.sum() <= 0:
+                out += [np.nan, np.nan]
+                continue
+            cdf = np.cumsum(w) / w.sum()
+            out += [float(np.interp(0.1, cdf, vs)), float(np.interp(0.9, cdf, vs))]
+    return np.array(out)
+
+
 def chi2(mod, obs, kind="profiles"):
     if kind == "basic":
         return F.chi2(mod, obs)
     n = len(EDGES) - 1
+    if kind == "profiles+pv":
+        npr = 3 * n + 1
+        c = chi2(mod[:npr], obs[:npr], "profiles")
+        for a, b in zip(mod[npr:], obs[npr:]):
+            if np.isfinite(b):
+                c += MISS if not np.isfinite(a) else ((a - b) / SIG_PV) ** 2
+        return float(c)
     sig = np.r_[np.full(n, SIG["m0"]), np.full(n, SIG["m1"]), np.full(n, SIG["m2"])]
     c = 0.0
     for k in range(3 * n):
@@ -217,7 +248,13 @@ def chi2(mod, obs, kind="profiles"):
 
 def observed(kind):
     d = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_mask_moments.npz")
-    return metrics(d["m0"], d["m1"], d["m2"], d["east"], d["north"], kind)
+    m = metrics(d["m0"], d["m1"], d["m2"], d["east"], d["north"], "basic" if kind == "basic" else "profiles")
+    if kind != "profiles+pv":
+        return m
+    c = np.load(Path(GALAXIES[GAL]["out"]) / f"{GAL}_cube_win.npz")
+    # ascending east for the slit sampler, as compare_obs.py
+    cb = dict(cube=c["cube"][:, :, ::-1].astype(float), xs=c["east"][::-1], vs=c["v"])
+    return np.r_[m, pv_metrics(cb, target())]
 
 
 def model_metrics(par, src, kind):
@@ -236,7 +273,10 @@ def model_metrics(par, src, kind):
             _snap[src] = mo.load(F.last_dump(src))
         p = _snap[src]
         cb = mo.cube(p, t, mo.m1_phase(p["x"], p["m"]) + float(par["az"]))
-    return metrics(*mo.moments(cb, t, rms=cb.get("rms")), cb["xs"], cb["xs"], kind), cb, t
+    m = metrics(*mo.moments(cb, t, rms=cb.get("rms")), cb["xs"], cb["xs"], "basic" if kind == "basic" else "profiles")
+    if kind == "profiles+pv":
+        m = np.r_[m, pv_metrics(cb, t)]
+    return m, cb, t
 
 
 def objective(x, names, fixed, src, kind, obs):
@@ -284,11 +324,24 @@ def check():
 def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
     m, cb, t = model_metrics(best, src, kind)
     # profiles: data against the best model
-    if kind == "profiles":
+    if kind in ("profiles", "profiles+pv"):
         n = len(EDGES) - 1
         rc = 0.5 * (np.array(EDGES[:-1]) + np.array(EDGES[1:]))  # annulus centres
-        fig, axs = plt.subplots(1, 3, figsize=(13, 4), layout="constrained")
-        for ax, (k, lab) in zip(axs, ((0, "share of moment 0"), (1, r"$|$moment 1$|$, 90th percentile [km/s]"),
+        npan = 4 if kind == "profiles+pv" else 3
+        fig, axs = plt.subplots(1, npan, figsize=(4.4 * npan, 4), layout="constrained")
+        if kind == "profiles+pv":
+            npr = 3 * n + 1
+            x = np.r_[np.array(POS), -np.array(POS)] * EDGES[-1]
+            ax = axs[3]
+            for arr, st, lab in ((obs, "ko", "data"), (m, "s", "model")):
+                q = arr[npr:].reshape(-1, 2)
+                ax.vlines(x, q[:, 0], q[:, 1], color="k" if lab == "data" else "C3", lw=3 if lab == "data" else 1.5,
+                          alpha=0.6, label=lab)
+            ax.axhline(0, color="0.7", lw=0.8)
+            ax.set(xlabel="position along the major axis [arcsec]", ylabel="PV velocities, 10-90% of the flux [km/s]")
+            ax.invert_xaxis()
+            ax.legend(fontsize=8, frameon=False)
+        for ax, (k, lab) in zip(axs[:3], ((0, "share of moment 0"), (1, r"$|$moment 1$|$, 90th percentile [km/s]"),
                                       (2, "moment 2, median [km/s]"))):
             ax.plot(rc, obs[k * n:(k + 1) * n], "ko-", label=f"{GALAXIES[GAL]['name']}, ALMA 2019.1.00273.S archive cube")
             ax.plot(rc, m[k * n:(k + 1) * n], "s--", color="C3", label="best model, same processing")
@@ -352,7 +405,7 @@ def main():
     ap.add_argument("--free", default=None, help="comma list; default all of the model source")
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
     ap.add_argument("--bounds", nargs="*", default=[], help="name=lo:hi")
-    ap.add_argument("--metrics", default="profiles", choices=("profiles", "basic"))
+    ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "basic"))
     ap.add_argument("--edges", default=None, help="annulus edges [arcsec], e.g. 0.01,0.025,0.04,0.06,0.08,0.1")
     ap.add_argument("--maxiter", type=int, default=40)
     ap.add_argument("--popsize", type=int, default=12)

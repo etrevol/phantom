@@ -740,3 +740,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   at 0.0045 (170) and settled to ~0.003. Saturated weak mode at 16k: A1/S0 0.067, about
   1/5 of the canonical 0.35; onset t ~ 78 (27 Myr at the fitted NGC 613 scale, P_orb
   0.35 Myr), saturation by ~170 (60 Myr).
+- **B27, black-hole mass, NGC 613.** The PV method of Combes et al. (2025) (peak
+  projected velocity at ~1 pc) on the archive cube, slit one pixel, 3 sigma: 247-274
+  km/s on the receding side at 0.7-1 pc (their 250), but 47-102 km/s on the approaching
+  side: one-sided, not circular rotation (the fast nuclear gas of B18/B22, outflow per
+  Audibert et al. 2019); a mass from it is biased high. For NGC 1672 the envelope mass
+  depends on slit and threshold (3e6-8e7): not robust at this S/N. `fit_torus.py
+  --metrics profiles+pv` adds the 10th and 90th velocity percentiles of the flux in the
+  major-axis PV diagram (slit one beam, smoothed, > 4 sigma by MAD) at +-6 positions
+  (24 numbers, error 20 km/s). NGC 613 (16 + 24 numbers): R0 0.55, e_max 0.69, i_max 52,
+  R_tor 5.9 pc, i 48, M_BH 1.53e7 (tight), chi2 39.8 (1.17 per dof). With M_BH fixed at
+  their 3.4e7: chi2 61.4, Delta chi2 21.6, reached only with i 19 and a cold disc
+  (e_max 0.12): the data prefer ~1.5e7 at i ~ 48 (plausible; chi2 rests on the adopted
+  errors). The data PV is asymmetric (approaching side faster, -120..-140 km/s at
+  0.01-0.05 arcsec, receding 40-100), the model symmetric.
