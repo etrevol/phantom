@@ -7,8 +7,12 @@ Model sources
              node random, periapsis on the node), mean anomaly uniform: the state a run
              reaches before the m = 1 mode, without self-gravity; same random numbers for
              every parameter set, so the objective is smooth
+  torus+disc the torus plus a central disc of clouds: surface density ~ 1/R from
+             0.02 R_tor to R_d, circular Keplerian orbits with a dispersion h_d v_K in
+             every component, f_d of the mass, tilted by tilt_d about the sky major axis
+             (its inclination is inc + tilt_d; the view is fixed at azimuth 0)
   snap:PATH  a dump (or a run directory: its last dump); only the view is fitted
-Parameters  R0, e_max, i_max (torus); R_pc (torus radius), inc, logM (log10 M_BH, the
+Parameters  R0, e_max, i_max (torus); R_d, f_d, h_d, tilt_d (disc); R_pc (torus radius), inc, logM (log10 M_BH, the
             dynamical mass), az (view azimuth about the m = 1 phase, snapshots only)
 Metrics     profiles (default): in six annuli 0.01-0.15 arcsec the share of moment 0,
             |moment 1| (90th percentile) and moment 2 (median), plus the moment-0 axis
@@ -53,9 +57,11 @@ SIZE = 0.05                     # particle size [R_tor] of generated tori (h/1.4
 EDGES = (0.01, 0.025, 0.04, 0.06, 0.08, 0.11, 0.15)    # annuli [arcsec]
 SIG = dict(m0=0.2, m1=0.15, m2=0.15, ba=0.1)  # log errors (m0, m1, m2) and absolute (b/a)
 MISS = 25.                      # chi2 of an annulus the model leaves empty
-DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.)
+DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
+               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0.)
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
-              inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.))
+              inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
+              R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.))
 CROP = 0.18                     # half-size of the field the metrics need [arcsec]
 _noise = {}
 _snap = {}
@@ -84,6 +90,25 @@ def torus(R0, e_max, i_max, n=N, seed=1):
         y, z = y * ci, y * si
         return np.c_[x * cn - y * sn, x * sn + y * cn, z]
     return dict(x=rot(xp, yp), v=rot(vxp, vyp), m=np.full(n, 1. / n), size=np.full(n, SIZE), m_tor=1.)
+
+
+def disc(R_d, h_d, tilt_d, n, seed=2):
+    """A central disc of clouds: Sigma ~ 1/R in [0.02, R_d], circular orbits about a unit
+    mass with a dispersion h_d v_K, tilted by tilt_d [deg] about the y axis, which is
+    the sky major axis for the view of fast_cube (azimuth 0): the disc's inclination
+    becomes inc + tilt_d."""
+    rng = np.random.default_rng(seed)
+    u = rng.random((2, n))
+    g = rng.standard_normal((4, n))
+    R = 0.02 + (max(R_d, 0.021) - 0.02) * u[0]
+    ph = 2. * np.pi * u[1]
+    vk = 1. / np.sqrt(R)
+    x = np.c_[R * np.cos(ph), R * np.sin(ph), h_d * R * g[0]]
+    vR, vp, vz = h_d * vk * g[1], vk + h_d * vk * g[2], h_d * vk * g[3]
+    v = np.c_[vR * np.cos(ph) - vp * np.sin(ph), vR * np.sin(ph) + vp * np.cos(ph), vz]
+    c, s = np.cos(np.radians(tilt_d)), np.sin(np.radians(tilt_d))
+    rot = np.array([[c, 0., -s], [0., 1., 0.], [s, 0., c]])
+    return x @ rot.T, v @ rot.T
 
 
 def noise(t, shape):
@@ -167,8 +192,14 @@ def observed(kind):
 
 def model_metrics(par, src, kind):
     t = replace(F.target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
-    if src == "torus":
+    if src in ("torus", "torus+disc"):
         p = torus(par["R0"], par["e_max"], par["i_max"])
+        if src == "torus+disc":
+            # same particle mass: the disc takes f_d of the N clouds from the torus
+            nd = int(round(par["f_d"] * N))
+            if nd > 0:
+                xd, vd = disc(par["R_d"], par["h_d"], par["tilt_d"], nd)
+                p["x"][:nd], p["v"][:nd] = xd, vd
         cb = fast_cube(p, t, 0.0)
     else:
         if src not in _snap:
@@ -299,8 +330,10 @@ def main():
     if a.check:
         check()
         return
-    src = "torus" if a.model == "torus" else str(Path(a.model.split(":", 1)[1]).resolve())
-    allowed = ["R0", "e_max", "i_max", "R_pc", "inc", "logM"] if src == "torus" else ["R_pc", "inc", "logM", "az"]
+    src = a.model if a.model in ("torus", "torus+disc") else str(Path(a.model.split(":", 1)[1]).resolve())
+    allowed = {"torus": ["R0", "e_max", "i_max", "R_pc", "inc", "logM"],
+               "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"]
+               }.get(src, ["R_pc", "inc", "logM", "az"])
     names = a.free.split(",") if a.free else allowed
     assert set(names) <= set(allowed), f"free parameters of this model: {allowed}"
     fixed = {k: v for k, v in DEFAULT.items()}
@@ -312,7 +345,7 @@ def main():
         k, v = kv.split("=")
         bnd[k] = tuple(map(float, v.split(":")))
     bounds = [bnd[n] for n in names]
-    tag = "torus" if src == "torus" else Path(src).parent.name + "_" + Path(src).name
+    tag = src.replace("+", "_") if src in ("torus", "torus+disc") else Path(src).parent.name + "_" + Path(src).name
     out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{tag}_{a.metrics}")
     out.mkdir(parents=True, exist_ok=True)
     obs = observed(a.metrics)
@@ -337,9 +370,12 @@ def main():
                    observed=list(map(float, obs)))
     (out / "fit.json").write_text(json.dumps(summary, indent=1))
     np.savez_compressed(out / "evaluations.npz", names=names, x=X, chi2=fv)
-    if src == "torus":
+    if src in ("torus", "torus+disc"):
         label = (rf"Collisionless torus (phase-mixed, no mode): $R_0 = {best['R0']:.2f}$, "
                  rf"$e_{{\max}} = {best['e_max']:.2f}$, $i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
+        if src == "torus+disc":
+            label += (rf"central disc: $R_d = {best['R_d']:.2f}\,R_{{\rm tor}}$, {100 * best['f_d']:.0f}% of the mass, "
+                      rf"$\sigma/v_{{\rm K}} = {best['h_d']:.2f}$, tilt ${best['tilt_d']:.0f}^\circ$;\n")
     else:
         label = L.wrapped(L.model_label(Path(src).parent), 110) + "\n"
     label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "

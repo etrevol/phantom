@@ -659,3 +659,9 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   put gas into the central 2-4 pc where NGC 613 has 40% of its CO: a torus alone lacks
   a central component (physically such orbits would be swallowed). Next candidate: a
   nested central disc (task C) with the torus.
+- **B19b, torus fit with physical bounds** (e_max <= 0.7, M_BH 0.7-4e7): R0 0.66, e_max
+  0.69 (0.49-0.70), i_max 48, R_tor 7.2 pc, i 54, M_BH 1.6e7; chi2 35.6 (2.7 per dof)
+  against 30.2 unbounded: near-radial orbits bought only Delta chi2 ~5. B24 started:
+  `fit_torus.py --model torus+disc` adds a central disc of clouds (radius R_d, mass
+  share f_d, dispersion h_d v_K, tilt about the sky major axis so its inclination is
+  inc + tilt_d; checked: axis ratio |cos(inc + tilt)| to 0.01).
