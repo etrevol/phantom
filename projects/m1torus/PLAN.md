@@ -47,6 +47,10 @@ Order (agreed with the user 2026-10-30 evening, after B20 and B31; discussion fi
 3. Path 3: other galaxies with high-resolution ALMA archive data, blind predictions.
 4. Paths 4-5: full HCO+ cube from the raw data; the black-hole mass against the
    literature; the A10 report.
+Extension (agreed with the user 2026-10-31, after the second look at the archive data):
+the misfit is dominated by geometry and the nucleus, and the NGC 613 lopsidedness depends
+on the adopted black-hole position; NGC 1672 is equally important. Order: B38 (figures,
+in the background), B33, B34, then B35-B36 for both galaxies, and B37.
 Literature to check first (novelty): m = 1 lopsided modes in nuclear discs (Tremaine
 1995, 2001; Hopkins & Quataert 2010 a, b), Beckert & Duschl 2004.
 
@@ -190,7 +194,13 @@ Units and observables (code: G = M_BH = R = 1):
 | B29 | [~] | NGC 613 m = 1 tension: m0 A1 0.17 > A2, A3 ~0.10, torus centroid ~1 pc from the AGN; which torus (M_tor, e_max, i_max) or which other cause gives it | a model of the observed lopsidedness or a reason it is not the slow mode | ~2-4 h |
 | B30 | [x] | intermediate torus 0.6-56-0.42 (e_max, i_max, R0), M_tor 0.1, 16k, to saturation | kinematics (40 numbers) and the m = 1 lopsidedness of NGC 613 together | done 2026-10-30: saturated A1/S0 ~0.17; chi2 49.6 + m = 1 1.2: best of the three, by Delta chi2 3-5 |
 | B31 | [x] | lopsidedness metrics (m0 A1, torus centroid offset and direction about the AGN) in the fit, errors from noise and clump realisations | the mode strength with an honest uncertainty | done 2026-10-30: no mode and weak mode excluded; strength A1/S0 ~0.25 (0.15-0.35) |
-| B32 | [~] | does the mode live with colliding gas: (b) a collisionless stellar torus with the mode plus 20% gas clouds with magnetised collisions (Hopkins et al. 2010-2011 picture); (a) the whole torus as clouds | gas m = 1 against the stars, its dispersion and lifetime | (b) done 2026-10-30: gas traces the stellar mode for gas shares 20-50% (phase within ~10 deg), but the settled gas cools to sigma_z ~0.14 and spreads in ~7 orbits; fitted to NGC 613 it does poorly (chi2 130 vs 44-54); b5 rarer collisions: warm gas (sigma_z 0.28) but faster spreading (~5 orbits, viscosity peaks at tau ~1), chi2 75, lopsided direction unstable; (c) fed torus, inflow 0.3 Msun/yr (`inject_cloudfeed.f90`), running 2026-10-30 |
+| B32 | [x] | does the mode live with colliding gas: (b) a collisionless stellar torus with the mode plus 20% gas clouds with magnetised collisions (Hopkins et al. 2010-2011 picture); (a) the whole torus as clouds | gas m = 1 against the stars, its dispersion and lifetime | (b) done 2026-10-30: gas traces the stellar mode for gas shares 20-50% (phase within ~10 deg), but the settled gas cools to sigma_z ~0.14 and spreads in ~7 orbits; fitted to NGC 613 it does poorly (chi2 130 vs 44-54); b5 rarer collisions: warm gas (sigma_z 0.28) but faster spreading (~5 orbits, viscosity peaks at tau ~1), chi2 75, lopsided direction unstable; (c) fed torus, inflow 0.3 Msun/yr (`inject_cloudfeed.f90`), stopped t 106: compact and warm, but the gas mode dilutes to A1 ~0.1 |
+| B33 | [ ] | free geometry in `fit_torus.py`: centre (dx, dy), systemic velocity, sky PA as fitted parameters; refit NGC 613 and NGC 1672 with the best models | how centre, v_sys and PA change the chi2, the mass and the lopsidedness | ~10 min per fit |
+| B34 | [ ] | black-hole position of NGC 613: channel centroids of the fastest CO (maser method), continuum re-examined, literature (VLBI masers); lopsidedness about the result | the centre with an error, and whether the m = 1 claim stands | - |
+| B35 | [ ] | the nucleus modelled, not excluded: gas within ~1 pc (sub-pc disc, inflow or outflow) and the H13CN(4-3) blend at +395 km/s in the mock pipeline | the innermost moment 2, PV at the centre and the broad nuclear spectrum reproduced | - |
+| B36 | [ ] | interferometric filtering in the mock pipeline (missing short spacings, MRS 0.24 arcsec): negative bowls and lost smooth emission | models and data filtered alike | - |
+| B37 | [ ] | NGC 1672 on equal footing: a lopsided (A1 0.27), warped, thin disc with an inner hole; literature first (eccentric thin discs, Tremaine 2001; warps), then a model that reproduces it, with the user | a model of NGC 1672 matching the cube | - |
+| B38 | [ ] | figures and movies of the representative runs (A3, A6, B25, B30, B32 b4, b5, c) by the FIGURES.md rules | a complete figure set | - |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.

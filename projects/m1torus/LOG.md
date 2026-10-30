@@ -1071,3 +1071,18 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   240-243, the same about the kinematic or the phase centre; the SW half carries ~2x the
   NE flux. A thin, warped, lopsided disc: a second m = 1 case, less centre-dependent than
   NGC 613, in a geometry the thick-torus mode does not cover.
+- **B32(c) result, fed torus, stopped at t = 106 with the user** (not by a criterion: the
+  NGC 613 comparison it was built for is being redefined by the centre question). The
+  inflow keeps the torus gas compact (R90 1.35 -> 1.41 over 6 orbits, against 3.35 in b5
+  without feeding) and warmish (sigma_z 0.30 -> 0.24), its mass levels off and grows again
+  after t ~104 (7551 -> 7122 -> 7336 clouds within r < 1.6). But the gas loses the mode:
+  A1 0.27 -> 0.10-0.12 (noise 0.024) while the stars keep 0.31-0.36, and its phase lags
+  the stars by 32-38 deg at the end: point-symmetric inflow dilutes the m = 1 of the gas
+  faster than the stellar torque imposes it. Reading: a fed torus can be compact and warm,
+  but its gas is then only weakly lopsided (A1/S0 ~0.1). Restartable with continue.sh
+  (maxp kept in the run directory).
+- **Plan extended with the user (2026-10-31)**: B33 free geometry in the fitter, B34 the
+  black-hole position of NGC 613, B35 the nucleus modelled (not excluded; the user: model
+  to the maximum), B36 interferometric filtering in the mock pipeline, B37 NGC 1672 on
+  equal footing (if the thick torus with the mode does not fit, find or build another
+  model), B38 figures of the representative runs.
