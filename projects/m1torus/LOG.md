@@ -772,3 +772,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   dynamical M_BH 1.4-1.5e7 (NGC 613, robust to the extended mass) and 1.15-1.3e7 (NGC
   1672, model-limited), 2.3-3.9 times below Combes et al. (2025), whose masses are
   disfavoured by Delta chi2 22 and 116 under our errors.
+- **B29, the m = 1 of NGC 613, first results.** m0 harmonics and torus centroid about
+  the black hole on synthetic maps at the NGC 613 view (R_tor 5.9 pc, i 48, M_BH 1.5e7,
+  8 azimuths), r < 0.1 arcsec: A3 (strong mode) A1 0.21, offset 1.26 pc; A7 0.22, 1.36;
+  A11 0.10, 0.50; B25 (fitted, weak) 0.06, 0.30; A6 (no mode) 0.01, 0.03; data 0.17,
+  0.96 pc. The evolved A3 at t = 100 fitted with its mode (profiles + PV, free R_pc,
+  inc, logM, azimuth): R_tor 5.6 pc, i 50 (Combes: 50), M_BH 1.44e7, azimuth 229, chi2
+  54.3 (1.51 per dof; the phase-mixed best 39.8 with 6 free). At that view, not fitted
+  to it, the torus centroid lies 1.25 pc from the black hole toward PA 310, the data
+  0.96 pc toward PA 316 (Combes' depression 3 pc to the NW); A1 0.21 against 0.17. The
+  same mode orientation reproduces the PV asymmetry and the moment-0 offset (plausible;
+  a ~3% chance alignment within 6 deg). B25 t = 225 fitted the same way for a fair
+  comparison: running.
