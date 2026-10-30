@@ -31,6 +31,23 @@ Ground truth is the paper and our own measurements. The side projects on this la
 
 Cost reference: 16k ~45 s/orbit (150 orbits ~2 h), 64k 4.7 min/orbit (150 orbits 12 h). Ask the user before anything over 30 min.
 
+## Roadmap (2026-10-30, after B12-B23 and B19; order to be set with the user)
+
+Where B stands: collisional cloud tori cannot stay hot for long whatever heats them
+(known since KB88 for damping; our three heating laws quantify it; a speed-dependent
+restitution gives a stable balance with sigma ~ v_A); the collisionless torus fits the
+archive cube best once its size is free (R_tor ~6.6 pc, i ~60, M_dyn ~1.4e7) but lacks
+the central component (40% of the CO within 4 pc, round core) and drives e_max to 1.
+Candidate steps:
+1. B19b: fit with physical bounds (e_max <= 0.7, M_BH within the literature 0.7-4e7).
+2. B24: torus plus a central disc fitted together (disc radius, mass share, thickness).
+3. B25: phantom run of the best physically grounded model (~2 h, ask): does the mode
+   grow, the evolved maps against the archive cube (three columns).
+4. B20: prediction and check of an m = 1 signature seen by ALMA (lopsided moment 0,
+   cavity offset against the AGN, PV asymmetry); the black-hole offset itself
+   (~0.002 arcsec) is far below the beam.
+5. Write-up: A10 report and the paper outline.
+
 ## A. Reproduction of the collisionless mode
 
 | id | status | task | acceptance | cost |
