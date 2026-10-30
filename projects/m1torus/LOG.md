@@ -864,3 +864,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   arcsec), the error from noise realisations at the measured HCO+ rms. Decision: if
   |shift| >= 2 sigma, PA 170-260 favours a moderate or strong mode, PA 140-165 no or
   a weak mode; otherwise inconclusive.
+- **B20 result (after the pre-registration in 181abbdc7).** HCO+ cube: v -37..1495 km/s
+  (rest 356.7342 GHz; the header holds the window's frequency), 13.3 km/s channels,
+  beam 0.0133 arcsec, rms 0.194 mJy. Receding half v +20..+300: CO centroid 2.37 pc from
+  the black hole at PA 350, HCO+ 1.96 pc at PA 333; shift HCO+ - CO 0.75 +- 0.31 pc
+  toward PA 218 (2.4 sigma; 40 noise realisations at the HCO+ rms); v +20..+230
+  (inside the continuum-fit edge of spw21 at +238 km/s): 0.72 +- 0.27 pc toward 218
+  (2.6 sigma). By the rule set before: >= 2 sigma and PA 170-260, so the test favours a
+  moderate or strong mode; PA 218 lies between the intermediate (174-206) and strong
+  (225-258) predictions, away from no mode (144-158) and the weak mode (159-162). The
+  size is ~2 times the largest prediction (0.42), ~1 sigma. Caveats: 2.4 sigma with
+  thermal noise only (clumps not included), HCO+ ~ density^q assumed, half the line.
+  Plausible, not established.
