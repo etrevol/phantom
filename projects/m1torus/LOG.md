@@ -735,3 +735,8 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   "prediction" for NGC 613 would not be blind. NGC 1672 has no continuum detection
   (as Combes say), so no AGN position from the data. Plan changed: B27-B29, then a
   blind B20.
+- **B25 saturated, stopped at t = 225.** A1/S0 (10-orbit means) 0.064, 0.066, 0.066,
+  0.067, 0.069, 0.066, 0.066 over 160-230; 195-205 against 215-225: 4% < 10%. r_c peaked
+  at 0.0045 (170) and settled to ~0.003. Saturated weak mode at 16k: A1/S0 0.067, about
+  1/5 of the canonical 0.35; onset t ~ 78 (27 Myr at the fitted NGC 613 scale, P_orb
+  0.35 Myr), saturation by ~170 (60 Myr).
