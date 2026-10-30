@@ -38,20 +38,20 @@ Where B stands: collisional cloud tori cannot stay hot for long whatever heats t
 restitution gives a stable balance with sigma ~ v_A); the collisionless torus fits the
 archive cube best once its size is free (R_tor ~6.6 pc, i ~60, M_dyn ~1.4e7) but lacks
 the central component (40% of the CO within 4 pc, round core) and drives e_max to 1.
-Order (the user's choice: torus plus disc; then the run, the prediction and other
-galaxies; publications not decided yet; the report after the model):
-1. B19b: torus fit with physical bounds (e_max <= 0.7, M_BH within the literature
-   0.7-4e7): how much the match loses without near-radial orbits.
-2. B24: torus plus a central disc fitted together (disc radius, mass share, thickness).
-3. B25: phantom run of the best physically grounded model (~2 h, ask, stop criterion):
-   does the mode grow, the evolved maps against the archive cube (three columns).
-4. B20: prediction and check of an m = 1 signature seen by ALMA (lopsided moment 0,
-   cavity offset against the AGN, PV asymmetry); the black-hole offset itself
-   (~0.002 arcsec) is far below the beam.
-5. B26: the same pipeline on other tori of Combes et al. (2025) from the archive of
-   project 2019.1.00273.S, so the conclusion does not rest on one galaxy.
-6. Write-up after the model: A10 report with the B chapters; the paper structure
-   (one or two papers) is decided later.
+Order (the user's choice 2026-10-30, after B19-B26: consolidate before predicting;
+no 64k run for now):
+1. B27: the black-hole mass, ours 2-2.5 times below Combes et al. (2025) in both
+   galaxies (1.5 vs 3.4e7, 1.9 vs 4.5e7): their PV method on our models, PV metrics in
+   the fit.
+2. B28: extended mass in the potential (stars, gas) where the rotation rises outward
+   (NGC 1672, 107 -> 127 km/s at 1.6-6 pc); it also sets the precession of the mode.
+3. B29: the m = 1 tension in NGC 613: m0 A1 0.17 against A2, A3 ~0.10 within 0.1
+   arcsec and a torus centroid ~1 pc from the continuum AGN, closer to the strong mode
+   (A3: r_tb ~0.24 R) than to the weak one of the fitted torus (B25: 0.17 pc); torus
+   mass, orbit parameters, or another cause (feeding, clumps, outflow).
+4. B20 only then, blind: predictions written before looking, for quantities not yet
+   seen (HCO+(4-3), other galaxies with high-resolution archive data).
+5. Write-up after the model: A10 report with the B chapters; papers decided later.
 
 ## A. Reproduction of the collisionless mode
 
@@ -188,6 +188,9 @@ Units and observables (code: G = M_BH = R = 1):
 | B24 | [x] | torus plus central disc fitted together to the archive cube (`fit_torus.py` with a disc component: radius, mass share, thickness) | the central moment-0 share, central moment 2 and the round core without near-radial orbits | done 2026-10-30: the disc does not improve the fit per degree of freedom; dropped |
 | B25 | [x] | phantom run of the best physically grounded model, stop criterion, three-column maps | does the mode grow in an NGC 613-like torus; evolved maps against the archive cube | done 2026-10-30: weak slow mode (A1/S0 0.05-0.06, locked at t ~ 78, still rising); evolved torus chi2 25.6 |
 | B26 | [x] | other tori of Combes et al. (2025), archive cubes of 2019.1.00273.S, same processing and fit | the conclusion beyond one galaxy | per galaxy ~1-2 h |
+| B27 | [ ] | black-hole mass: our fits 2-2.5 x below Combes et al. (2025) in both galaxies; their PV method (peak projected velocity at ~1 pc) applied to our models, PV metrics added to the fit | the source of the factor and a consistent M_BH | ~2 h |
+| B28 | [ ] | extended mass (stellar cluster, gas) in the generator potential and in phantom (external potential) where the rotation rises outward (NGC 1672) | rotation profile shape; its effect on the precession and the mode | ~2-3 h |
+| B29 | [ ] | NGC 613 m = 1 tension: m0 A1 0.17 > A2, A3 ~0.10, torus centroid ~1 pc from the AGN; which torus (M_tor, e_max, i_max) or which other cause gives it | a model of the observed lopsidedness or a reason it is not the slow mode | ~2-4 h |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.

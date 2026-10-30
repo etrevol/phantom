@@ -724,3 +724,14 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   colliding clouds become once cooled. The slow mode needs a thick eccentric torus
   (paper; our thin control A5): prediction for B20, no slow m = 1 mode in NGC 1672, a
   weak one possible in NGC 613.
+- **Before B20: is it too early?** (the user asked). Yes, in the planned form. (1) The
+  fitted black-hole masses are 2-2.5 times below Combes et al. (2025) in both galaxies:
+  a systematic, open. (2) NGC 1672 needs extended mass, which also sets the precession.
+  (3) The weak mode of B25 is at 16k only. (4) The m0 harmonics of NGC 613 about the
+  continuum AGN: A1 0.09, A2 0.10, A3 0.10 within 0.05 arcsec; A1 0.17, A2 0.11, A3 0.10
+  within 0.1, the torus centroid 0.24 and 0.96 pc from the AGN: clumps give ~0.10 in
+  every harmonic, so B25's weak mode would be invisible, yet the data show m = 1 above
+  that, nearer the strong mode. These numbers were looked at now, so a lopsidedness
+  "prediction" for NGC 613 would not be blind. NGC 1672 has no continuum detection
+  (as Combes say), so no AGN position from the data. Plan changed: B27-B29, then a
+  blind B20.
