@@ -1016,3 +1016,22 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   noise over 5 orbits, stars A1 < 0.1, or alive particles > 47000. Success, read at the
   end: torus gas steady (+-20% over the last 5 orbits), sigma_z >= 0.25, phase within 30
   deg of the stars, and a fit to NGC 613 with kinematic + m = 1 chi2 <~ 60.
+- **Novelty check, second pass (alphaXiv search and full text, 2026-10-30).** (1) Bannikova
+  et al. (2026, Sect. 9.2) already propose the slow mode for NGC 613, at order of
+  magnitude only: from Combes' 3 pc hole offset and M_tor/M_BH ~ 0.3 they estimate an
+  amplitude ~20 against 40 of their canonical run, and name "dissipation effects between
+  the clouds" as future work. The qualitative claim is theirs; ours is the quantitative
+  test: a fit of the raw cube processed as the models, the measured lopsidedness about the
+  AGN (A1 0.167, offset 0.97 pc), the inferred saturated strength 0.15-0.35, the blind
+  HCO+ test, and colliding gas carried by a stellar mode. The same group plans "dedicated
+  simulations for each object" (Sect. 9.1): a competing study is likely. (2) Combes et al.
+  (2026, Sects. 4.2, 5.3) read the NGC 613 hole as an m = 1 lopsided mode plus a past AGN
+  episode, cite PPI and Hopkins & Quataert (2010), and expect tori to live a few Myr and
+  be refilled by accretion; no dynamical model is fitted. So the fed torus is their
+  expectation, not new as an idea; a fed collisional torus that keeps the mode would be.
+  (3) Black-hole masses from N-body tori against ALMA maps were done before (Bannikova et
+  al. 2021: NGC 1068 5e6, qualitative NGC 1672 1e8, NGC 1326); our NGC 613 1.3-1.5e7 and
+  NGC 1672 1.15-1.3e7 from fits are new numbers, against 3.4e7 and 4.5e7 of Combes et al.
+  (2026), who note the 1672 value exceeds the M-sigma 2.5e7. (4) No quantitative
+  dynamical model of the NGC 613 torus found in a recency search. Confidence: plausible
+  (one index; papers outside it or in preparation can exist).
