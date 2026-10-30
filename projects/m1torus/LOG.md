@@ -955,3 +955,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **B32(b4) start**: A3 at t = 100, frac_clouds 0.5 (8192 clouds, 8192 stars), v_A 0.2,
   r_cl 0.01, r_acc 0.05; criteria of b3 (bound-gas R90 > 3, unbound > 10%, gas A1 < 3x
   noise for 5 orbits, < 30% clouds left), else 20 orbits.
+- **B32(b4) result, half gas, v_A 0.2, stopped at t = 108** (bound-gas R90 3.24 > 3).
+  Stars A1 0.354 -> 0.315; gas A1 0.36 -> 0.26-0.28 (noise 0.022-0.026), phase within
+  +-11 deg of the stars' (+3..+7 at the end); gas sigma_z 0.33 -> 0.14, unbound 1.9%,
+  28% into the black hole in 8 orbits (~3.5% per orbit); the bound gas spread from R90
+  1.4 to 3.2: the viscous time of colliding gas at sigma/v ~0.15, (v/sigma)^2/Omega ~ 7
+  orbits. The mode survives with half the torus as gas. Gas only at t = 108 fitted to
+  NGC 613 (profiles + PV, free R_pc, inc, logM, azimuth): chi2 130.5 (3.6 per dof), i at
+  the bound 80, R_tor 8.8 pc, M_BH 1.08e7; at that view A1 0.08, offset 0.36 pc toward
+  PA 325 (data 0.17, 0.97 pc, 316). The cooled, spread gas does not look like the
+  compact, hot-looking torus of NGC 613; the collisionless tori fit far better (44-54).
+  So the stars-carry, gas-traces mechanism works for the mode, but the settled gas of
+  this model is too cold and too spread. Candidate readings: the observed gas is young
+  (freshly supplied by the inflow, not yet cooled and spread), or its clouds collide far
+  less than here (lower viscosity and cooling).
