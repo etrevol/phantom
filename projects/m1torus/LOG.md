@@ -762,3 +762,13 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   M(<r) = M_BH [1 + f_ext (r/R_tor)^beta], velocities scaled by sqrt(M(<r)/M_BH)
   (exact for circular orbits); f_ext, beta free. Figure title fixed (axis ratio index
   with PV metrics).
+- **B28, extended mass** (profiles + PV, f_ext and beta free). NGC 613: f_ext 0.09
+  (0.01-0.09), M_BH 1.41e7, chi2 41.1 against 39.8 without: none needed. NGC 1672:
+  f_ext 0.76 (0.5-1.9), beta 2.3, M_BH 1.15e7, chi2 98.0 against 102.5 (Delta 4.5 for 2
+  parameters, marginal); the outward-rising |moment 1| stays unmatched while the
+  major-axis PV agrees: the high |m1| at 0.06-0.12 arcsec comes from the decoupled
+  outer gas at another PA overlapping in projection, which one torus cannot hold
+  (plausible; a two-component model would test it). B27/B28 summary: torus-scale
+  dynamical M_BH 1.4-1.5e7 (NGC 613, robust to the extended mass) and 1.15-1.3e7 (NGC
+  1672, model-limited), 2.3-3.9 times below Combes et al. (2025), whose masses are
+  disfavoured by Delta chi2 22 and 116 under our errors.
