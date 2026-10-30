@@ -800,3 +800,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   0.0039 -> 0.0031, B25 0.0019 -> 0.0006). Our analysis_m1torus also measures x_c from
   the origin. Tests proposed for the authors: total momentum and barycentre of all
   their runs; R_SMBH from the instantaneous barycentre; the phase of the maxima.
+- **B29, fair comparison** (evolved snapshots, free R_pc, inc, logM, azimuth, 40
+  numbers): B25 t = 225 (weak mode) chi2 44.0, R_tor 6.2 pc, i 47, M_BH 1.47e7, azimuth
+  257, its torus centroid 0.29 pc toward PA 336, A1 0.06; A3 t = 100 (strong mode) chi2
+  54.3, 1.25 pc toward PA 310, A1 0.21; data 0.96 pc toward PA 316, A1 0.17. The
+  kinematics favour the weak mode by Delta chi2 10, the lopsidedness the strong one
+  (B25 three times too small, A3 ~25% too large); both point NW. With the m = 1 numbers
+  added (errors ~0.05 in A1, ~0.3 pc in the offset, the clump level) the total is ~56
+  for A3 against ~72 for B25 (depends on those errors). Plausible reading: a torus
+  between them (i_max 52-60) fits both, and the lopsidedness of NGC 613 is the slow
+  m = 1 mode of a self-gravitating eccentric torus. Caveats: one realisation each, 16k,
+  adopted errors, the azimuth partly set by the PV asymmetry. Next: a run of an
+  intermediate torus (ask first).
