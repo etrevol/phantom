@@ -186,7 +186,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B22 | [x] | the molecular outflow of NGC 613 (Audibert et al. 2019) added kinematically to the synthetic cube: how much of the nuclear moment 2 and the PV wing it explains | moment 2 at the nucleus and PV against the archive cube | done 2026-10-30: the outflow does not set the annulus moment 2; feeding needs the drained gas to leave |
 | B23 | [x] | magnetised clouds: restitution from the collision speed (KB88 eq. 25, `v_alfven`), no thermostat, from A3 at t = 100; v_A 0.2 first, stop criterion at t = 103 | a stable hot torus (sigma ~0.25-0.4 v_K predicted), then the mode and the synthetic maps against the archive cube | done 2026-10-30: v_A 0.2 bound but cold (sigma_z 0.11), v_A 0.6 at sigma_z 0.28 drains and evaporates |
 | B24 | [x] | torus plus central disc fitted together to the archive cube (`fit_torus.py` with a disc component: radius, mass share, thickness) | the central moment-0 share, central moment 2 and the round core without near-radial orbits | done 2026-10-30: the disc does not improve the fit per degree of freedom; dropped |
-| B25 | [ ] | phantom run of the best physically grounded model, stop criterion, three-column maps | does the mode grow in an NGC 613-like torus; evolved maps against the archive cube | ~2 h (ask) |
+| B25 | [~] | phantom run of the best physically grounded model, stop criterion, three-column maps | does the mode grow in an NGC 613-like torus; evolved maps against the archive cube | ~2 h (ask) |
 | B26 | [ ] | other tori of Combes et al. (2025), archive cubes of 2019.1.00273.S, same processing and fit | the conclusion beyond one galaxy | per galaxy ~1-2 h |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the

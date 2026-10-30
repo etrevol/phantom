@@ -680,3 +680,11 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   follow the data within the errors; moment 2 stays ~15% low (inner annulus 44 against
   59 km/s) and the core is less round (0.70 against 0.86). Candidate for B25: torus
   0.70-52-0.53 (e_max, i_max, R0).
+- **B25 start**: the B19 torus, e_max 0.70, i_max 52, R0 0.53, M_tor 0.1 (Combes' gas
+  mass with a central alpha_CO 3-10 below Galactic gives 0.1-0.2 of M_dyn; the paper's
+  reference mass), 16k, 150 orbits, A3 numerics (eps_c 0, adaptive h, individual
+  steps). N: 16k reproduced 64k within ~3% where the mode grows (A3/A4), so a growing
+  mode is trusted at 16k; no mode at 16k is not conclusive for a marginal i_max (A6 at
+  45 deg showed none, unlike the paper's 128k), so then 64k (~12 h) is proposed, not a
+  conclusion. Stop criterion: at t = 100, A1/S0 < 0.04 (3x the 16k noise) and not
+  rising over 80-100: stop.
