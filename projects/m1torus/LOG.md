@@ -812,3 +812,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   m = 1 mode of a self-gravitating eccentric torus. Caveats: one realisation each, 16k,
   adopted errors, the azimuth partly set by the PV asymmetry. Next: a run of an
   intermediate torus (ask first).
+- **Sources for the barycentre-drift reading** (downloaded, quotes checked):
+  Bannikova et al. (2026), Sect. 2 and 3.1: phi-GPU, Hermite with hierarchical
+  individual block time steps; r_c is the radius vector of the central mass and
+  "r_c = -M_tor r_tb, as required by conservation of the system's centre of mass", so
+  r_c + M_tor r_tb = 0 is their own test. Pelupessy, Jaenes & Portegies Zwart (2012,
+  arXiv:1205.5668), Sect. 2: in block time step codes slow particles are extrapolated
+  to the time of fast ones; "The extrapolating schemes, including their Hermite
+  generalizations, are not momentum conserving"; Sect. 1: such schemes "typically do
+  not conserve momentum". Zhu (2017, arXiv:1712.10116), Sect. 1 and 2.2: individual
+  timesteps "introduce errors in momentum conservation by directly violating Newton's
+  third law", producing "spurious net velocities". Dehnen & Read (2011), Sect. 2.4: a
+  tree code violates Newton's third law, "implying the loss of total-momentum
+  conservation" (phantom's case). Berczik et al. (2013): phi-GPU uses 4th-8th order
+  Hermite with hierarchical block time steps.
