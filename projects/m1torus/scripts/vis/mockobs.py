@@ -82,6 +82,9 @@ def load(dump):
         nt = d["header_lists"]["npartoftype"]
         itype = np.full(len(g["x"]), 1 + int(np.argmax(nt)))
     alive = g["h"] > 0
+    # a stellar torus (dark-matter type) with gas clouds (star type): only the gas emits
+    if np.any(itype == 5) and np.any(itype == ISTAR):
+        alive &= itype == ISTAR
     m = np.array([mtype[it - 1] for it in itype])
     x = np.c_[g["x"], g["y"], g["z"]] - [s["x"][0], s["y"][0], s["z"][0]]
     v = np.c_[g["vx"], g["vy"], g["vz"]] - [s["vx"][0], s["vy"][0], s["vz"][0]]

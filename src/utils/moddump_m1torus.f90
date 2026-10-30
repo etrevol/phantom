@@ -27,6 +27,9 @@ module moddump
 !   sf_n = overlapping clouds that make a bound clump a sink (0: off)
 !   v_alfven = Alfven speed in the clouds for mode = clouds: speed-dependent restitution
 !              (Krolik & Begelman 1988, eq. 25; 0: constant e_rest)
+!   frac_clouds = share of the torus particles that become clouds (mode = clouds); the
+!              rest stay collisionless as dark-matter-type particles, a stellar torus that
+!              carries the mode while the gas clouds collide (default 1: all clouds)
 !
 ! :References: None
 !
@@ -44,7 +47,7 @@ contains
 
 subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  use part,           only:nptmass,xyzmh_ptmass,vxyz_ptmass,ihsoft,ihacc,igas,istar,&
-                           set_particle_type,iphase,iamtype
+                           set_particle_type,iphase,iamtype,idarkmatter
  use eos,            only:ieos,polyk,qfacdisc,isink
  use part,           only:hsoft_nbody,accrete_stars
  use cloudcollisions, only:r_cloud,e_rest,heat_s,heat_tau,sf_n,v_alfven
@@ -57,8 +60,8 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
  real,    intent(inout) :: xyzh(:,:),vxyzu(:,:)
  type(inopts), allocatable :: db(:)
  character(len=20) :: mode
- real :: eps_c,xc(3),vc(3),hor,r_acc
- integer :: ierr,i
+ real :: eps_c,xc(3),vc(3),hor,r_acc,frac_clouds
+ integer :: ierr,i,nstay
 
  mode  = 'none'
  eps_c = 1.e-2
@@ -78,6 +81,7 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
     call read_inopt(heat_tau,'heat_tau',db,min=0.,default=1.)
     call read_inopt(sf_n,'sf_n',db,min=0,default=0)
     call read_inopt(v_alfven,'v_alfven',db,min=0.,default=0.)
+    call read_inopt(frac_clouds,'frac_clouds',db,min=0.,max=1.,default=1.)
  else
     r_cloud = 0.
  endif
@@ -116,6 +120,22 @@ subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
     print "(a,i8,a,f6.3,a,f6.3)",' moddump_m1torus: ',npartoftype(igas),' particles to gas, H/R = ', &
           hor,', r_acc = ',r_acc
  case('clouds')
+    ! a golden-ratio sequence picks the particles that stay stars: even, deterministic
+    if (frac_clouds < 1.) then
+       nstay = 0
+       do i=1,npart
+          if (iamtype(iphase(i))/=istar) cycle
+          if (modulo(real(i)*0.6180339887498949,1.) >= frac_clouds) then
+             call set_particle_type(i,idarkmatter)
+             nstay = nstay + 1
+          endif
+       enddo
+       npartoftype(idarkmatter) = npartoftype(idarkmatter) + nstay
+       npartoftype(istar)       = npartoftype(istar) - nstay
+       massoftype(idarkmatter)  = massoftype(istar)
+       print "(a,i8,a,i8,a)",' moddump_m1torus: ',npartoftype(istar),' clouds, ',nstay, &
+             ' collisionless stars (dark-matter type)'
+    endif
     hsoft_nbody   = 1.4*r_cloud
     accrete_stars = .true.
     xyzmh_ptmass(ihacc,1) = r_acc

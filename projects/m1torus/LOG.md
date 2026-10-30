@@ -889,3 +889,21 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   deg). The errors hold noise and particle shot noise only, not the clumps of the real
   gas (data A2, A3 ~0.10): the exclusion of no mode survives an error of 0.05, the
   strength is better quoted as ~0.15-0.35.
+- **Novelty check before B32.** Hopkins & Quataert (2010) and Hopkins et al. (2011): in
+  gas inflow simulations lopsided eccentric (m = 1) discs form at 1-10 pc, the stellar
+  disc carries the eccentricity and torques the gas; that disc is proposed as the AGN
+  "torus" (thickness from bending modes); the stellar relic stays eccentric (M31,
+  Tremaine 1995); slow m = 1 modes in Keplerian discs: Tremaine (2001). So "the torus as
+  an m = 1 structure" is known; ours is narrower (the slow mode of the self-gravitating
+  eccentric torus fitted quantitatively to ALMA, a blind test). Hopkins' picture also
+  answers the main tension: a collisionless stellar component can carry the mode while
+  the colliding gas traces it. With the user: B32 as (b) two components first, then (a).
+- **B32 start (b)**: A3 at t = 100 (strong mode, saturated), 20% of the particles become
+  gas clouds (`frac_clouds 0.2`, golden-ratio pick), 80% stay collisionless as
+  dark-matter-type stars; magnetised collisions v_A 0.4 v_K (balance sigma ~0.19),
+  r_cl 0.01, r_acc 0.05, fixed softening 1.4 r_cl for both; synthetic maps from the
+  gas only (`mockobs.load`). Questions: do the gas clouds keep the stars' m = 1 (gas A1
+  and phase against the stars'), at what dispersion, how long. Stop criteria, set
+  before: gas unbound > 5% or gas R90 > 4 (evaporation); the gas m = 1 below 3x its
+  noise for 5 orbits while the stars keep theirs (the gas loses the mode); otherwise
+  20 orbits (t = 120). Check at t = 105.
