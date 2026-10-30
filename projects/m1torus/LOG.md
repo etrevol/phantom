@@ -921,3 +921,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **B32(b2) start**: as B32(b) with v_A 0.2 (gas balance sigma_z ~0.11, bound in B23).
   Same stop criteria (gas unbound > 5% or R90 > 4; gas A1 < 3x noise for 5 orbits while
   the stars keep theirs), else 20 orbits.
+- **B32(b2) result, v_A 0.2, stopped at t = 107 by R90 > 4** (`...twocomp-f02-va02...`).
+  Stars A1 0.35-0.38; gas A1 0.378, 0.348, 0.330, 0.291, 0.262, 0.366, 0.334, 0.352 over
+  t 100-107 (noise ~0.037), phase 0-8 deg from the stars' (0 at the end): the cooled gas
+  follows the stellar mode in amplitude and phase. Gas sigma_z/v_K 0.32 -> 0.18 (the
+  v_A 0.2 balance), unbound 1.3 -> 2.8% and slowing, 19% into the black hole in 7
+  orbits (~2.7% per orbit: the torus feeds the hole; without inflow the gas lasts
+  ~30-40 orbits, 10-15 Myr). R90 crossed 4 through a few slowly receding outer clouds,
+  not a runaway: the criterion was too strict; longer runs use R90 of the bound gas.
+  Reading (plausible): a collisionless stellar torus carries the slow mode and gas
+  clouds with realistic, dissipative collisions trace it closely; this removes the
+  requirement that the observed (gas) torus be nearly collisionless. Open: lifetime over
+  tens of orbits; the gas dispersion that matches NGC 613 (v_A 0.4 gave sigma_z ~0.26 but
+  evaporated ~2% per orbit); synthetic maps of the gas tracer against the archive cube.
