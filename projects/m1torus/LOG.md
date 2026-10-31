@@ -1175,3 +1175,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   symmetric torus generator: 132.9 (data 127.0), data A1 0.178, offset (-0.77, -0.10) pc
   against model 0.077: a symmetric torus cannot make NGC 1672's asymmetry; eccentric disc
   fit running.
+- **B37, NGC 1672 eccentric warped disc (kinematic), profiles + PV + m = 1 with priors.**
+  Total 75.5 (data 58.2, prior 17.3) against 132.9 for the symmetric torus: Delta chi2
+  57. Best: inner hole a_in 0.34 (2.7 pc of R 8.0 pc), e rising 0.00 -> 0.66 from the
+  inner to the outer edge, apsidal twist 60 deg, warp -8 deg about node 70, thickness
+  i_max 25 (not thin), i 69, M 1.14e7, PA 49. m = 1: data A1 0.29, offset (-0.31, -1.06)
+  pc about the fitted centre; model 0.20, (+0.02, -1.02). Caveats: the prior costs 17 -
+  the centre (-21, +10) mas is 2 sigma from the fast-gas centre and dv -45 km/s is 3
+  sigma from -20 +- 8. Those priors come from symmetric-disc estimators, which an
+  eccentric disc biases (its kinematic centre and mean velocity shift), so they may be
+  too tight for this model; to test: refit with the catalogue systemic velocity alone.
+  Reading (plausible): NGC 1672's asymmetry is reproduced by eccentric orbits growing
+  outward, not by a symmetric disc; e ~0.6 at the edge is large and needs a physical
+  origin (B37 next step).
