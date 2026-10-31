@@ -1163,3 +1163,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   node_n, and the H13CN line at xi_t (torus) and xi_n (nucleus) times the CO flux;
   defaults off, B30 alone reproduces chi2 49.6. Fits of B30 and A6 with the nucleus
   (xi fixed at 0.043 and 0.19) queued.
+- **B33 with priors and the lopsidedness in chi2 (profiles + PV + m = 1, 43 numbers;
+  priors centre (0 +- 5, +4 +- 4) mas, dv 15 +- 15, PA 367 +- 10).** NGC 613: mid mode
+  B30 total 56.6 (data 56.0, prior 0.7), centre (+1.3, +6.3) mas, PA 6, i 60, M 1.19e7;
+  m = 1 data A1 0.098, offset (-0.19, +0.48) pc, model 0.120, (-0.24, +0.60). No mode A6
+  67.0 (data 61.9, prior 5.0): it moves the centre to (-3, +12) mas, where the data look
+  symmetric (A1 0.033), and still fits worse. Strong mode A3 84.2 (model A1 0.23, offset
+  1.4 pc, too lopsided). The intermediate mode wins by Delta chi2 ~10 over no mode and ~28
+  over the strong one: the NGC 613 lopsidedness survives a free, prior-bound centre at A1
+  ~0.10-0.12 (not 0.17); confidence plausible (assigned errors, chi2/dof ~1.3). NGC 1672,
+  symmetric torus generator: 132.9 (data 127.0), data A1 0.178, offset (-0.77, -0.10) pc
+  against model 0.077: a symmetric torus cannot make NGC 1672's asymmetry; eccentric disc
+  fit running.
