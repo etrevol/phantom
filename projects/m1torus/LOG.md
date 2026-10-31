@@ -1099,3 +1099,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   ~0.11-0.17 and PA N to NW, weaker than B31's 0.167 about the continuum. The fast blue
   gas at -150 km/s 40 mas NW, on the receding side, belongs to the moment-2 ridge
   (PA ~310): non-circular gas (an inner stream or the outflow base), not rotation.
+- **The authors' answer (2026-10-31).** Their r_cm(t) of all particles grows nearly
+  linearly and more for smaller eps: ~0.057 (64k, 1e-4), ~0.028 (128k, 1e-4), ~0.006
+  and ~0.002 (1e-3), ~0 (1e-2) at t = 1000; no oscillation in it. P. Berczik: the drift
+  comes from a few chaotic particles ejected to ~1000 NB units; within r < 10 the
+  centre of mass stays at ~1e-5; the integration is equally accurate for all eps (same
+  eta), small eps only makes it longer (8 h against 36 h for 64k). Our reading: an
+  r_cm without oscillation is expected (the drift is the slow B, the oscillation lives
+  in |A + B|). The decisive point is momentum: if it were conserved, ejections could not
+  move the total r_cm, the bound rest would recoil by -sum(m r_ej)/M_bound; so a total
+  r_cm of 0.057 with the bound part at 1e-5 means momentum is not conserved in the
+  ejections (numerical), and then the R_SMBH oscillation is not the reference drift.
+  If instead the bound part recoils, it is. Their data decide: R_cm(r < 10) as a vector
+  with the black hole, |r_BH - R_cm(r < 10)|, total P(t), and how the ejected
+  particles gained their energy (one step at pericentre near the black hole, or slowly).
