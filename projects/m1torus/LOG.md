@@ -1138,3 +1138,28 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   priors from B34 (NGC 613: centre (0 +- 5, +4 +- 4) mas, dv 15 +- 15, PA 367 +- 10;
   NGC 1672: (0 +- 10, -5 +- 10) mas, dv -20 +- 8, PA 55 +- 10) for B30, A6, A3 and NGC
   1672 running.
+- **Fit metric with the lopsidedness (2026-10-31).** `--metrics profiles+pv+m1` adds A1
+  (0.02-0.1 arcsec) and the moment-0 centroid offset east and north [pc] about the fitted
+  black hole, errors 0.03, 0.15, 0.15 pc (B31 data noise plus clump noise): a moved centre
+  can no longer hide the asymmetry. Data check: about the continuum A1 0.167, offset
+  (-0.67, +0.69) pc as B31; about (0, +4) mas 0.127, (-0.10, +0.65); about the moment-1
+  centre 0.043. Refits with priors (B30, A6, A3, NGC 1672 torus) running.
+- **B37 started with the user: kinematics first.** `fit_torus.py --model eccdisc`: aligned
+  Keplerian ellipses with an inner hole (a in [a_in, 1], Sigma ~ 1/a, sharp edges), e0 ->
+  e1 across the disc, an apsidal twist, a thickness i_max and a warp (tilt warp_i x about
+  a line of nodes), as Peiris & Tremaine (2003) for M31. Physics comes after: a thin
+  self-gravitating disc holds an eccentric mode only with a sharp edge (Lithwick et al.
+  2025); eccentric gas orbits in the Galactic Centre (Sofue et al. 2025). Fit to NGC 1672
+  with lopsidedness and priors queued.
+- **B35 step 1, H13CN(4-3) blend (`nucleus_spectrum.py`).** With S(v) = C(v) + xi
+  C(v - 396): xi = 0.19 within 1 beam of the kinematic centre, 0.17 within 2 beams, 0.04
+  in the torus annulus; the residual over +300..+700 km/s is at the noise (0.8-1.0x).
+  The emission at +330..+700 is all H13CN; the nuclear CO left spans -200..+300 km/s,
+  red-skewed (7% of the flux at +230..+300 within 1 beam, 0.4% below -200): gas down to
+  ~0.5 pc for M ~1.4e7 if Keplerian, or a red wing (Combes et al. 2026: wings extending
+  the rotation, redshifted opposite the jet). Dense gas is 4-5 times more concentrated at
+  the nucleus than in the torus. B35 step 2 coded: `nucleus()` adds to any model a disc of
+  f_n of its clouds over 0.03-R_n R_tor with dispersion h_n, tilted by tilt_n about
+  node_n, and the H13CN line at xi_t (torus) and xi_n (nucleus) times the CO flux;
+  defaults off, B30 alone reproduces chi2 49.6. Fits of B30 and A6 with the nucleus
+  (xi fixed at 0.043 and 0.19) queued.
