@@ -1113,3 +1113,14 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   If instead the bound part recoils, it is. Their data decide: R_cm(r < 10) as a vector
   with the black hole, |r_BH - R_cm(r < 10)|, total P(t), and how the ejected
   particles gained their energy (one step at pericentre near the black hole, or slowly).
+- **The authors' BH trajectories (x_bh, y_bh) from the origin, six runs.** For every N
+  and eps the black hole moves on a circle of the same radius, ~0.022-0.023 (the
+  saturated mode). For eps 1e-2 the circle stays centred on the origin; for 1e-3 its
+  centre moves a little; for 1e-4 the centre drifts steadily in one direction (-y),
+  by ~0.02 for 64k and ~0.01 for 128k by the end (read off the figure). This is the
+  picture |A e^{i Omega_p t} + B(t)| directly: the mode is eps-independent, the eps
+  effect is a translation of the frame, i.e. of the bound system the black hole
+  circles, which also contradicts "centre of mass within r < 10 at 1e-5" unless that
+  number excludes the black hole or is defined otherwise. Open: their first plot
+  (R_SMBH 0.012-0.027 for 64k, 1e-4) is not |r_bh| from the origin, which by this
+  figure would reach 0-0.044; its definition is to be asked.
