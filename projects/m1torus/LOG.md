@@ -1188,3 +1188,18 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   Reading (plausible): NGC 1672's asymmetry is reproduced by eccentric orbits growing
   outward, not by a symmetric disc; e ~0.6 at the edge is large and needs a physical
   origin (B37 next step).
+- **B35 step 2, fits with the nucleus (xi_t 0.043, xi_n 0.19 fixed; priors as B33).**
+  NGC 613 mid mode + nucleus: total 42.0 (data 40.3, prior 1.6; 56.6 without the
+  nucleus), nucleus 9.5% of the gas over 0.03-0.30 R_tor (to 2 pc), dispersion 0.26 v_K,
+  tilted 28 deg about node 215; torus R 6.7 pc, i 44, M 1.56e7, PA 359, centre (+4.9,
+  +3.4) mas, dv +16; m = 1 data A1 0.137, offset (-0.38, +0.66) pc, model 0.142, (-0.41,
+  +0.73). No mode + nucleus: 47.9 (data 44.9, prior 3.0), m = 1 data 0.052, model 0.010.
+  The mode is preferred by Delta chi2 ~6 once the nucleus is modelled (10 without it).
+  **Visual check of the maps (fit figures):** the NGC 613 model now has a bright compact
+  nuclear peak in moment 0 that the data (a ring around a depleted centre) do not show,
+  and its moment-2 peak is round where the data have a 10-pc ridge; the NGC 1672
+  eccentric disc (chi2 75) is a thick, wide ellipse (i 69, i_max 25) bright NE and SW,
+  where the data are a thin strip along PA ~66: the 43 summary numbers (annulus shares,
+  |m1| p90, m2 medians, b/a, one PV slit, m = 1) can be matched by maps that look wrong.
+  The summary metric is too coarse; the standard in the field is a fit of the whole cube
+  (KinMS forward modelling, Davis et al. 2013; WISDOM black-hole masses).
