@@ -1203,3 +1203,10 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   |m1| p90, m2 medians, b/a, one PV slit, m = 1) can be matched by maps that look wrong.
   The summary metric is too coarse; the standard in the field is a fit of the whole cube
   (KinMS forward modelling, Davis et al. 2013; WISDOM black-hole masses).
+- **Proof test for the authors** (Bannikova: the drift may explain the trend, not
+  sure about the oscillations). `scripts/vis/bh_circle_test.py`: from the black-hole
+  trajectory alone, a circle fit per pattern period gives the centre C(t) and radius
+  A(t); the drift explains the oscillation if A stays constant, half the swing of
+  |r_bh| equals |C| and |r_bh - C(t)| stops oscillating. On a synthetic circle (A
+  0.0225, 54 orbits, centre drifting to (-0.003, -0.02)): A 0.0225 +- 0.0002, half
+  swing 0.0143 against |C| 0.0136, correlation 1.000, residual 0.0014 (the noise).
