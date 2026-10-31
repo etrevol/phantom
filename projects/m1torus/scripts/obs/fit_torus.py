@@ -243,7 +243,31 @@ def pv_metrics(cb, t, centre=(0.0, 0.0), dv=0.0):
     return np.array(out)
 
 
+SIG_M1 = (0.03, 0.15, 0.15)      # errors of A1 and of the centroid offset east, north [pc]:
+                                 # data noise (B31: 0.014, 0.07) and clump noise of the models
+
+
+def lopsided(m0, east, north, t):
+    """The m = 1 numbers of moment 0 about the black hole at the map origin: A1 of the
+    annulus 0.02 arcsec - outer edge, and the centroid offset east and north [pc]."""
+    E, N_ = np.meshgrid(east, north)
+    m0 = np.where(np.isfinite(m0), m0, 0.0)
+    r = np.hypot(E, N_)
+    w = np.where(r < EDGES[-1], m0, 0.0)
+    if w.sum() <= 0:
+        return np.array([np.nan, np.nan, np.nan])
+    s = (r > 0.02) & (r < EDGES[-1])
+    a1 = abs((m0[s] * np.exp(1j * np.arctan2(N_, E)[s])).sum()) / max(m0[s].sum(), 1e-30)
+    pcas = mo.pc_per_arcsec(t)
+    return np.array([a1, (w * E).sum() / w.sum() * pcas, (w * N_).sum() / w.sum() * pcas])
+
+
 def chi2(mod, obs, kind="profiles"):
+    if kind == "profiles+pv+m1":
+        c = chi2(mod[:-3], obs[:-3], "profiles+pv")
+        for a, b, sg in zip(mod[-3:], obs[-3:], SIG_M1):
+            c += MISS if not np.isfinite(a) else ((a - b) / sg) ** 2
+        return float(c)
     if kind == "basic":
         return F.chi2(mod, obs)
     n = len(EDGES) - 1
@@ -278,12 +302,15 @@ def observed(kind, geo=None):
     g.update({k: geo[k] for k in GEO if geo and k in geo})
     m = metrics(d["m0"], d["m1"] - g["dv"], d["m2"], d["east"] - g["dx"], d["north"] - g["dy"],
                 "basic" if kind == "basic" else "profiles")
-    if kind != "profiles+pv":
+    if not kind.startswith("profiles+pv"):
         return m
     t = target()
     if np.isfinite(g["pa"]):
         t = replace(t, pa=float(g["pa"]))
-    return np.r_[m, pv_metrics(cb, t, centre=(g["dx"], g["dy"]), dv=g["dv"])]
+    m = np.r_[m, pv_metrics(cb, t, centre=(g["dx"], g["dy"]), dv=g["dv"])]
+    if kind == "profiles+pv+m1":
+        m = np.r_[m, lopsided(d["m0"], d["east"] - g["dx"], d["north"] - g["dy"], t)]
+    return m
 
 
 def model_metrics(par, src, kind):
@@ -304,9 +331,12 @@ def model_metrics(par, src, kind):
             _snap[src] = mo.load(F.last_dump(src))
         p = _snap[src]
         cb = mo.cube(p, t, mo.m1_phase(p["x"], p["m"]) + float(par["az"]))
-    m = metrics(*mo.moments(cb, t, rms=cb.get("rms")), cb["xs"], cb["xs"], "basic" if kind == "basic" else "profiles")
-    if kind == "profiles+pv":
+    mom = mo.moments(cb, t, rms=cb.get("rms"))
+    m = metrics(*mom, cb["xs"], cb["xs"], "basic" if kind == "basic" else "profiles")
+    if kind.startswith("profiles+pv"):
         m = np.r_[m, pv_metrics(cb, t)]
+    if kind == "profiles+pv+m1":
+        m = np.r_[m, lopsided(mom[0], cb["xs"], cb["xs"], t)]
     return m, cb, t
 
 
@@ -442,7 +472,7 @@ def main():
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
     ap.add_argument("--bounds", nargs="*", default=[], help="name=lo:hi")
     ap.add_argument("--prior", nargs="*", default=[], help="name=mean:sigma, a Gaussian prior added to chi2")
-    ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "basic"))
+    ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "profiles+pv+m1", "basic"))
     ap.add_argument("--edges", default=None, help="annulus edges [arcsec], e.g. 0.01,0.025,0.04,0.06,0.08,0.1")
     ap.add_argument("--maxiter", type=int, default=40)
     ap.add_argument("--popsize", type=int, default=12)
@@ -519,7 +549,12 @@ def main():
     if any(k in names for k in GEO):
         label += (rf"; centre $({1e3 * best['dx']:+.0f}, {1e3 * best['dy']:+.0f})$ mas, "
                   rf"$\Delta v_{{\rm sys}} = {best['dv']:+.0f}$ km/s, PA ${best['pa'] if np.isfinite(best['pa']) else pa0:.0f}^\circ$")
-    figures(out, best, src, a.metrics, obs, X, fv, names, bounds, label)
+    m1k = a.metrics == "profiles+pv+m1"
+    if m1k:
+        summary["m1_data"] = list(map(float, obs[-3:]))
+        summary["m1_model"] = list(map(float, model_metrics(best, src, a.metrics)[0][-3:]))
+        (out / "fit.json").write_text(json.dumps(summary, indent=1))
+    figures(out, best, src, "profiles+pv" if m1k else a.metrics, obs[:-3] if m1k else obs, X, fv, names, bounds, label)
     print(json.dumps(summary, indent=1))
     if edge:
         print(f"WARNING: best value at a bound for {edge}: widen --bounds")
