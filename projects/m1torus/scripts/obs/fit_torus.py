@@ -63,18 +63,21 @@ POS = (0.1, 0.2, 0.35, 0.5, 0.7, 0.9)   # PV positions along the major axis [x o
 DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
                R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5,
                dx=0., dy=0., dv=0., pa=np.nan,
-               a_in=0.3, e0=0.1, e1=0.1, dw=0., warp_i=0., warp_n=0.)
+               a_in=0.3, e0=0.1, e1=0.1, dw=0., warp_i=0., warp_n=0.,
+               f_n=0., R_n=0.3, h_n=0.1, tilt_n=0., node_n=0., xi_t=0., xi_n=0.)
 # geometry of the data: black hole at (dx, dy) [arcsec east, north] of the map centre,
 # systemic velocity dv [km/s] above the adopted one, sky PA of the model (nan: galaxies.py);
 # the data metrics are taken about that centre and velocity, the model's about its own
 GEO = ("dx", "dy", "dv", "pa")
+NUC = ("f_n", "R_n", "h_n", "tilt_n", "node_n", "xi_t", "xi_n")     # the nucleus (B35), see nucleus()
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
               R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.),
               f_ext=(0.0, 5.0), beta=(0.5, 3.0),
               dx=(-0.03, 0.03), dy=(-0.03, 0.03), dv=(-60., 60.), pa=(None, None),
               a_in=(0.05, 0.9), e0=(0., 0.7), e1=(0., 0.7), dw=(-90., 90.), warp_i=(-45., 45.),
-              warp_n=(0., 180.))
+              warp_n=(0., 180.), f_n=(0., 0.4), R_n=(0.05, 0.6), h_n=(0.02, 0.5), tilt_n=(0., 90.),
+              node_n=(0., 360.), xi_t=(0., 0.3), xi_n=(0., 0.5))
 GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --galaxy
 _noise = {}
 _snap = {}
@@ -163,15 +166,48 @@ def eccdisc(a_in, e0, e1, dw, warp_i, warp_n, i_max, n=N, seed=3):
     vr, vt = e * np.sin(nu) / np.sqrt(p), (1. + e * np.cos(nu)) / np.sqrt(p)
     vel = np.c_[vr * np.cos(th) - vt * np.sin(th), vr * np.sin(th) + vt * np.cos(th), np.zeros(n)]
 
-    def tilt(v, ang, node):             # rotate each vector by ang about the in-plane axis at node
-        k = np.c_[np.cos(node), np.sin(node), np.zeros_like(node)]
-        c, s = np.cos(ang)[:, None], np.sin(ang)[:, None]
-        return v * c + np.cross(k, v) * s + k * (k * v).sum(1)[:, None] * (1. - c)
+    tilt = _tilt
     thick, tnode = np.radians((2. * u[2] - 1.) * i_max), 2. * np.pi * u[3]
     pos, vel = tilt(pos, thick, tnode), tilt(vel, thick, tnode)
     wa, wn = np.radians(warp_i) * x, np.full(n, np.radians(warp_n))
     pos, vel = tilt(pos, wa, wn), tilt(vel, wa, wn)
     return dict(x=pos, v=vel, m=np.full(n, 1. / n), size=np.full(n, SIZE), m_tor=1.)
+
+
+def nucleus(p, par, seed=4):
+    """The nucleus added to any model: a disc of f_n times the model's clouds (same cloud
+    mass) with Sigma ~ 1/R over [R_in, R_n] (R_in = 0.03 R_tor ~ 0.2 pc), dispersion h_n
+    v_K, tilted by tilt_n [deg] about the line of nodes at node_n in the torus plane; and
+    H13CN(4-3) at xi_t (torus) and xi_n (nucleus) times the CO flux (B35, measured at the
+    NGC 613 nucleus by nucleus_spectrum.py: 0.04 in the torus, 0.17-0.19 within 2 beams).
+    The total CO flux stays that of the galaxy: the nucleus takes its share."""
+    nd = int(round(par.get("f_n", 0.) * len(p["m"])))
+    xi = np.full(len(p["m"]), float(par.get("xi_t", 0.)))
+    if nd <= 0:
+        return dict(p, xi=xi) if np.any(xi > 0) else p
+    rng = np.random.default_rng(seed)
+    u, g = rng.random((3, nd)), rng.standard_normal((4, nd))
+    R_in, h = 0.03, float(par["h_n"])
+    R = R_in + (max(float(par["R_n"]), R_in + 0.01) - R_in) * u[0]
+    ph = 2. * np.pi * u[1]
+    vk = 1. / np.sqrt(R)
+    x = np.c_[R * np.cos(ph), R * np.sin(ph), h * R * g[0]]
+    vR, vp, vz = h * vk * g[1], vk + h * vk * g[2], h * vk * g[3]
+    v = np.c_[vR * np.cos(ph) - vp * np.sin(ph), vR * np.sin(ph) + vp * np.cos(ph), vz]
+    ang, node = np.full(nd, np.radians(par["tilt_n"])), np.full(nd, np.radians(par["node_n"]))
+    x, v = _tilt(x, ang, node), _tilt(v, ang, node)
+    m = np.full(nd, float(np.mean(p["m"])))
+    return dict(x=np.r_[p["x"], x], v=np.r_[p["v"], v], m=np.r_[p["m"], m],
+                size=np.r_[p["size"], np.minimum(np.median(p["size"]), 0.3 * R)],
+                m_tor=float(p["m_tor"]) * (1. + nd / len(p["m"])),
+                xi=np.r_[xi, np.full(nd, float(par.get("xi_n", 0.)))])
+
+
+def _tilt(v, ang, node):
+    """Rotate each vector by ang about the in-plane axis at azimuth node (Rodrigues)."""
+    k = np.c_[np.cos(node), np.sin(node), np.zeros_like(node)]
+    c, s = np.cos(ang)[:, None], np.sin(ang)[:, None]
+    return v * c + np.cross(k, v) * s + k * (k * v).sum(1)[:, None] * (1. - c)
 
 
 def disc(R_d, h_d, tilt_d, n, seed=2):
@@ -210,20 +246,21 @@ def fast_cube(p, t, phi):
     """mockobs.cube for particles of one size: binned fluxes smoothed by beam and line width."""
     pcas = mo.pc_per_arcsec(t)
     east, north, _, vlos = mo.to_sky(p["x"], p["v"], t.inc, t.pa, phi)
+    (east, north, vlos, pm), fx, dvl = mo.line2(p, east, north, vlos, p["m"])
     nx = int(round(2 * t.field_arcsec / t.pix_arcsec)) | 1
     nv = int(round(2 * t.vmax / t.dv)) | 1
     xs = (np.arange(nx) - nx // 2) * t.pix_arcsec
     vs = (np.arange(nv) - nv // 2) * t.dv
-    flux = p["m"] / p["m_tor"] * t.m_gas * t.jy_kms_per_msun
+    flux = pm * fx / p["m_tor"] * t.m_gas * t.jy_kms_per_msun
     ex = np.r_[xs - t.pix_arcsec / 2, xs[-1] + t.pix_arcsec / 2]
     ev = np.r_[vs - t.dv / 2, vs[-1] + t.dv / 2]
-    v = vlos * np.sqrt(mo.G_PC * t.M_bh / t.R_pc)
+    v = vlos * np.sqrt(mo.G_PC * t.M_bh / t.R_pc) + dvl
     h, _ = np.histogramdd(np.c_[v, north * t.R_pc / pcas, east * t.R_pc / pcas], bins=(ev, ex, ex),
                           weights=flux)
     size = float(np.median(p["size"]))
     sig_beam = t.beam_arcsec / mo.FWHM
     sig_p = np.hypot(size * t.R_pc / pcas, sig_beam)
-    m_msun = t.m_gas / len(flux)
+    m_msun = t.m_gas / len(p["m"])
     sig_v = max(np.sqrt(mo.G_PC * m_msun / max(size * t.R_pc, 1e-6)), 0.5 * t.dv)
     c = gaussian_filter(h / (t.pix_arcsec ** 2 * t.dv),
                         (sig_v / t.dv, sig_p / t.pix_arcsec, sig_p / t.pix_arcsec), mode="constant")
@@ -360,7 +397,7 @@ def model_metrics(par, src, kind):
     if src == "eccdisc":
         p = extend(eccdisc(par["a_in"], par["e0"], par["e1"], par["dw"], par["warp_i"], par["warp_n"],
                            par["i_max"]), par["f_ext"], par["beta"])
-        cb = fast_cube(p, t, float(par["az"]))
+        cb = fast_cube(nucleus(p, par), t, float(par["az"]))
     elif src in ("torus", "torus+disc"):
         p = extend(torus(par["R0"], par["e_max"], par["i_max"]), par["f_ext"], par["beta"])
         if src == "torus+disc":
@@ -369,12 +406,12 @@ def model_metrics(par, src, kind):
             if nd > 0:
                 xd, vd = disc(par["R_d"], par["h_d"], par["tilt_d"], nd)
                 p["x"][:nd], p["v"][:nd] = xd, vd
-        cb = fast_cube(p, t, 0.0)
+        cb = fast_cube(nucleus(p, par), t, 0.0)
     else:
         if src not in _snap:
             _snap[src] = mo.load(F.last_dump(src))
         p = _snap[src]
-        cb = mo.cube(p, t, mo.m1_phase(p["x"], p["m"]) + float(par["az"]))
+        cb = mo.cube(nucleus(p, par), t, mo.m1_phase(p["x"], p["m"]) + float(par["az"]))
     mom = mo.moments(cb, t, rms=cb.get("rms"))
     m = metrics(*mom, cb["xs"], cb["xs"], "basic" if kind == "basic" else "profiles")
     if kind.startswith("profiles+pv"):
@@ -537,8 +574,8 @@ def main():
                "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"],
                "eccdisc": ["a_in", "e0", "e1", "dw", "warp_i", "warp_n", "i_max", "R_pc", "inc", "logM", "az",
                            "f_ext", "beta"]
-               }.get(src, ["R_pc", "inc", "logM", "az"]) + list(GEO)
-    names = a.free.split(",") if a.free else [n for n in allowed if n not in GEO]
+               }.get(src, ["R_pc", "inc", "logM", "az"]) + list(GEO) + list(NUC)
+    names = a.free.split(",") if a.free else [n for n in allowed if n not in GEO + NUC]
     assert set(names) <= set(allowed), f"free parameters of this model: {allowed}"
     fixed = {k: v for k, v in DEFAULT.items()}
     for kv in a.fix:

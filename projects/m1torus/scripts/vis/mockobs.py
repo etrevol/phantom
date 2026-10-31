@@ -125,14 +125,32 @@ def to_sky(x, v, inc, pa, phi):
     return east, north, los, vlos
 
 
+H13CN_DV = 396.1      # H13CN(4-3) in the CO(3-2) frame [km/s]: it falls inside the CO cube
+
+
+def line2(p, *arrays):
+    """Particles that also emit H13CN(4-3) (p["xi"] > 0, its flux over CO): the arrays
+    extended by those particles again, and the flux factor and velocity offset of each."""
+    xi = p.get("xi")
+    n = len(arrays[0])
+    if xi is None or not np.any(xi > 0):
+        return arrays, np.ones(n), np.zeros(n)
+    k = xi > 0
+    out = tuple(np.r_[a, a[k]] for a in arrays)
+    return out, np.r_[np.ones(n), xi[k]], np.r_[np.zeros(n), np.full(k.sum(), H13CN_DV)]
+
+
 def cube(p, t: Target, phi, seed=1):
-    """Spectral cube [Jy/beam] on a grid of (v, north, east), with beam and noise."""
+    """Spectral cube [Jy/beam] on a grid of (v, north, east), with beam and noise; with
+    p["xi"] the particles also emit H13CN(4-3) at +396 km/s, xi times their CO flux."""
     pcas = pc_per_arcsec(t)
     vunit = np.sqrt(G_PC * t.M_bh / t.R_pc)
     east, north, _, vlos = to_sky(p["x"], p["v"], t.inc, t.pa, phi)
+    (east, north, vlos, pm, psize), fx, dvl = line2(p, east, north, vlos, p["m"], p["size"])
+    p = dict(p, m=pm * fx, size=psize)
     east_as = east * t.R_pc / pcas
     north_as = north * t.R_pc / pcas
-    v = vlos * vunit
+    v = vlos * vunit + dvl
     nx = int(round(2 * t.field_arcsec / t.pix_arcsec)) | 1
     nv = int(round(2 * t.vmax / t.dv)) | 1
     xs = (np.arange(nx) - nx // 2) * t.pix_arcsec
@@ -142,7 +160,7 @@ def cube(p, t: Target, phi, seed=1):
     sig_beam = t.beam_arcsec / FWHM
     sig_p = np.sqrt((p["size"] * t.R_pc / pcas) ** 2 + sig_beam ** 2)
     # internal line width: a self-gravitating cloud, sqrt(G m / r), at least half a channel
-    m_msun = p["m"] / p["m_tor"] * t.m_gas
+    m_msun = p["m"] / fx / p["m_tor"] * t.m_gas      # the cloud mass, not its line flux
     sig_v = np.maximum(np.sqrt(G_PC * m_msun / np.maximum(p["size"] * t.R_pc, 1e-6)), 0.5 * t.dv)
     c = np.zeros((nv, nx, nx))
     ix0 = np.searchsorted(xs, east_as)
