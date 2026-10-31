@@ -310,11 +310,13 @@ def model_metrics(par, src, kind):
     return m, cb, t
 
 
-def objective(x, names, fixed, src, kind, obs):
+def objective(x, names, fixed, src, kind, obs, prior=None):
     par = dict(fixed, **dict(zip(names, x)))
+    # Gaussian priors from independent measurements (e.g. the kinematic centre, B34)
+    pen = sum(((par[k] - mu) / sig) ** 2 for k, (mu, sig) in (prior or {}).items())
     if any(k in names for k in GEO) or any(par[k] != 0 for k in ("dx", "dy", "dv")) or np.isfinite(par["pa"]):
         obs = observed(kind, par)
-    return chi2(model_metrics(par, src, kind)[0], obs, kind)
+    return chi2(model_metrics(par, src, kind)[0], obs, kind) + pen
 
 
 class Recorder:
@@ -439,6 +441,7 @@ def main():
     ap.add_argument("--free", default=None, help="comma list; default all of the model source")
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
     ap.add_argument("--bounds", nargs="*", default=[], help="name=lo:hi")
+    ap.add_argument("--prior", nargs="*", default=[], help="name=mean:sigma, a Gaussian prior added to chi2")
     ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "basic"))
     ap.add_argument("--edges", default=None, help="annulus edges [arcsec], e.g. 0.01,0.025,0.04,0.06,0.08,0.1")
     ap.add_argument("--maxiter", type=int, default=40)
@@ -472,6 +475,7 @@ def main():
         k, v = kv.split("=")
         bnd[k] = tuple(map(float, v.split(":")))
     bounds = [bnd[n] for n in names]
+    prior = {kv.split("=")[0]: tuple(map(float, kv.split("=")[1].split(":"))) for kv in a.prior}
     tag = src.replace("+", "_") if src in ("torus", "torus+disc") else F.last_dump(src).parent.name + "_" + F.last_dump(src).name
     out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{GAL}_{tag}_{a.metrics}")
     out.mkdir(parents=True, exist_ok=True)
@@ -479,7 +483,7 @@ def main():
     print(f"model {src}, free {names}, metrics {a.metrics} ({len(obs)} numbers)")
     rec = Recorder(names)
     t0 = time.time()
-    res = differential_evolution(partial(objective, names=names, fixed=fixed, src=src, kind=a.metrics, obs=obs),
+    res = differential_evolution(partial(objective, names=names, fixed=fixed, src=src, kind=a.metrics, obs=obs, prior=prior),
                                  bounds, maxiter=a.maxiter, popsize=a.popsize, seed=a.seed, tol=1e-3,
                                  workers=a.workers, updating="deferred", polish=False, callback=rec)
     X, fv = np.array(rec.x), np.array(rec.f)
@@ -491,7 +495,9 @@ def main():
     obs = observed(a.metrics, best)           # the data about the fitted centre
     edge = [n for i, n in enumerate(names)
             if min(res.x[i] - bounds[i][0], bounds[i][1] - res.x[i]) < 0.02 * (bounds[i][1] - bounds[i][0])]
+    pen = sum(((best[k] - mu) / sig) ** 2 for k, (mu, sig) in prior.items())
     summary = dict(model=src, metrics=a.metrics, n_numbers=len(obs), free=names, chi2=float(res.fun),
+                   prior={k: list(v) for k, v in prior.items()}, chi2_prior=float(pen), chi2_data=float(res.fun - pen),
                    chi2_per_dof=float(res.fun / dof), best={k: float(v) for k, v in best.items()},
                    M_bh=float(10 ** best["logM"]), ranges_delta_chi2=delta, ranges=ranges, at_bound=edge,
                    evaluations=int(res.nfev), minutes=round((time.time() - t0) / 60., 1),

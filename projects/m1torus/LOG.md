@@ -1124,3 +1124,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   number excludes the black hole or is defined otherwise. Open: their first plot
   (R_SMBH 0.012-0.027 for 64k, 1e-4) is not |r_bh| from the origin, which by this
   figure would reach 0-0.044; its definition is to be asked.
+- **B33, free geometry without priors (2026-10-31).** NGC 613, profiles + PV (40 numbers),
+  free R_tor, i, M, azimuth, centre (dx, dy), dv, PA: mid-mode torus B30 chi2 44.5 (49.6
+  with the geometry fixed), centre (-11, +8) mas, dv +6.5 km/s, PA 8 deg (the kinematic
+  PA), i 52, M 1.19e7; no-mode torus A6 chi2 47.6, but with the black hole at (+28, -23)
+  mas (3 pc from every kinematic estimate and from the continuum), dv -45 km/s, i 70.
+  A free centre lets a symmetric torus imitate lopsidedness: the geometry must be tied to
+  independent measurements. NGC 1672 (43 numbers, torus generator): chi2 31.2 (102.5 with
+  the geometry fixed), M 2.0e7, but the centre at the dx bound (-29, +20) mas and PA 27
+  against the kinematic 50-69. Fast-gas centre of NGC 1672 (channel method of B34):
+  (-9 +- 11, -3 +- 11) mas, PA 50 +- 9, v0 -18 +- 9 km/s; blue/red midpoints (-2, -9) and
+  (-5, -13). `fit_torus.py --prior name=mean:sigma` adds Gaussian priors; refits with
+  priors from B34 (NGC 613: centre (0 +- 5, +4 +- 4) mas, dv 15 +- 15, PA 367 +- 10;
+  NGC 1672: (0 +- 10, -5 +- 10) mas, dv -20 +- 8, PA 55 +- 10) for B30, A6, A3 and NGC
+  1672 running.
