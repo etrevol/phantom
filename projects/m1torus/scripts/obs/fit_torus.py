@@ -62,7 +62,8 @@ SIG_PV = 20.                    # error of a PV velocity percentile [km/s] (~3 c
 POS = (0.1, 0.2, 0.35, 0.5, 0.7, 0.9)   # PV positions along the major axis [x outer annulus edge]
 DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
                R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5,
-               dx=0., dy=0., dv=0., pa=np.nan)
+               dx=0., dy=0., dv=0., pa=np.nan,
+               a_in=0.3, e0=0.1, e1=0.1, dw=0., warp_i=0., warp_n=0.)
 # geometry of the data: black hole at (dx, dy) [arcsec east, north] of the map centre,
 # systemic velocity dv [km/s] above the adopted one, sky PA of the model (nan: galaxies.py);
 # the data metrics are taken about that centre and velocity, the model's about its own
@@ -71,7 +72,9 @@ BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.)
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
               R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.),
               f_ext=(0.0, 5.0), beta=(0.5, 3.0),
-              dx=(-0.03, 0.03), dy=(-0.03, 0.03), dv=(-60., 60.), pa=(None, None))
+              dx=(-0.03, 0.03), dy=(-0.03, 0.03), dv=(-60., 60.), pa=(None, None),
+              a_in=(0.05, 0.9), e0=(0., 0.7), e1=(0., 0.7), dw=(-90., 90.), warp_i=(-45., 45.),
+              warp_n=(0., 180.))
 GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --galaxy
 _noise = {}
 _snap = {}
@@ -132,6 +135,43 @@ def torus(R0, e_max, i_max, n=N, seed=1):
         y, z = y * ci, y * si
         return np.c_[x * cn - y * sn, x * sn + y * cn, z]
     return dict(x=rot(xp, yp), v=rot(vxp, vyp), m=np.full(n, 1. / n), size=np.full(n, SIZE), m_tor=1.)
+
+
+def eccdisc(a_in, e0, e1, dw, warp_i, warp_n, i_max, n=N, seed=3):
+    """A lopsided, warped thin disc of Keplerian orbits about a unit mass (kinematic, not
+    self-consistent; as the eccentric-disc models of M31, Peiris & Tremaine 2003): semi-
+    major axes uniform in [a_in, 1] (Sigma ~ 1/a, sharp edges, an inner hole), eccentricity
+    e0 -> e1 linearly from the inner to the outer edge, pericentres along x turned by dw
+    [deg] across the disc, uniform mean anomaly (time average: crowding at apocentre), a
+    thickness of random tilts within +-i_max, and a warp: each orbit tilted by warp_i x
+    [deg] (x = 0 inner edge, 1 outer edge) about the line of nodes at warp_n [deg]."""
+    rng = np.random.default_rng(seed)
+    u = rng.random((5, n))
+    a = a_in + (1. - a_in) * u[0]
+    x = (a - a_in) / max(1. - a_in, 1e-6)
+    e = np.clip(e0 + (e1 - e0) * x, 0., 0.95)
+    M = 2. * np.pi * u[1]
+    E = M.copy()
+    for _ in range(40):
+        E -= (E - e * np.sin(E) - M) / (1. - e * np.cos(E))
+    nu = 2. * np.arctan2(np.sqrt(1. + e) * np.sin(E / 2.), np.sqrt(1. - e) * np.cos(E / 2.))
+    p = a * (1. - e ** 2)
+    r = p / (1. + e * np.cos(nu))
+    w = np.radians(dw) * x
+    th = nu + w
+    pos = np.c_[r * np.cos(th), r * np.sin(th), np.zeros(n)]
+    vr, vt = e * np.sin(nu) / np.sqrt(p), (1. + e * np.cos(nu)) / np.sqrt(p)
+    vel = np.c_[vr * np.cos(th) - vt * np.sin(th), vr * np.sin(th) + vt * np.cos(th), np.zeros(n)]
+
+    def tilt(v, ang, node):             # rotate each vector by ang about the in-plane axis at node
+        k = np.c_[np.cos(node), np.sin(node), np.zeros_like(node)]
+        c, s = np.cos(ang)[:, None], np.sin(ang)[:, None]
+        return v * c + np.cross(k, v) * s + k * (k * v).sum(1)[:, None] * (1. - c)
+    thick, tnode = np.radians((2. * u[2] - 1.) * i_max), 2. * np.pi * u[3]
+    pos, vel = tilt(pos, thick, tnode), tilt(vel, thick, tnode)
+    wa, wn = np.radians(warp_i) * x, np.full(n, np.radians(warp_n))
+    pos, vel = tilt(pos, wa, wn), tilt(vel, wa, wn)
+    return dict(x=pos, v=vel, m=np.full(n, 1. / n), size=np.full(n, SIZE), m_tor=1.)
 
 
 def disc(R_d, h_d, tilt_d, n, seed=2):
@@ -317,7 +357,11 @@ def model_metrics(par, src, kind):
     t = replace(target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
     if np.isfinite(par.get("pa", np.nan)):
         t = replace(t, pa=float(par["pa"]))
-    if src in ("torus", "torus+disc"):
+    if src == "eccdisc":
+        p = extend(eccdisc(par["a_in"], par["e0"], par["e1"], par["dw"], par["warp_i"], par["warp_n"],
+                           par["i_max"]), par["f_ext"], par["beta"])
+        cb = fast_cube(p, t, float(par["az"]))
+    elif src in ("torus", "torus+disc"):
         p = extend(torus(par["R0"], par["e_max"], par["i_max"]), par["f_ext"], par["beta"])
         if src == "torus+disc":
             # same particle mass: the disc takes f_d of the N clouds from the torus
@@ -488,9 +532,11 @@ def main():
     GAL = a.galaxy
     if a.edges:
         EDGES = tuple(map(float, a.edges.split(",")))
-    src = a.model if a.model in ("torus", "torus+disc") else str(Path(a.model.split(":", 1)[1]).resolve())
+    src = a.model if a.model in ("torus", "torus+disc", "eccdisc") else str(Path(a.model.split(":", 1)[1]).resolve())
     allowed = {"torus": ["R0", "e_max", "i_max", "R_pc", "inc", "logM", "f_ext", "beta"],
-               "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"]
+               "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"],
+               "eccdisc": ["a_in", "e0", "e1", "dw", "warp_i", "warp_n", "i_max", "R_pc", "inc", "logM", "az",
+                           "f_ext", "beta"]
                }.get(src, ["R_pc", "inc", "logM", "az"]) + list(GEO)
     names = a.free.split(",") if a.free else [n for n in allowed if n not in GEO]
     assert set(names) <= set(allowed), f"free parameters of this model: {allowed}"
@@ -506,7 +552,7 @@ def main():
         bnd[k] = tuple(map(float, v.split(":")))
     bounds = [bnd[n] for n in names]
     prior = {kv.split("=")[0]: tuple(map(float, kv.split("=")[1].split(":"))) for kv in a.prior}
-    tag = src.replace("+", "_") if src in ("torus", "torus+disc") else F.last_dump(src).parent.name + "_" + F.last_dump(src).name
+    tag = src.replace("+", "_") if src in ("torus", "torus+disc", "eccdisc") else F.last_dump(src).parent.name + "_" + F.last_dump(src).name
     out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{GAL}_{tag}_{a.metrics}")
     out.mkdir(parents=True, exist_ok=True)
     obs = observed(a.metrics)
@@ -534,7 +580,11 @@ def main():
                    observed=list(map(float, obs)))
     (out / "fit.json").write_text(json.dumps(summary, indent=1))
     np.savez_compressed(out / "evaluations.npz", names=names, x=X, chi2=fv)
-    if src in ("torus", "torus+disc"):
+    if src == "eccdisc":
+        label = (rf"Eccentric warped disc (kinematic): $a = {best['a_in']:.2f}-1$, $e = {best['e0']:.2f} \to {best['e1']:.2f}$, "
+                 rf"twist ${best['dw']:.0f}^\circ$, warp ${best['warp_i']:.0f}^\circ$ at ${best['warp_n']:.0f}^\circ$, "
+                 rf"$i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
+    elif src in ("torus", "torus+disc"):
         label = (rf"Collisionless torus (phase-mixed, no mode): $R_0 = {best['R0']:.2f}$, "
                  rf"$e_{{\max}} = {best['e_max']:.2f}$, $i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
         if src == "torus+disc":
