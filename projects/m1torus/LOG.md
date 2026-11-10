@@ -1210,3 +1210,33 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   |r_bh| equals |C| and |r_bh - C(t)| stops oscillating. On a synthetic circle (A
   0.0225, 54 orbits, centre drifting to (-0.003, -0.02)): A 0.0225 +- 0.0002, half
   swing 0.0143 against |C| 0.0136, correlation 1.000, residual 0.0014 (the noise).
+- **B39, whole-cube metric (2026-11-10/11, with the user: models of both galaxies first).**
+  `fit_torus.py --metrics cube`: data and noise-free model cubes smoothed to 2 beams
+  (1 channel sigma) and read on a grid of nearly independent samples (one per smoothing
+  beam and per two channels) within the outer annulus edge about the fitted black hole;
+  chi2 with the sample noise from the smoothed data far from the torus (7.8e-5 Jy/beam
+  for NGC 613) and the flux scale solved for (alpha_CO, missing flux). 1760 samples for
+  NGC 613, 3224 for NGC 1672; 0.3 s per evaluation (binned cube for snapshots too).
+  Synthetic check (generator torus as data, pipeline noise): chi2/N 1.46 = (pipeline
+  noise / data noise)^2, i.e. 1.0 for matched noise; another clump realisation adds 8%;
+  5 deg in i, 0.05 dex in M or 0.5 pc in R_tor raise chi2/N by 0.2-0.6 (hundreds in
+  chi2). Old best fits scored before refitting: empty model 37500, A6 15256, B30 12539,
+  B30 + nucleus 10468.
+- **B39, NGC 613 refitted on the cube** (free R_tor, i, M, azimuth, centre, dv, PA; priors
+  of B33; errors to be scaled by chi2/N ~3.3-3.9). Without a nucleus: weak mode B25
+  6170 (i 27, M 1.9e7), mid mode B30 6744 (i 28, M 1.8e7), no mode A6 6798 (+7 prior; i
+  26, M 2.1e7), strong mode A3 7674. With the second component (xi fixed): B30 5757 (+3
+  prior; i 30, M 1.5e7; component 14% of the gas to 0.59 R_tor at the bound, tilt 68),
+  A6 5797 (+11; i 25, M 2.1e7; 19%, 0.56 R_tor, tilt 15), generator torus without a
+  mode, free shape 5805 (+7; R0 0.61, e_max 0.12, i_max 25, i 14.6, M 5.1e7; 17%, 0.56
+  R_tor, tilt 44). Readings: (1) the maps of the best models now look like the data (a
+  round ring with a hole), which the summary numbers did not secure; (2) M sin^2 i =
+  3.2-3.8e6 Msun is what the cube fixes; i 15-30 and M 1.5-5e7 trade off across torus
+  shapes, so the earlier 1.2-1.6e7 at i 44-60 is withdrawn; Combes et al. (2026) 3.4e7
+  at i 50 has M sin^2 i 2.0e7, 5-6 times ours; (3) the mode against no mode: Delta chi2
+  ~50 of 5800 with or without the nucleus, ~15 after scaling, and the no-mode fits each
+  move the black hole 10-14 mas north where the data are more symmetric: the cube does
+  not decide the mode, the black-hole position does; the strong mode is excluded (by
+  ~900); B25 beating B30 mixes mode strength with torus shape; (4) every model wants
+  14-19% of the gas inside the ring out to ~3 pc with a high dispersion, at a tilt the
+  disc model does not fix (15, 44, 68 deg): the moment-2 ridge, geometry open.

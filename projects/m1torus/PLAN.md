@@ -201,6 +201,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B36 | [ ] | interferometric filtering in the mock pipeline (missing short spacings, MRS 0.24 arcsec): negative bowls and lost smooth emission | models and data filtered alike | - |
 | B37 | [~] | NGC 1672 on equal footing: a lopsided (A1 0.27), warped, thin disc with an inner hole; literature first (eccentric thin discs, Tremaine 2001; warps), then a model that reproduces it, with the user | a model of NGC 1672 matching the cube | - |
 | B38 | [x] | figures and movies of the representative runs (A3, A6, B25, B30, B32 b4, b5, c) by the FIGURES.md rules | a complete figure set | - |
+| B39 | [~] | whole-cube metric in `fit_torus.py` (smoothed cube on independent samples, free flux scale) and refits of both galaxies | maps of the best models look like the data; mode, mass and inclination with honest degeneracies | minutes per fit |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.
