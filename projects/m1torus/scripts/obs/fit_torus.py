@@ -41,7 +41,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # noqa: E402
 import numpy as np  # noqa: E402
-from scipy.ndimage import gaussian_filter  # noqa: E402
+from scipy.ndimage import gaussian_filter, map_coordinates  # noqa: E402
 from scipy.optimize import differential_evolution  # noqa: E402
 
 HERE = Path(__file__).resolve().parent
@@ -242,7 +242,7 @@ def noise(t, shape):
     return _noise[shape]
 
 
-def fast_cube(p, t, phi):
+def fast_cube(p, t, phi, noisy=True):
     """mockobs.cube for particles of one size: binned fluxes smoothed by beam and line width."""
     pcas = mo.pc_per_arcsec(t)
     east, north, _, vlos = mo.to_sky(p["x"], p["v"], t.inc, t.pa, phi)
@@ -266,7 +266,8 @@ def fast_cube(p, t, phi):
                         (sig_v / t.dv, sig_p / t.pix_arcsec, sig_p / t.pix_arcsec), mode="constant")
     c *= 2 * np.pi * sig_beam ** 2                      # Jy/beam
     nz, rms = noise(t, c.shape)
-    c += nz
+    if noisy:
+        c += nz
     # the metrics need |x| < the outer annulus only: crop, the noise level is known
     k = np.abs(xs) <= EDGES[-1] + 0.03
     return dict(cube=c[:, k][:, :, k], xs=xs[k], vs=vs, rms=rms)
@@ -339,7 +340,54 @@ def lopsided(m0, east, north, t):
     return np.array([a1, (w * E).sum() / w.sum() * pcas, (w * N_).sum() / w.sum() * pcas])
 
 
+CUBE_SM = 2.0        # cube metric: smoothing FWHM and sampling step [beams]; 1 channel sigma, 2 channel step
+_cube = {}
+
+
+def cube_samples(cb, centre=(0.0, 0.0), dv=0.0):
+    """The cube smoothed to CUBE_SM beams and read on a grid of nearly independent points
+    (one per smoothing beam and per two channels) within the outer annulus edge about
+    the black hole at centre, velocities about dv: the numbers of the whole-cube fit."""
+    t = target()
+    xs, vs = cb["xs"], cb["vs"]
+    pix, dvc = abs(xs[1] - xs[0]), abs(vs[1] - vs[0])
+    sm = gaussian_filter(cb["cube"], (1.0, CUBE_SM * t.beam_arcsec / mo.FWHM / pix,
+                                      CUBE_SM * t.beam_arcsec / mo.FWHM / pix), mode="nearest")
+    if GAL not in _cube or _cube[GAL][0] != EDGES[-1]:
+        step = CUBE_SM * t.beam_arcsec
+        g1 = np.arange(-EDGES[-1], EDGES[-1] + 1e-9, step)
+        g1 -= g1.mean()
+        E, N_ = np.meshgrid(g1, g1)
+        k = np.hypot(E, N_) <= EDGES[-1]
+        vv = np.arange(-t.vmax + 4 * t.dv, t.vmax - 4 * t.dv + 1e-9, 2 * t.dv)
+        _cube[GAL] = (EDGES[-1], np.repeat(vv, k.sum()), np.tile(N_[k], len(vv)), np.tile(E[k], len(vv)))
+    _, sv, sn, se = _cube[GAL]
+    idx = [(sv + dv - vs[0]) / (vs[1] - vs[0]), (sn + centre[1] - xs[0]) / (xs[1] - xs[0]),
+           (se + centre[0] - xs[0]) / (xs[1] - xs[0])]
+    return map_coordinates(sm, idx, order=1, mode="nearest")
+
+
+def cube_sigma():
+    """Noise of one cube sample: robust scatter of the smoothed data far from the torus."""
+    key = (GAL, "sig")
+    if key not in _cube:
+        observed("cube")
+        cb = _data[GAL][1]
+        t = target()
+        pix = abs(cb["xs"][1] - cb["xs"][0])
+        sm = gaussian_filter(cb["cube"], (1.0, CUBE_SM * t.beam_arcsec / mo.FWHM / pix,
+                                          CUBE_SM * t.beam_arcsec / mo.FWHM / pix), mode="nearest")
+        E, N_ = np.meshgrid(cb["xs"], cb["xs"])
+        far = sm[:, np.hypot(E, N_) > 0.8 * abs(cb["xs"][0])]
+        _cube[key] = float(1.4826 * np.median(np.abs(far - np.median(far))))
+    return _cube[key]
+
+
 def chi2(mod, obs, kind="profiles"):
+    if kind == "cube":
+        # the flux scale is a linear nuisance (alpha_CO, missing flux): solved for
+        a = max(float((mod * obs).sum() / max((mod * mod).sum(), 1e-30)), 0.0)
+        return float((((obs - a * mod) / cube_sigma()) ** 2).sum())
     if kind == "profiles+pv+m1":
         c = chi2(mod[:-3], obs[:-3], "profiles+pv")
         for a, b, sg in zip(mod[-3:], obs[-3:], SIG_M1):
@@ -377,6 +425,8 @@ def observed(kind, geo=None):
     d, cb = _data[GAL]
     g = dict(dx=0., dy=0., dv=0., pa=np.nan)
     g.update({k: geo[k] for k in GEO if geo and k in geo})
+    if kind == "cube":
+        return cube_samples(cb, (g["dx"], g["dy"]), g["dv"])
     m = metrics(d["m0"], d["m1"] - g["dv"], d["m2"], d["east"] - g["dx"], d["north"] - g["dy"],
                 "basic" if kind == "basic" else "profiles")
     if not kind.startswith("profiles+pv"):
@@ -394,6 +444,20 @@ def model_metrics(par, src, kind):
     t = replace(target(), R_pc=float(par["R_pc"]), inc=float(par["inc"]), M_bh=10. ** float(par["logM"]))
     if np.isfinite(par.get("pa", np.nan)):
         t = replace(t, pa=float(par["pa"]))
+    if kind == "cube":
+        # noise-free model, binned cube for every source (the smoothing hides particle sizes)
+        if src == "eccdisc":
+            p, phi = extend(eccdisc(par["a_in"], par["e0"], par["e1"], par["dw"], par["warp_i"],
+                                    par["warp_n"], par["i_max"]), par["f_ext"], par["beta"]), float(par["az"])
+        elif src == "torus":
+            p, phi = extend(torus(par["R0"], par["e_max"], par["i_max"]), par["f_ext"], par["beta"]), 0.0
+        else:
+            if src not in _snap:
+                _snap[src] = mo.load(F.last_dump(src))
+            p = _snap[src]
+            phi = mo.m1_phase(p["x"], p["m"]) + float(par["az"])
+        cb = fast_cube(nucleus(p, par), t, phi, noisy=False)
+        return cube_samples(cb), cb, t
     if src == "eccdisc":
         p = extend(eccdisc(par["a_in"], par["e0"], par["e1"], par["dw"], par["warp_i"], par["warp_n"],
                            par["i_max"]), par["f_ext"], par["beta"])
@@ -553,7 +617,7 @@ def main():
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
     ap.add_argument("--bounds", nargs="*", default=[], help="name=lo:hi")
     ap.add_argument("--prior", nargs="*", default=[], help="name=mean:sigma, a Gaussian prior added to chi2")
-    ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "profiles+pv+m1", "basic"))
+    ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "profiles+pv+m1", "cube", "basic"))
     ap.add_argument("--edges", default=None, help="annulus edges [arcsec], e.g. 0.01,0.025,0.04,0.06,0.08,0.1")
     ap.add_argument("--maxiter", type=int, default=40)
     ap.add_argument("--popsize", type=int, default=12)
@@ -636,6 +700,18 @@ def main():
     if any(k in names for k in GEO):
         label += (rf"; centre $({1e3 * best['dx']:+.0f}, {1e3 * best['dy']:+.0f})$ mas, "
                   rf"$\Delta v_{{\rm sys}} = {best['dv']:+.0f}$ km/s, PA ${best['pa'] if np.isfinite(best['pa']) else pa0:.0f}^\circ$")
+    if a.metrics == "cube":
+        # figures and the m = 1 numbers through the summary metrics, for reading only
+        mm = model_metrics(best, src, "cube")[0]
+        summary["flux_scale"] = float((mm * obs).sum() / (mm * mm).sum())
+        summary["sigma_sample"] = cube_sigma()
+        o1 = observed("profiles+pv+m1", best)
+        summary["m1_data"] = list(map(float, o1[-3:]))
+        summary["m1_model"] = list(map(float, model_metrics(best, src, "profiles+pv+m1")[0][-3:]))
+        (out / "fit.json").write_text(json.dumps(summary, indent=1))
+        figures(out, best, src, "profiles+pv", o1[:-3], X, fv, names, bounds, label)
+        print(json.dumps({k: v for k, v in summary.items() if k != "observed"}, indent=1))
+        return
     m1k = a.metrics == "profiles+pv+m1"
     if m1k:
         summary["m1_data"] = list(map(float, obs[-3:]))
