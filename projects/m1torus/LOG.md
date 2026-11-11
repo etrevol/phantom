@@ -1240,3 +1240,20 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   ~900); B25 beating B30 mixes mode strength with torus shape; (4) every model wants
   14-19% of the gas inside the ring out to ~3 pc with a high dispersion, at a tilt the
   disc model does not fix (15, 44, 68 deg): the moment-2 ridge, geometry open.
+- **B39, NGC 1672 on the cube** (3224 samples, priors of B37). Symmetric torus: 7453
+  (+3; chi2/N 2.3), i 59, R 7.2 pc, PA 47, M 2.1e7, dv -29, flux scale 0.55; m = 1 data
+  A1 0.26, offset (-0.73, -0.76) pc, model 0.01. Eccentric warped disc: 6289 (+10; chi2/N
+  1.96), Delta chi2 1160 (~590 scaled): inner edge 0.17 R (2.3 pc of 13.5 pc), e 0.30 ->
+  0.18 outward (not the 0.66 of the summary metric), no apsidal twist, warp -27 deg about
+  node 167, thickness i_max 21, i 75, PA 54, M 1.96e7, centre (+10, +6) mas, dv -43 km/s
+  (2.8 sigma from the prior -20 +- 8), flux scale 0.58; m = 1 data A1 0.28, offset
+  (-0.85, -0.79) pc, model 0.21, (-0.95, -0.17). The map is now an inclined strip along
+  the data's PA with the SW side brighter, still thicker than the data. M sin^2 i =
+  1.8e7 (torus 1.5e7): 1.5-2.1e7 against 4.5e7 of Combes et al. (2026).
+- **Visual check of the cube fits.** NGC 613: without the second component the model is a
+  round ring with a hole like the data; the second component (chi2 -1000) is drawn as an
+  edge-on bar across the centre along E-W with a bright nuclear peak, where the data have
+  the high-dispersion ridge along PA ~130/310 and no moment-0 peak. The 2-beam smoothing
+  cannot see the 1-beam central hole, so the metric tolerates the peak. Next: smoothing 1
+  beam (4 times the samples), and the second component as a stream or bar with a free
+  sky orientation instead of an axisymmetric disc.
