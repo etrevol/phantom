@@ -189,8 +189,10 @@ def animate(frames, info, out_dir, kind="deviation", fps=CONFIG["fps"]):
         def arrays(fr):
             return [fr["rho"].T.ravel(), deviation("rho", fr["rho"]).T.ravel()]
 
-    title = fig.suptitle("", fontsize=15, fontweight="bold")
-    fig.tight_layout()
+    # the full two-line title before tight_layout, so the panels leave room for it
+    title = fig.suptitle(pdat.model_name(info) + f"\nt = {frames[0]['time'] / p_orb:.2f} orbits",
+                         fontsize=13, fontweight="bold")
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
 
     def update(k):
         fr = frames[k]
