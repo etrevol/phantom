@@ -64,12 +64,12 @@ DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4
                R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5,
                dx=0., dy=0., dv=0., pa=np.nan,
                a_in=0.3, e0=0.1, e1=0.1, dw=0., warp_i=0., warp_n=0.,
-               f_n=0., R_n=0.3, h_n=0.1, tilt_n=0., node_n=0., xi_t=0., xi_n=0.)
+               f_n=0., R_n=0.3, h_n=0.1, tilt_n=0., node_n=0., xi_t=0., xi_n=0., e_n=0., w_n=0.)
 # geometry of the data: black hole at (dx, dy) [arcsec east, north] of the map centre,
 # systemic velocity dv [km/s] above the adopted one, sky PA of the model (nan: galaxies.py);
 # the data metrics are taken about that centre and velocity, the model's about its own
 GEO = ("dx", "dy", "dv", "pa")
-NUC = ("f_n", "R_n", "h_n", "tilt_n", "node_n", "xi_t", "xi_n")     # the nucleus (B35), see nucleus()
+NUC = ("f_n", "R_n", "h_n", "tilt_n", "node_n", "xi_t", "xi_n", "e_n", "w_n")     # the nucleus (B35), see nucleus()
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
               R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.),
@@ -77,7 +77,7 @@ BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.)
               dx=(-0.03, 0.03), dy=(-0.03, 0.03), dv=(-60., 60.), pa=(None, None),
               a_in=(0.05, 0.9), e0=(0., 0.7), e1=(0., 0.7), dw=(-90., 90.), warp_i=(-45., 45.),
               warp_n=(0., 180.), f_n=(0., 0.4), R_n=(0.05, 0.6), h_n=(0.02, 0.5), tilt_n=(0., 90.),
-              node_n=(0., 360.), xi_t=(0., 0.3), xi_n=(0., 0.5))
+              node_n=(0., 360.), xi_t=(0., 0.3), xi_n=(0., 0.5), e_n=(0., 0.9), w_n=(0., 360.))
 GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --galaxy
 _noise = {}
 _snap = {}
@@ -188,11 +188,23 @@ def nucleus(p, par, seed=4):
     rng = np.random.default_rng(seed)
     u, g = rng.random((3, nd)), rng.standard_normal((4, nd))
     R_in, h = 0.03, float(par["h_n"])
-    R = R_in + (max(float(par["R_n"]), R_in + 0.01) - R_in) * u[0]
-    ph = 2. * np.pi * u[1]
+    a = R_in + (max(float(par["R_n"]), R_in + 0.01) - R_in) * u[0]
+    # e_n > 0: aligned Keplerian ellipses with pericentres at azimuth w_n (a stream or
+    # bar-like lopsided inner flow); e_n = 0 is the circular disc
+    e = min(float(par.get("e_n", 0.)), 0.95)
+    M = 2. * np.pi * u[1]
+    E = M.copy()
+    for _ in range(40):
+        E -= (E - e * np.sin(E) - M) / (1. - e * np.cos(E))
+    nu = 2. * np.arctan2(np.sqrt(1. + e) * np.sin(E / 2.), np.sqrt(1. - e) * np.cos(E / 2.))
+    sl = a * (1. - e ** 2)
+    R = sl / (1. + e * np.cos(nu))
+    ph = nu + np.radians(float(par.get("w_n", 0.)))
     vk = 1. / np.sqrt(R)
     x = np.c_[R * np.cos(ph), R * np.sin(ph), h * R * g[0]]
-    vR, vp, vz = h * vk * g[1], vk + h * vk * g[2], h * vk * g[3]
+    vR = e * np.sin(nu) / np.sqrt(sl) + h * vk * g[1]
+    vp = (1. + e * np.cos(nu)) / np.sqrt(sl) + h * vk * g[2]
+    vz = h * vk * g[3]
     v = np.c_[vR * np.cos(ph) - vp * np.sin(ph), vR * np.sin(ph) + vp * np.cos(ph), vz]
     ang, node = np.full(nd, np.radians(par["tilt_n"])), np.full(nd, np.radians(par["node_n"]))
     x, v = _tilt(x, ang, node), _tilt(v, ang, node)
@@ -667,6 +679,8 @@ def main():
     ap.add_argument("--free", default=None, help="comma list; default all of the model source")
     ap.add_argument("--fix", nargs="*", default=[], help="name=value")
     ap.add_argument("--bounds", nargs="*", default=[], help="name=lo:hi")
+    ap.add_argument("--cube-sm", type=float, default=None,
+                    help="cube metric: smoothing FWHM and sampling step [beams], default 2")
     ap.add_argument("--prior", nargs="*", default=[], help="name=mean:sigma, a Gaussian prior added to chi2")
     ap.add_argument("--metrics", default="profiles", choices=("profiles", "profiles+pv", "profiles+pv+m1", "cube", "basic"))
     ap.add_argument("--edges", default=None, help="annulus edges [arcsec], e.g. 0.01,0.025,0.04,0.06,0.08,0.1")
@@ -684,8 +698,10 @@ def main():
     if a.replot:
         replot(Path(a.replot), a.galaxy, a.edges)
         return
-    global EDGES, GAL
+    global EDGES, GAL, CUBE_SM
     GAL = a.galaxy
+    if a.cube_sm:
+        CUBE_SM = a.cube_sm
     if a.edges:
         EDGES = tuple(map(float, a.edges.split(",")))
     src = a.model if a.model in ("torus", "torus+disc", "eccdisc") else str(Path(a.model.split(":", 1)[1]).resolve())
@@ -742,6 +758,7 @@ def main():
         mm = model_metrics(best, src, "cube")[0]
         summary["flux_scale"] = float((mm * obs).sum() / (mm * mm).sum())
         summary["sigma_sample"] = cube_sigma()
+        summary["cube_sm"] = CUBE_SM
         o1 = observed("profiles+pv+m1", best)
         summary["m1_data"] = list(map(float, o1[-3:]))
         summary["m1_model"] = list(map(float, model_metrics(best, src, "profiles+pv+m1")[0][-3:]))
