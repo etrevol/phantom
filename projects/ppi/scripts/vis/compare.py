@@ -58,6 +58,8 @@ def main(argv=None):
         ax.set_xlabel(r"$t\;[P_{\rm orb}]$")
         ax.grid(True, alpha=0.3)
         ax.legend(fontsize=8, ncol=2 if ax is axa else 1)
+    fig.suptitle(r"Papaloizou-Pringle torus model ($C' = 0.2$, $\gamma = 1.3$, $N = 10^5$): torus mass and modes",
+                 fontsize=13, fontweight="bold")
     fig.tight_layout()
     out = Path(a.out) if a.out else Path(a.runs[0]).resolve().parent / "compare.png"
     fig.savefig(out, dpi=200, bbox_inches="tight")

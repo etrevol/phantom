@@ -82,9 +82,7 @@ def main(argv=None):
     for ax in axes.flat:
         ax.set_xlabel(r"$t\;[P_{\rm orb}]$")
         ax.grid(True, alpha=0.3)
-    fig.suptitle("History", fontsize=15, fontweight="bold")
-    fig.text(0.012, 0.988, "\n".join(pdat.info_lines(info)), ha="left", va="top",
-             fontsize=8.5, bbox=dict(boxstyle="round", fc="white", ec="#b8b8b4", alpha=0.9))
+    fig.suptitle("History\n" + pdat.model_name(info), fontsize=14, fontweight="bold")
     fig.tight_layout()
     out_dir = Path(a.out) if a.out else info["dir"] / "figs"
     out_dir.mkdir(parents=True, exist_ok=True)

@@ -174,8 +174,7 @@ def main(argv=None):
         axf.set_ylabel(r"$|F_m|/A_0$  ($\Sigma v_R$ modes)")
         axf.grid(True, alpha=0.3)
         axf.legend(ncol=4, fontsize=9)
-    fig.text(0.012, 0.988, "\n".join(pdat.info_lines(info)), ha="left", va="top",
-             fontsize=8.5, bbox=dict(boxstyle="round", fc="white", ec="#b8b8b4", alpha=0.9))
+    fig.suptitle(pdat.model_name(info), fontsize=12, fontweight="bold")
     fig.tight_layout()
     f = out_dir / "modes.png"
     fig.savefig(f, dpi=200, bbox_inches="tight")

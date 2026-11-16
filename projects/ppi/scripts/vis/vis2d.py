@@ -68,7 +68,7 @@ def _norm(name, a, normalize, pct=(2.0, 98.0)):
 
 def _info_box(fig, lines):
     if lines:
-        fig.text(0.012, 0.988, "\n".join(lines), ha="left", va="top", fontsize=8.5,
+        fig.text(0.012, 0.012, "\n".join(lines), ha="left", va="bottom", fontsize=8.5,
                  color="#1a1a19", linespacing=1.5,
                  bbox=dict(boxstyle="round", fc="white", ec="#b8b8b4", alpha=0.9))
 
@@ -112,8 +112,7 @@ def plot_polar(frame, info, out_dir, normalize=False):
     for ax, mesh in zip(axes, meshes):
         fig.colorbar(mesh, ax=ax, pad=0.1)
     what = "Mid-plane deviation from the azimuthal mean" if normalize else "Mid-plane"
-    fig.suptitle(_title(frame, p_orb, what), fontsize=16, fontweight="bold")
-    _info_box(fig, pdat.info_lines(info))
+    fig.suptitle(_title(frame, p_orb, what) + "\n" + pdat.model_name(info), fontsize=14, fontweight="bold")
     fig.tight_layout()
     tag = "deviation" if normalize else "polar"
     f = out_dir / f"{tag}_t{frame['time'] / p_orb:06.2f}.png"
@@ -139,8 +138,7 @@ def plot_meridional(frame, info, out_dir):
         ax.set_title(title, fontsize=12, fontweight="bold")
         ax.grid(True, alpha=CONFIG["grid_alpha"])
         fig.colorbar(mesh, ax=ax, pad=0.02)
-    fig.suptitle(_title(frame, p_orb, "Meridional cuts"), fontsize=15, fontweight="bold")
-    _info_box(fig, pdat.info_lines(info))
+    fig.suptitle(_title(frame, p_orb, "Meridional cuts") + "\n" + pdat.model_name(info), fontsize=13, fontweight="bold")
     fig.tight_layout()
     f = out_dir / f"meridional_t{frame['time'] / p_orb:06.2f}.png"
     fig.savefig(f, dpi=CONFIG["dpi"], bbox_inches="tight")
@@ -192,15 +190,13 @@ def animate(frames, info, out_dir, kind="deviation", fps=CONFIG["fps"]):
             return [fr["rho"].T.ravel(), deviation("rho", fr["rho"]).T.ravel()]
 
     title = fig.suptitle("", fontsize=15, fontweight="bold")
-    _info_box(fig, pdat.info_lines(info))
     fig.tight_layout()
 
     def update(k):
         fr = frames[k]
         for m, a in zip(meshes, arrays(fr)):
             m.set_array(a)
-        title.set_text(f"Frame {k + 1:4d}/{len(frames)} | t = {fr['time']:.3f} "
-                       f"({fr['time'] / p_orb:.2f} orbits)")
+        title.set_text(pdat.model_name(info) + f"\nt = {fr['time'] / p_orb:.2f} orbits")
         return meshes + [title]
 
     anim = FuncAnimation(fig, update, frames=len(frames), blit=False)

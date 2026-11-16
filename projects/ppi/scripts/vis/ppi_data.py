@@ -107,6 +107,26 @@ def run_info(run_dir="."):
                 dumps=sorted(run_dir.glob(f"{prefix}_[0-9][0-9][0-9][0-9][0-9]")))
 
 
+def model_name(info):
+    """The model in words with its parameters (journal style, as m1torus FIGURES.md)."""
+    par, m = info["par"], info["model"]
+    n = float(par.get("np", 0))
+    e = int(round(np.log10(n))) if n > 0 else 0
+    nt = rf"10^{{{e}}}" if n > 0 and abs(n - 10 ** e) < 1e-6 * n else f"{n:.3g}"
+    seed = par.get("pert_kind", "none")
+    if seed == "none":
+        what = "no seed"
+    else:
+        amp = float(par.get("pert_amp", 0))
+        ea = int(np.floor(np.log10(amp))) if amp > 0 else 0
+        at = rf"10^{{{ea}}}" if amp > 0 and abs(amp - 10 ** ea) < 1e-9 else f"{amp:g}"
+        what = (rf"seeded $m = {par.get('pert_m')}$, $A = {at}$" if seed in ("single", "multi")
+                else rf"seeded ({seed}), $A = {at}$")
+    relax = str(par.get("relax", "T")).strip().upper().startswith("T")
+    return (rf"Papaloizou-Pringle torus model ($C' = {m.C_prime:g}$, $\gamma = {m.gamma:.4g}$, $N = {nt}$), "
+            + ("relaxed, " if relax else "unrelaxed, ") + what)
+
+
 def info_lines(info):
     """Model parameters for figure annotations, one item per entry."""
     par, m = info["par"], info["model"]
