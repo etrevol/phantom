@@ -140,7 +140,7 @@ def torus(R0, e_max, i_max, n=N, seed=1):
     return dict(x=rot(xp, yp), v=rot(vxp, vyp), m=np.full(n, 1. / n), size=np.full(n, SIZE), m_tor=1.)
 
 
-def eccdisc(a_in, e0, e1, dw, warp_i, warp_n, i_max, n=N, seed=3):
+def eccdisc(a_in, e0, e1, dw, warp_i, warp_n, i_max, n=N, seed=3, time=0.):
     """A lopsided, warped thin disc of Keplerian orbits about a unit mass (kinematic, not
     self-consistent; as the eccentric-disc models of M31, Peiris & Tremaine 2003): semi-
     major axes uniform in [a_in, 1] (Sigma ~ 1/a, sharp edges, an inner hole), eccentricity
@@ -153,7 +153,7 @@ def eccdisc(a_in, e0, e1, dw, warp_i, warp_n, i_max, n=N, seed=3):
     a = a_in + (1. - a_in) * u[0]
     x = (a - a_in) / max(1. - a_in, 1e-6)
     e = np.clip(e0 + (e1 - e0) * x, 0., 0.95)
-    M = 2. * np.pi * u[1]
+    M = 2. * np.pi * u[1] + time * a ** -1.5      # time [code units] moves every cloud along its orbit
     E = M.copy()
     for _ in range(40):
         E -= (E - e * np.sin(E) - M) / (1. - e * np.cos(E))
@@ -532,6 +532,7 @@ def check():
 
 
 def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
+    label = L.wrapped(label, 120)
     m, cb, t = model_metrics(best, src, kind)
     # profiles: data against the best model
     if kind in ("profiles", "profiles+pv"):
@@ -609,6 +610,56 @@ def figures(out, best, src, kind, obs, X, fvals, names, bounds, label):
     plt.close(fig)
 
 
+def replot(out, galaxy, edges):
+    """Figures of a finished fit from its fit.json and evaluations.npz."""
+    global EDGES, GAL
+    GAL = galaxy
+    if edges:
+        EDGES = tuple(map(float, edges.split(",")))
+    fit = json.loads((out / "fit.json").read_text())
+    best = dict(DEFAULT, **fit["best"])
+    src = fit["model"] if fit["model"] in ("torus", "torus+disc", "eccdisc") else str(Path(fit["model"]).parent)
+    ev = np.load(out / "evaluations.npz")
+    names = list(ev["names"])
+    bnd = dict(BOUNDS)
+    bnd["pa"] = (GALAXIES[GAL]["pa"] - 45., GALAXIES[GAL]["pa"] + 45.)
+    bounds = [bnd[n] for n in names]
+    if fit["metrics"] in ("cube", "profiles+pv+m1"):
+        kind, obs = "profiles+pv", observed("profiles+pv", best)
+    else:
+        kind, obs = fit["metrics"], observed(fit["metrics"], best)
+    figures(out, best, src, kind, obs, ev["x"], ev["chi2"], names, bounds,
+            fit_label(src, best, names, GALAXIES[GAL]["pa"]))
+
+
+def fit_label(src, best, names, pa0):
+    """The model and its fitted parameters in words, for the fit figures."""
+    if src == "eccdisc":
+        label = (rf"Eccentric warped disc (kinematic): $a = {best['a_in']:.2f}-1$, $e = {best['e0']:.2f} \to {best['e1']:.2f}$, "
+                 rf"twist ${best['dw']:.0f}^\circ$, warp ${best['warp_i']:.0f}^\circ$ at ${best['warp_n']:.0f}^\circ$, "
+                 rf"$i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
+    elif src in ("torus", "torus+disc"):
+        label = (rf"Collisionless torus (phase-mixed, no mode): $R_0 = {best['R0']:.2f}$, "
+                 rf"$e_{{\max}} = {best['e_max']:.2f}$, $i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
+        if src == "torus+disc":
+            label += (rf"central disc: $R_d = {best['R_d']:.2f}\,R_{{\rm tor}}$, {100 * best['f_d']:.0f}% of the mass, "
+                      rf"$\sigma/v_{{\rm K}} = {best['h_d']:.2f}$, tilt ${best['tilt_d']:.0f}^\circ$;\n")
+    else:
+        label = L.wrapped(L.model_label(F.last_dump(src).parent), 110) + "\n"
+    if best.get("f_ext", 0) > 0:
+        label += rf"extended mass $f_{{\rm ext}} = {best['f_ext']:.2f}$, $\beta = {best['beta']:.1f}$; "
+    label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "
+              rf"$M_{{\rm BH}} = {10 ** best['logM'] / 1e7:.2f}\times10^7\,M_\odot$")
+    if best.get("f_n", 0) > 0:
+        label += (rf"; inner component {100 * best['f_n']:.0f}% of the gas to ${best['R_n']:.2f}\,R_{{\rm tor}}$, "
+                  rf"$\sigma/v_{{\rm K}} = {best['h_n']:.2f}$, tilt ${best['tilt_n']:.0f}^\circ$")
+    if any(k in names for k in GEO):
+        pa = best["pa"] if np.isfinite(best["pa"]) else pa0
+        label += (rf"; centre $({1e3 * best['dx']:+.0f}, {1e3 * best['dy']:+.0f})$ mas, "
+                  rf"$\Delta v_{{\rm sys}} = {best['dv']:+.0f}$ km/s, PA ${pa % 360:.0f}^\circ$")
+    return label
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--galaxy", default="ngc613", choices=sorted(GALAXIES))
@@ -625,9 +676,13 @@ def main():
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--out", default=None)
     ap.add_argument("--check", action="store_true", help="fast cube against mockobs.cube, then stop")
+    ap.add_argument("--replot", default=None, help="redraw the figures of a finished fit directory, then stop")
     a = ap.parse_args()
     if a.check:
         check()
+        return
+    if a.replot:
+        replot(Path(a.replot), a.galaxy, a.edges)
         return
     global EDGES, GAL
     GAL = a.galaxy
@@ -681,25 +736,7 @@ def main():
                    observed=list(map(float, obs)))
     (out / "fit.json").write_text(json.dumps(summary, indent=1))
     np.savez_compressed(out / "evaluations.npz", names=names, x=X, chi2=fv)
-    if src == "eccdisc":
-        label = (rf"Eccentric warped disc (kinematic): $a = {best['a_in']:.2f}-1$, $e = {best['e0']:.2f} \to {best['e1']:.2f}$, "
-                 rf"twist ${best['dw']:.0f}^\circ$, warp ${best['warp_i']:.0f}^\circ$ at ${best['warp_n']:.0f}^\circ$, "
-                 rf"$i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
-    elif src in ("torus", "torus+disc"):
-        label = (rf"Collisionless torus (phase-mixed, no mode): $R_0 = {best['R0']:.2f}$, "
-                 rf"$e_{{\max}} = {best['e_max']:.2f}$, $i_{{\max}} = {best['i_max']:.0f}^\circ$; ")
-        if src == "torus+disc":
-            label += (rf"central disc: $R_d = {best['R_d']:.2f}\,R_{{\rm tor}}$, {100 * best['f_d']:.0f}% of the mass, "
-                      rf"$\sigma/v_{{\rm K}} = {best['h_d']:.2f}$, tilt ${best['tilt_d']:.0f}^\circ$;\n")
-    else:
-        label = L.wrapped(L.model_label(F.last_dump(src).parent), 110) + "\n"
-    if best.get("f_ext", 0) > 0:
-        label += rf"extended mass $f_{{\rm ext}} = {best['f_ext']:.2f}$, $\beta = {best['beta']:.1f}$; "
-    label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "
-              rf"$M_{{\rm BH}} = {10 ** best['logM'] / 1e7:.2f}\times10^7\,M_\odot$")
-    if any(k in names for k in GEO):
-        label += (rf"; centre $({1e3 * best['dx']:+.0f}, {1e3 * best['dy']:+.0f})$ mas, "
-                  rf"$\Delta v_{{\rm sys}} = {best['dv']:+.0f}$ km/s, PA ${best['pa'] if np.isfinite(best['pa']) else pa0:.0f}^\circ$")
+    label = fit_label(src, best, names, pa0)
     if a.metrics == "cube":
         # figures and the m = 1 numbers through the summary metrics, for reading only
         mm = model_metrics(best, src, "cube")[0]

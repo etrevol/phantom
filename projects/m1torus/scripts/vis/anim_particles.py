@@ -115,15 +115,24 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None, twocomp=False):
 
     # the model name (FIGURES.md): name and parameters, and below how the run started
     name, pars, suffix = labels.model_parts(run)
-    title = fig.text(0.065, 0.968, f"{name} ({', '.join(pars.values())})", ha="left",
-                     va="center", fontsize=11)
-    # a long name (heated clouds) shrinks to end before the clock
+    full = f"{name} ({', '.join(pars.values())})"
+    title = fig.text(0.065, 0.968, full, ha="left", va="center", fontsize=11)
+    # a long name (heated clouds) shrinks to end before the clock, and takes two lines
+    # when even the smallest size does not fit
     rend = fig.canvas.get_renderer()
-    while title.get_fontsize() > 8 and \
-            fig.transFigure.inverted().transform(title.get_window_extent(rend))[1, 0] > 0.79:
+
+    def right():
+        return fig.transFigure.inverted().transform(title.get_window_extent(rend))[1, 0]
+    while title.get_fontsize() > 8 and right() > 0.775:
         title.set_fontsize(title.get_fontsize() - 0.25)
+    y_suffix = 0.942
+    if right() > 0.775:
+        title.set_text(labels.wrapped(full, len(full) // 2 + 10))
+        title.set_fontsize(9.5)
+        title.set_y(0.966)
+        y_suffix = 0.932
     if suffix:
-        fig.text(0.065, 0.942, (lambda u: u[0].upper() + u[1:])(suffix.lstrip(", ")), ha="left", va="center",
+        fig.text(0.065, y_suffix, (lambda u: u[0].upper() + u[1:])(suffix.lstrip(", ")), ha="left", va="center",
                  fontsize=9.5, color="0.25")
     # the clock in three fixed pieces, digits of equal width, so nothing moves
     fig.text(0.80, 0.955, r"$t\,=$", ha="left", va="center", fontsize=11)

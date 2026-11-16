@@ -150,17 +150,20 @@ def legend_labels(runs):
 
 
 def wrapped(text, width=70):
-    """Break a label into lines of about width characters at ', ' or ' (' outside $...$."""
+    """Break a label into lines of about width characters at ', ', '; ' or ' (' outside
+    $...$; line breaks already in the text are kept."""
+    if "\n" in text:
+        return "\n".join(wrapped(t, width) for t in text.split("\n"))
     pieces, cur, depth = [], "", 0
     i = 0
     while i < len(text):
         ch = text[i]
         if ch == "$":
             depth ^= 1
-        brk = depth == 0 and (text.startswith(", ", i) or text.startswith(" (", i))
-        if brk:
-            pieces.append(cur + (", " if text.startswith(", ", i) else ""))
-            cur = "" if text.startswith(", ", i) else "("
+        sep = next((s for s in (", ", "; ") if text.startswith(s, i)), None)
+        if depth == 0 and (sep or text.startswith(" (", i)):
+            pieces.append(cur + (sep or ""))
+            cur = "" if sep else "("
             i += 2
             continue
         cur += ch
