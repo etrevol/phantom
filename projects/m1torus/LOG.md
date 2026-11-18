@@ -1257,3 +1257,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   cannot see the 1-beam central hole, so the metric tolerates the peak. Next: smoothing 1
   beam (4 times the samples), and the second component as a stream or bar with a free
   sky orientation instead of an axisymmetric disc.
+- **B39 at one-beam smoothing** (`--cube-sm 1`, 7080 samples for NGC 613; synthetic floor
+  chi2/N 1.37 = the pipeline-noise ratio, other clumps +8%). NGC 613 without a second
+  component: weak mode B25 15788 (+7 prior), mid B30 17071 (+5), no mode A6 17538 (+10);
+  i 26-28, M 1.9-2.0e7 in all three. With the second component as aligned ellipses
+  (e_n, w_n free): mid B30 14227 (+5.5; chi2/N 2.01; i 31, M 1.6e7; component 25% of the
+  gas to 0.84 R_tor, dispersion 0.49 v_K at the bound, e_n 0.48), no mode A6 14782 (+8),
+  free-shape torus without a mode 15005 (+9). The mode wins by ~560 (~280 scaled, against
+  ~15 at two beams) and the lopsidedness now matches in size and direction (data A1
+  0.171, offset (+0.46, +0.77) pc; model 0.173, (+0.43, +0.84)). The second component is
+  a quarter of the gas, hot and as wide as the torus: a second layer, not a nucleus; its
+  physics is open. NGC 1672 torus 17194 (chi2/N 1.48); the eccentric-disc fit was cut
+  by the session end and is to be rerun.
