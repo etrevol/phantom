@@ -1269,3 +1269,26 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   a quarter of the gas, hot and as wide as the torus: a second layer, not a nucleus; its
   physics is open. NGC 1672 torus 17194 (chi2/N 1.48); the eccentric-disc fit was cut
   by the session end and is to be rerun.
+- **Order with the user (2026-11-18).** The cube fits so far dress collisionless snapshots
+  (and a kinematic second component) as gas: diagnostics of what NGC 613 needs, not a
+  physical model; the two-component torus is not finished (gas spreads in 4-7 orbits,
+  fed gas loses the mode). B40 added: close the physical model. First A17, the two-mass
+  torus E. Bannikova asked about. The NGC 1672 eccentric-disc fit at one beam is to be
+  rerun.
+- **A17 start, two-mass torus.** Literature: Foote, Generozov & Madigan (2020, ApJ,
+  arXiv:1911.01426), an eccentric nuclear disc with two species, M_H = 10 M_L after
+  Alexander & Hopman (2009; stars and stellar black holes), 400 light stars with 5-40
+  heavy, REBOUND: radial segregation (heavy to lower a) and vertical segregation (heavy to
+  lower inclination within ~100-200 orbits, partly secular); strength set by Delta =
+  N_H M_H^2 / (N_L M_L^2) x 4/(3 + M_H/M_L). The m = 1 mode with two species is not
+  studied there. Setup: `f_heavy` (number fraction, evenly spread in the same draw) and
+  `mu_heavy`; heavy particles are phantom's dark-matter type (same physics as stars, own
+  mass); the barycentre now mass-weighted. Smoke test 2k: 186 heavy, mass ratio 10.00,
+  heavy share 0.500, both species softened at 0.014 = 1.4 eps. Run: 16k, f_heavy 1/11
+  (1489 heavy, 14895 light, half the mass each, Delta 3.1, the weak regime of Foote et
+  al.), eps_star 0.01, C_cour = C_force = 0.04, seed 1 (the same orbital elements as
+  A14), 150 orbits, ~6.5 h. Stop: |dE/E| > 1e-2, a stall, or t = 150. Expected
+  (speculative): the mode as in A14 (A1/S0 0.32 saturated); two-body segregation slow
+  (effective relaxation ~1e4 orbits, three times faster than one mass), so any visible
+  segregation within 150 orbits points to collective (secular) effects. Measured from
+  dumps per species: A1, phase, mean a, e, inclination, |z|.

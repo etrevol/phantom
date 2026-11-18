@@ -26,6 +26,7 @@ module setup
 !   - np               : *number of torus particles*
 !   - eps_c            : *softening length of the central mass (0 = Kepler)*
 !   - eps_star         : *fixed Plummer-equivalent softening of the torus (0 = adaptive)*
+!   - f_heavy          : *number fraction of heavy torus particles (0 = one mass)*
 !   - r_cloud          : *particles are clouds of this radius that collide (0 = collisionless)*
 !   - e_rest           : *normal restitution coefficient of cloud collisions*
 !   - heat_s           : *cloud thermostat target sigma / v_K (0 = off)*
@@ -38,6 +39,7 @@ module setup
 !   - hor              : *H/R of the gas disc, c_s = hor v_K about the sink*
 !   - r_acc            : *accretion radius of the central mass*
 !   - iseed            : *random seed*
+!   - mu_heavy         : *mass of a heavy particle over a light one*
 !   - n_orbits         : *run length [orbits at R_tor]*
 !   - n_analysis_orbit : *analysis calls per orbit*
 !   - n_dumps_orbit    : *full dumps per orbit*
@@ -64,6 +66,10 @@ module setup
  ! eps_star > 0 fixes the torus softening (paper: Plummer eps = 0.01) instead of phantom's
  ! adaptive h; the cubic spline matches a Plummer potential at r = 0 for h = 1.4 eps
  real    :: eps_star = 0.
+ ! f_heavy > 0: every particle drawn from the same orbital elements, a fraction f_heavy of
+ ! them (evenly spaced in the draw, so the same distribution) made dark-matter type with
+ ! mu_heavy times the star mass: a two-mass torus (Foote et al. 2020 used mu = 10)
+ real    :: f_heavy = 0., mu_heavy = 10.
  ! geometry = 1: an isothermal gas disc about the sink instead of the torus; c_s = hor v_K
  ! (ieos = 6, q = 1/2), Sigma ~ R^-p_index between r_in and r_out (NGC 613: B, PLAN)
  integer :: geometry = 0
@@ -77,7 +83,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
                    gamma,hfact,time,fileprefix)
  use units,        only:set_units
  use physcon,      only:pc,solarm
- use part,         only:istar,igas,set_particle_type,nptmass,xyzmh_ptmass,vxyz_ptmass, &
+ use part,         only:istar,idarkmatter,igas,set_particle_type,nptmass,xyzmh_ptmass,vxyz_ptmass, &
                         ihacc,ihsoft,hsoft_nbody
  use eos,          only:ieos,qfacdisc,isink
  use setdisc,      only:set_disc
@@ -97,8 +103,9 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  real,              intent(out) :: massoftype(:)
  real,              intent(in)  :: time
  character(len=20), intent(in)  :: fileprefix
- integer :: ierr,i,is
- real :: pmass,a,e,inc,node,omega,nu,p,r,xo,yo,vxo,vyo,h0,vol
+ integer :: ierr,i,is,nheavy
+ real :: pmass,a,e,inc,node,omega,nu,p,r,xo,yo,vxo,vyo,h0,vol,mlight
+ real, allocatable :: mi(:)
  real :: c1,s1,ci,si,co,so,xcm(3),vcm(3),mtot,p_orb
 
  call get_options(trim(fileprefix)//'.setup',id==master,ierr,&
@@ -117,6 +124,8 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
 
  npart = np
  pmass = M_tor/np
+ nheavy = 0
+ mlight = pmass
  npartoftype(:) = 0
  massoftype(:) = 0.
  if (geometry == 1) then
@@ -132,9 +141,17 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
     qfacdisc = 0.5
     h0 = xyzh(4,1)
  else
-    npartoftype(istar) = np
-    massoftype(istar) = pmass
+    nheavy = int(f_heavy*np)
+    mlight = M_tor/(np - nheavy + mu_heavy*nheavy)
+    npartoftype(istar) = np - nheavy
+    massoftype(istar) = mlight
+    if (nheavy > 0) then
+       npartoftype(idarkmatter) = nheavy
+       massoftype(idarkmatter)  = mu_heavy*mlight
+    endif
  endif
+ allocate(mi(np))
+ mi = pmass
 
  ! initial guess of h from the mean density of a ring of radius 1, half-width R0
  ! and height sin(i_max); phantom iterates it to its own value
@@ -180,7 +197,14 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
     vxyzu(1,i) = (c1*co - s1*so*ci)*vxo + (-c1*so - s1*co*ci)*vyo
     vxyzu(2,i) = (s1*co + c1*so*ci)*vxo + (-s1*so + c1*co*ci)*vyo
     vxyzu(3,i) = (so*si)*vxo + (co*si)*vyo
-    call set_particle_type(i,istar)
+    ! heavy where the running count of f_heavy*i steps up: evenly spread over the draw
+    if (int(f_heavy*i) > int(f_heavy*(i-1))) then
+       call set_particle_type(i,idarkmatter)
+       mi(i) = mu_heavy*mlight
+    else
+       call set_particle_type(i,istar)
+       mi(i) = mlight
+    endif
  enddo
  endif
 
@@ -194,8 +218,8 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
  ! the system barycentre at rest at the origin, so that r_c = -M_tor r_tb holds
  mtot = 1. + M_tor
  do i=1,3
-    xcm(i) = pmass*sum(xyzh(i,1:np))/mtot
-    vcm(i) = pmass*sum(vxyzu(i,1:np))/mtot
+    xcm(i) = sum(mi*xyzh(i,1:np))/mtot
+    vcm(i) = sum(mi*vxyzu(i,1:np))/mtot
     xyzh(i,1:np)  = xyzh(i,1:np) - xcm(i)
     vxyzu(i,1:np) = vxyzu(i,1:np) - vcm(i)
     xyzmh_ptmass(i,1) = xyzmh_ptmass(i,1) - xcm(i)
@@ -214,6 +238,8 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,&
           '  R0 = ',R0,'  e_max = ',e_max,'  i_max = ',i_max
     print "(a,es10.3,a,es10.3,a,es10.3,a,es10.3)",'  eps_c = ',eps_c,'  r_acc = ',r_acc, &
           '  h0 = ',h0,'  eps_star = ',eps_star
+    if (geometry /= 1 .and. nheavy > 0) print "(a,i8,a,f6.2,a,f6.3)",'  heavy particles: ',nheavy, &
+          '  mass ratio ',mu_heavy,'  heavy mass share ',mu_heavy*nheavy*mlight/M_tor
     print "(a,3es11.3)",'  barycentre shift removed: ',xcm
     print "(a,f8.1,a,i4,a,i4,a)",'  tmax = ',n_orbits,' orbits, ',n_analysis_orbit, &
           ' analysis calls and ',n_dumps_orbit,' dumps per orbit'
@@ -239,6 +265,8 @@ subroutine write_setupfile(filename)
  call write_inopt(np,'np','number of torus particles',iunit)
  call write_inopt(iseed,'iseed','random seed',iunit)
  call write_inopt(eps_star,'eps_star','fixed Plummer softening of the torus (0 = adaptive)',iunit)
+ call write_inopt(f_heavy,'f_heavy','number fraction of heavy torus particles (0 = one mass)',iunit)
+ call write_inopt(mu_heavy,'mu_heavy','mass of a heavy particle over a light one',iunit)
  call write_inopt(r_cloud,'r_cloud','particles are clouds of this radius that collide (0 = collisionless)',iunit)
  call write_inopt(e_rest,'e_rest','normal restitution coefficient of cloud collisions',iunit)
  call write_inopt(heat_s,'heat_s','cloud thermostat target sigma / v_K (0 = off)',iunit)
@@ -283,6 +311,8 @@ subroutine read_setupfile(filename,ierr)
  call read_inopt(iseed,'iseed',db,errcount=nerr)
  call read_inopt(eps_c,'eps_c',db,min=0.,errcount=nerr)
  call read_inopt(eps_star,'eps_star',db,min=0.,default=0.)
+ call read_inopt(f_heavy,'f_heavy',db,min=0.,max=1.,default=0.)
+ call read_inopt(mu_heavy,'mu_heavy',db,min=0.,default=10.)
  call read_inopt(r_cloud,'r_cloud',db,min=0.,default=0.)
  call read_inopt(e_rest,'e_rest',db,min=0.,max=1.,default=0.5)
  call read_inopt(heat_s,'heat_s',db,min=0.,default=0.)

@@ -74,6 +74,7 @@ Literature to check first (novelty): m = 1 lopsided modes in nuclear discs (Trem
 | A14 | [x] | fixed softening at 16k (setup `eps_star`, merged 2026-10-28): A3 again with the same seed and eps = 0.01 as the paper, after 16k tests of cost and energy | A1/S0, r_c, onset and growth against A3 (adaptive h ~ 0.08) and the paper | tests 30 min, run 2-15 h |
 | A15 | [ ] | 16k canonical run continued to 1000 orbits (A3 from t = 150) | the mode lives to t = 1000 (paper Sect. 3.1) | ~14 h, overnight |
 | A16 | [ ] | (lowest) oscillation of the central-mass radius against softening: an unpublished figure of the authors shows |r_c| at 64k oscillating with a ~55-orbit period and growing amplitude after t ~ 200 for eps = 1e-3, 1e-4, flat for 1e-2 | from A15 (our sink unsoftened, torus h ~ 0.08) and, if needed, fixed eps_star 1e-3 and 1e-2 runs (C = 0.04, ~24 orbits/h at 16k): which softening, sink-particle or particle-particle, drives it | after A15 |
+| A17 | [~] | two-mass torus (asked by E. Bannikova, 2026-11-18): canonical torus with 1/11 of the particles 10 times heavier (half the mass each), same orbital-element draw, fixed softening 0.01 as A14, 16k, 150 orbits; setup `f_heavy`, `mu_heavy` | mode of the light and heavy species against each other and against A14; radial and vertical mass segregation (Foote et al. 2020) | ~6.5 h |
 
 Order (2026-10-29, agreed with the user): by day A11, A7 at 0.06, A6 on to 400; then A10
 (LaTeX write-up of A, edited later if needed); A15 last of the needed tasks, overnight.
@@ -202,6 +203,7 @@ Units and observables (code: G = M_BH = R = 1):
 | B37 | [~] | NGC 1672 on equal footing: a lopsided (A1 0.27), warped, thin disc with an inner hole; literature first (eccentric thin discs, Tremaine 2001; warps), then a model that reproduces it, with the user | a model of NGC 1672 matching the cube | - |
 | B38 | [x] | figures and movies of the representative runs (A3, A6, B25, B30, B32 b4, b5, c) by the FIGURES.md rules | a complete figure set | - |
 | B39 | [~] | whole-cube metric in `fit_torus.py` (smoothed cube on independent samples, free flux scale) and refits of both galaxies | maps of the best models look like the data; mode, mass and inclination with honest degeneracies | minutes per fit |
+| B40 | [ ] | close the physical model (agreed with the user 2026-11-18, after A17): the cube metric on the gas of the two-component runs (b4, b5, fed), then the physics the fits ask for (a hot gas layer of ~25% inside the ring, lopsided A1 ~0.15, long-lived) | how far the self-consistent gas is from what NGC 613 needs; the fits of collisionless snapshots are diagnostics, not the model | - |
 
 Order (2026-10-29, the user's choice): B13b first (the only independent check of the
 number the conclusion rests on), B13a and B14 alongside, s 0.3 after A6.
