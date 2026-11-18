@@ -37,6 +37,9 @@ HFACT = 1.2
 LIM = 2.0
 ISTAR, IDARK = 4, 5      # gas clouds and collisionless stars of two-component runs
 GAS = "#d81bd8"
+# the type drawn in one colour over the density map, and its legend: the gas clouds of a
+# two-component run, or the heavy particles of a two-mass collisionless torus (f_heavy)
+OVER = dict(itype=ISTAR, label="gas clouds")
 NORM = LogNorm(1e-4, 1e-1)
 CMAP = "turbo"
 ARROW_FULL = 1.6        # arrow length at the paper's saturated A_1/Sigma_0 = 0.368
@@ -96,7 +99,7 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None, twocomp=False):
                Line2D([], [], color="crimson", lw=2, marker=">", ms=6,
                       label=r"$m=1$: phase $\Phi_1$, length $\propto A_1/\Sigma_0$")]
     if twocomp:
-        handles.append(Line2D([], [], ls="", marker="o", color=GAS, ms=5, label="gas clouds"))
+        handles.append(Line2D([], [], ls="", marker="o", color=GAS, ms=5, label=OVER["label"]))
     ax_f.legend(handles=handles, loc="lower left", fontsize=8.5, frameon=True,
                 framealpha=0.85, edgecolor="0.7", handlelength=1.6, borderpad=0.5)
 
@@ -162,7 +165,7 @@ def draw(art, path, pmass, tm, a1, m1, corotate=False):
         fr["x"], fr["y"] = cr * fr["x"] - sr * fr["y"], sr * fr["x"] + cr * fr["y"]
         xc = fr["xc"]
         fr["xc"] = (cr * xc[0] - sr * xc[1], sr * xc[0] + cr * xc[1], xc[2])
-    gas = (fr["itype"] == ISTAR) & np.any(fr["itype"] == IDARK)
+    gas = (fr["itype"] == OVER["itype"]) & np.any(fr["itype"] == IDARK) & np.any(fr["itype"] == ISTAR)
     if gas.any():
         art["gas_f"].set_offsets(np.c_[fr["x"][gas], fr["y"][gas]])
         art["gas_e"].set_offsets(np.c_[fr["x"][gas], fr["z"][gas]])
@@ -212,6 +215,9 @@ def main(argv=None):
     tm = m1["time"] / P_ORB
     a1 = m1["A1"] / m1["sigma0"]
     rc = np.hypot(m1["xc"], m1["yc"])
+    if float(str(setup.get("f_heavy", 0) or 0).split()[0]) > 0:
+        mu = float(str(setup.get("mu_heavy", 10)).split()[0])
+        OVER.update(itype=IDARK, label=f"heavy particles ({mu:g}" + r"$\times$ mass)")
     art = build_figure(setup, n, tm, a1, rc, a.corotate, run,
                        twocomp=np.any(pio.read_dump(dumps[0])["gas"]["itype"] == IDARK))
 

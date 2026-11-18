@@ -101,6 +101,12 @@ def model_parts(run):
         eps = _num(setup.get("eps_star", 0) or 0)
         if eps > 0:
             pars["eps"] = "fixed " + _math(r"\varepsilon = " + _fmt(eps))
+        fh = _num(setup.get("f_heavy", 0) or 0)
+        if fh > 0:
+            mu = _num(setup.get("mu_heavy", 10) or 10)
+            share = mu * fh / (1 - fh + mu * fh)
+            pars["heavy"] = (_math(rf"{100 * fh:.0f}\%") + " of the particles " + _math(rf"{_fmt(mu)}\times")
+                             + " heavier (" + _math(rf"{100 * share:.0f}\%") + " of the mass)")
         eps_c = _num(setup.get("eps_c", 0) or 0)
         if eps_c > 0:
             pars["eps_c"] = _math(r"\varepsilon_c = " + _fmt(eps_c))
