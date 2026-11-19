@@ -1339,3 +1339,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   estimate is rough. Test: the same setup at 4k and 8k (seed 1, eps 0.01, C 0.04, 150
   orbits) after the merge regressions. Reading: the rate of Delta a(t) and Delta i(t)
   scaling as 1/N means numerical relaxation; independent of N means a collective effect.
+- **A17 result at 16k (fixed run 20261119-064304, 150 orbits, dE/E 2.0e-3, momentum
+  conserved).** Mode: the same in both species (saturated A1/S0 ~0.30, phases locked
+  within ~10 deg after t ~45); it rises ~10-15 orbits earlier than in A14 (the heavy
+  particles seed it more strongly) and saturates at ~0.30 against ~0.33 in A14. BH offset
+  |r_c| 0.019 as A14. Segregation against the A14 control (same particle subset):
+  Delta a = a_light - a_heavy from -0.004 to +0.027, slope over t 60-150 +0.018 +-
+  0.0007 per 100 orbits (control +0.001 +- 0.0007); Delta i from 0.28 to 1.35 deg, slope
+  +0.72 +- 0.10 deg per 100 orbits (control -0.02 +- 0.11). Shape: the light particles'
+  mean a rises steadily (1.00 -> 1.06) and the heavy ones' half as fast (1.004 -> 1.033);
+  the inclinations drop during the mode growth (t 45-85), the heavy ones by ~1 deg more,
+  then stay flat; the heavy |z| ends ~0.025 lower. Mean e grows with the mode, the heavy
+  ones' less (0.36 against 0.38). The vertical segregation coincides with the mode growth
+  (collective, plausible); the radial one grows steadily (two-body or secular: the 4k
+  and 8k runs decide).
