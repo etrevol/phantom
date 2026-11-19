@@ -1292,3 +1292,20 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   (effective relaxation ~1e4 orbits, three times faster than one mass), so any visible
   segregation within 150 orbits points to collective (secular) effects. Measured from
   dumps per species: A1, phase, mean a, e, inclination, |z|.
+- **A17 first run invalid: a phantom bug for unequal masses (2026-11-19).** The run
+  (20261118-225203) ended at t = 150 with dE/E 9.4e-3 (A14: 1.9e-3) and the total
+  momentum at 1e-4 (A14: 3e-6), so the whole system drifted 0.08 R_tor and |r_bh| about
+  the origin looked three times A14's. 2k tests: one mass 6e-6, two masses 9e-5, also
+  with tree_accuracy 0.1 (1.5e-4) and global steps (9e-5): not the tree, not the steps.
+  Cause in `force.F90` (upstream APR commit 7bc52f5c6, 2024-10-16): the pair self-gravity
+  within the kernel was `0.5*(m_j f_i + m_i f_j)` instead of `0.5*m_j*(f_i + f_j)`
+  (Price & Monaghan 2007): within 2 eps a light particle felt a heavy one with the mean
+  mass and the heavy one felt it likewise, breaking action and reaction. Upstream fixed it
+  in b6cd74933 (2026-08-20) inside its new number-density formulation; ported here as the
+  pre-APR form. After the fix: two masses 7.6e-6 at 2k, one mass bit-identical (etot
+  equal to 11 digits). Every earlier run used equal masses (the two-component runs set
+  the dark-matter mass equal to the star mass) and is unaffected. What the invalid run
+  showed (for comparison with the rerun): the mode the same in both species (A1/S0 0.24-
+  0.37 saturated, phases within ~10 deg); segregation against A14 with the same subset as
+  control: a_light - a_heavy -0.004 -> +0.027 (control stays -0.004..-0.008), inclination
+  difference 0.28 -> 1.6 deg (control 0.2-0.7). Rerun with the fix next.

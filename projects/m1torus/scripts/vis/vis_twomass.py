@@ -40,9 +40,12 @@ def row(path):
     mt = d["header_lists"]["massoftype"]
     m = np.array([mt[k - 1] for k in it])
     live = g["h"] > 0
-    # the mode about the system barycentre (the analysis convention), elements about the sink
-    x = np.c_[g["x"], g["y"], g["z"]]
+    # the mode about the system barycentre (the analysis convention), elements about the sink;
+    # the barycentre is measured, since a two-mass run need not keep it at the origin
     xb = np.r_[s["x"][0], s["y"][0], s["z"][0]]
+    xs = ((m[live, None] * np.c_[g["x"], g["y"], g["z"]][live]).sum(0) + s["m"][0] * xb) / (m[live].sum() + s["m"][0])
+    x = np.c_[g["x"], g["y"], g["z"]] - xs
+    xb = xb - xs
     vb = np.r_[s["vx"][0], s["vy"][0], s["vz"][0]]
     r = x - xb
     v = np.c_[g["vx"], g["vy"], g["vz"]] - vb
@@ -53,7 +56,7 @@ def row(path):
     ev = ((v2 - M / rr)[:, None] * r - (r * v).sum(1)[:, None] * v) / M
     h = np.cross(r, v)
     inc = np.degrees(np.arccos(np.clip(h[:, 2] / np.linalg.norm(h, axis=1), -1, 1)))
-    out = dict(t=d["header"]["time"] / P_ORB)
+    out = dict(t=d["header"]["time"] / P_ORB, rbh=float(np.hypot(*xb[:2])), drift=float(np.linalg.norm(xs)))
     out["all"] = mode(x[live], m[live])
     for name, k in (("light", LIGHT), ("heavy", HEAVY)):
         sel = live & (it == k)
@@ -75,7 +78,9 @@ def main():
     li = np.array([q["light"] for q in rows])
     he = np.array([q["heavy"] for q in rows])
     al = np.array([q["all"] for q in rows])
-    np.savez(run / "twomass.npz", t=t, light=li, heavy=he, all=al,
+    rbh = np.array([q["rbh"] for q in rows])
+    drift = np.array([q["drift"] for q in rows])
+    np.savez(run / "twomass.npz", t=t, light=li, heavy=he, all=al, rbh=rbh, drift=drift,
              cols="A1 phase a e inc |z| noise")
 
     fig, ax = plt.subplots(3, 2, figsize=(11, 9.5), sharex=True)

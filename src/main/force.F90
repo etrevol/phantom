@@ -1359,7 +1359,10 @@ subroutine compute_forces(i,iamgasi,iamdusti,xpartveci,hi,hi1,hi21,hi41,gradhi,g
           pmassj = massoftype(iamtypej)
        endif
 
-       fgrav = 0.5*(pmassj*fgravi + pmassi*fgravj)
+       ! the force on i from j carries m_j in both halves (Price & Monaghan 2007); the
+       ! APR form 0.5*(m_j f_i + m_i f_j) breaks momentum for unequal masses (upstream
+       ! fix b6cd74933 in the number-density formulation)
+       fgrav = 0.5*pmassj*(fgravi + fgravj)
 
        !--get dv : needed for timestep and av term
        vxj = vxyzu(1,j)
