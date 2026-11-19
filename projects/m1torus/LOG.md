@@ -1309,3 +1309,12 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   0.37 saturated, phases within ~10 deg); segregation against A14 with the same subset as
   control: a_light - a_heavy -0.004 -> +0.027 (control stays -0.004..-0.008), inclination
   difference 0.28 -> 1.6 deg (control 0.2-0.7). Rerun with the fix next.
+- **B39, NGC 1672 at one beam (loose dv prior 0 +- 30).** Eccentric warped disc 15481
+  (+5; chi2/N 1.33) against the symmetric torus 17194 (+2): Delta chi2 1710 (~1290
+  scaled). Inner edge 0.11 R (1.4 pc of 12.8 pc), e 0.37 at the inner edge falling to
+  0.05 at the outer, apsidal twist -40 deg, warp -17 deg about node 118, i_max 22, i 68,
+  PA 53, M 2.0e7, dv -36 km/s. m = 1 now matches: data A1 0.30, offset (-0.90, -0.83) pc;
+  model 0.27, (-0.83, -0.73). With dv free the fit settles at -36 km/s, so the catalogue
+  systemic velocity is off by ~36 km/s or the disc's mean velocity is shifted (a test
+  with an independent v_sys is open). NGC 1672 reads as an eccentric inner disc (e ~0.3-
+  0.4 inside 3 pc, nearly circular outside), plausible.
