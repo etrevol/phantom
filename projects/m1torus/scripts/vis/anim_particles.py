@@ -131,10 +131,24 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None, twocomp=False):
         title.set_fontsize(title.get_fontsize() - 0.25)
     y_suffix = 0.942
     if right() > 0.775:
-        title.set_text(labels.wrapped(full, len(full) // 2 + 10))
+        # as many lines as it takes, hung from the top edge, with the suffix run in so
+        # that three lines still clear the panels
+        full = full + (", " + suffix.lstrip(", ") if suffix else "")
+        suffix = ""
         title.set_fontsize(9.5)
-        title.set_y(0.966)
-        y_suffix = 0.932
+        title.set_va("top")
+        title.set_y(0.997)
+        width = len(full) // 3 + 10
+        title.set_text(labels.wrapped(full, width))
+        while right() > 0.775 and width > 30:
+            width -= 5
+            title.set_text(labels.wrapped(full, width))
+        # the panels shrink from the top to clear a title of more than two lines
+        bottom = fig.transFigure.inverted().transform(title.get_window_extent(rend))[0, 1]
+        for ax in (ax_f, ax_e):
+            x0, y0, w, h = ax.get_position().bounds
+            if y0 + h > bottom - 0.012:
+                ax.set_position([x0, y0, w, bottom - 0.012 - y0])
     if suffix:
         fig.text(0.065, y_suffix, (lambda u: u[0].upper() + u[1:])(suffix.lstrip(", ")), ha="left", va="center",
                  fontsize=9.5, color="0.25")
