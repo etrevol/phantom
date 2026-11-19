@@ -1429,3 +1429,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   rotation is flat (|v1| 65-72 km/s out to 0.05"), which no gas placed deeper in a
   point-mass potential gives; next the cheap kinematic test of option 2 (extended mass
   on the snapshot speeds, f_ext and beta free) on b5 early.
+- **B40 option 2 (extended mass) and the no-dissipation control.** With b5 early's
+  geometry fixed (inc, logM free): f_ext 0 gives 15055, f_ext 0.18 (beta 2.7) 14961,
+  Delta 94 for two parameters (~45 after the chi2/dof scaling) against the ~800 gap:
+  the extended mass is not what is missing (as B28 found on the old metric). A free
+  10-parameter fit (15852) did not converge in 40 generations. The stars of the
+  canonical torus at t = 100, from which all gas runs start, score 18927: two orbits of
+  collisions improve the cube by ~3900 (b5, r_cl 0.0044, v_A 0.4), while the stronger
+  dissipation of b4 (r_cl 0.01, v_A 0.2) gives 16200-17000. Decision (option 3, taken
+  both ways): scan the collision rate at v_A 0.4, r_cl 0.002 and 0.007 (b5 0.0044), t
+  100 -> 108, cube fits at t 102, 104, 108. Criterion: an optimum below 14558 (b5
+  - 500) continues the cloud family; otherwise it saturates near 15000 and the next
+  step is option 4 (SPH gas).
