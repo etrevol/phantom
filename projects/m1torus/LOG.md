@@ -1330,3 +1330,12 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   ppitorus); unit tests pass (cloud collisions, cloud feed). Branch `merge-upstream`
   (6489d85e3) in `~/phantom-merge`; master stays until the regression restarts
   (adaptive and fixed softening, clouds, two masses at 2k; old against merged) agree.
+- **A17, interim at t ~113 (fixed run) and the N test (with the user).** The mode is the
+  same in both species (A1/S0 0.29-0.35, phases within ~10 deg, |r_c| ~0.019 as A14).
+  Segregation is clear and steady: a_light - a_heavy +0.025 (from -0.004), inclination
+  difference ~1 deg (from 0.28), none in the A14 control; the buggy run gave nearly the
+  same (+0.023 at t ~110). It is far faster than the two-body estimate (~1e4 orbits),
+  pointing to collective (secular) segregation as in Foote et al. (2020), but that
+  estimate is rough. Test: the same setup at 4k and 8k (seed 1, eps 0.01, C 0.04, 150
+  orbits) after the merge regressions. Reading: the rate of Delta a(t) and Delta i(t)
+  scaling as 1/N means numerical relaxation; independent of N means a collective effect.
