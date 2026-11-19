@@ -83,7 +83,7 @@ def main():
     np.savez(run / "twomass.npz", t=t, light=li, heavy=he, all=al, rbh=rbh, drift=drift,
              cols="A1 phase a e inc |z| noise")
 
-    fig, ax = plt.subplots(3, 2, figsize=(11, 9.5), sharex=True)
+    fig, ax = plt.subplots(3, 2, figsize=(11, 8.9), sharex=True, layout="constrained")
     ax = ax.ravel()
     cl, ch = "C0", "C3"
     ax[0].plot(t, li[:, 0], color=cl, label="light")
@@ -112,7 +112,6 @@ def main():
     name, pars, suffix = L.model_parts(run)
     fig.suptitle("Light and Heavy Particles of the Torus\n" + L.wrapped(f"{name} ({', '.join(pars.values())}){suffix}", 110),
                  fontsize=9.5)
-    fig.tight_layout(rect=(0, 0, 1, 0.92))
     (run / "figs").mkdir(exist_ok=True)
     fig.savefig(run / "figs" / "twomass.png", dpi=120)
     print(run / "figs" / "twomass.png")

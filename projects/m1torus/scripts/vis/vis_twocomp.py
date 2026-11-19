@@ -38,7 +38,7 @@ def main():
     g = lambda c, k: np.array([r[c][k] for r in rows])
     dph = (g("gas", "phase") - g("stars", "phase") + 180) % 360 - 180
 
-    fig, ax = plt.subplots(5, 1, figsize=(8.5, 10.5), sharex=True)
+    fig, ax = plt.subplots(5, 1, figsize=(8.5, 9.9), sharex=True, layout="constrained")
     ax[0].plot(t, g("stars", "A1"), color="0.2", label="stars")
     ax[0].plot(t, g("gas", "A1"), color="#d81bd8", label="gas clouds")
     ax[0].fill_between(t, 0, g("gas", "noise"), color="#d81bd8", alpha=0.15, lw=0, label=r"gas noise $2/\sqrt{N}$")
@@ -58,7 +58,6 @@ def main():
     name, pars, suffix = L.model_parts(run)
     fig.suptitle("Stars and Gas of the Torus\n" + L.wrapped(f"{name} ({', '.join(pars.values())}){suffix}", 95),
                  fontsize=9.5)
-    fig.tight_layout(rect=(0, 0, 1, 0.9))
     out = run / "figs"
     out.mkdir(exist_ok=True)
     fig.savefig(out / "twocomp.png", dpi=120)
