@@ -1376,3 +1376,6 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   heating by the heavy particles weakens the mode at small N and the effect fades with N.
   Answer to the question: the mode does not care about a 1:10 mass spectrum once N is
   large enough; the mass segregation seen is numerical (plausible, single seeds).
+- **A18 closed (2026-11-19).** Master merged `merge-upstream` (upstream phantom main of
+  2026-11, number-density grad-h terms, its own unequal-mass gravity fix); master builds.
+  The worktree `~/phantom-merge` is kept with its regression outputs.
