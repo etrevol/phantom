@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -14,10 +14,10 @@ module analysis
 !
 ! :Runtime parameters: None
 !
-! :Dependencies: dim, eos, getneighbours, io, part, physcon, prompting,
+! :Dependencies: dim, getneighbours, io, part, physcon, prompting,
 !   sortutils
 !
- use getneighbours,    only:generate_neighbour_lists, read_neighbours, write_neighbours, &
+ use getneighbours,    only:generate_neighbour_lists,read_neighbours,write_neighbours,&
                            neighcount,neighb,neighmax,meanneigh
  implicit none
  character(len=27), parameter, public :: analysistype = 'velocitydispersion_vs_scale'
@@ -25,20 +25,20 @@ module analysis
 
 ! Variables for particle list construction
  integer :: ninside
- integer, allocatable,dimension(:) :: particlelist, checked, rhosort
+ integer, allocatable :: particlelist(:), checked(:), rhosort(:)
 
 ! Variables for mean velocity and velocity dispersion
 
- real, allocatable,dimension(:,:) :: vmean, vdisp
- real, allocatable,dimension(:)   :: rhopart
- real, allocatable,dimension(:)   :: ekin, egrav,etherm, emag
+ real, allocatable :: vmean(:,:), vdisp(:,:)
+ real, allocatable :: rhopart(:)
+ real, allocatable :: ekin(:), egrav(:),etherm(:), emag(:)
 
  ! Variables for scales
  integer :: nscale
  real    :: rscale, volume_scale,rscalemin, rscalemax,drscale
 
  ! Variables for outputs
- real, dimension(3) :: vdisp_exp, vdisp_var
+ real :: vdisp_exp(3), vdisp_var(3)
  real               :: ekin_exp, etherm_exp, egrav_exp, emag_exp
  real               :: ekin_var, etherm_var, egrav_var, emag_var
 
@@ -49,17 +49,18 @@ module analysis
 
 contains
 
+!----------------------------------------------------------------------------!
+!+
+!  Main analysis routine
+!+
+!----------------------------------------------------------------------------!
 subroutine do_analysis(dumpfile,numfile,xyzh,vxyzu,pmass,npart,time,iunit)
  use io,      only:fatal
  use dim,     only:maxp
- use part,    only:gravity,mhd,Bxyz,rhoh,igas,&
-              get_partinfo,maxphase,maxp,iphase,massoftype,poten
- use eos,     only: utherm
+ use part,    only:rho,gravity,mhd,Bxyz,igas,&
+              get_partinfo,maxphase,maxp,iphase,poten
  use physcon, only:pi
  use sortutils, only:indexx
-
- implicit none
-
  character(len=*), intent(in) :: dumpfile
  real,             intent(in) :: xyzh(:,:),vxyzu(:,:)
  real,             intent(in) :: pmass,time
@@ -71,12 +72,8 @@ subroutine do_analysis(dumpfile,numfile,xyzh,vxyzu,pmass,npart,time,iunit)
 
  integer :: j,k,l, ipart,jpart,iscale,ncalculated,iamtypei
  real :: percent, percentcount,vmeansum,vdispsum,dv
- real :: pmassi, rhoj,rhoj1
+ real :: rhoj,rhoj1
  logical :: existneigh, iactivei,iamdusti,iamgasi
-
-! Print the analysis being done
- write(*,'("Performing analysis type ",A)') analysistype
- write(*,'("Input file name is ",A)') dumpfile
 
  write(output,"(a6,i5.5)") 'scale_',numfile
  write(*,'("Output file name is ",A)') output
@@ -128,7 +125,7 @@ subroutine do_analysis(dumpfile,numfile,xyzh,vxyzu,pmass,npart,time,iunit)
     endif
 
     if (.not.iamgasi) cycle
-    rhopart(ipart) = rhoh(xyzh(4,ipart), massoftype(igas))
+    rhopart(ipart) = rho(ipart)
  enddo
 
  allocate(rhosort(npart))
@@ -155,8 +152,6 @@ subroutine do_analysis(dumpfile,numfile,xyzh,vxyzu,pmass,npart,time,iunit)
  etherm(:) = 0.0
  egrav(:)  = 0.0
  emag(:)   = 0.0
-
- pmassi = massoftype(igas)
 
  ! Loop over size scales
  do iscale=1,nscale
@@ -210,17 +205,17 @@ subroutine do_analysis(dumpfile,numfile,xyzh,vxyzu,pmass,npart,time,iunit)
        do l = 1,ninside
           jpart = particlelist(l)
 
-          rhoj = rhoh(xyzh(4,jpart),pmassi)
+          rhoj = rho(jpart)
           rhoj1 = 1.0/rhoj
 
           do k=1,3
              vmean(k,ipart) = vmean(k,ipart) + vxyzu(k,jpart)
           enddo
 
-          ekin(ipart) = ekin(ipart) + 0.5*pmassi*dot_product(vxyzu(:,jpart), vxyzu(:,jpart))
-          etherm(ipart) = etherm(ipart) + pmassi*utherm(vxyzu(4,jpart),rhoj)
-          if (gravity) egrav(ipart) = egrav(ipart) + pmassi*poten(jpart)
-          if (mhd) emag(ipart) = emag(ipart) + pmassi*dot_product(Bxyz(:,jpart), Bxyz(:,jpart))*rhoj1
+          ekin(ipart) = ekin(ipart) + 0.5*pmass*dot_product(vxyzu(:,jpart), vxyzu(:,jpart))
+          etherm(ipart) = etherm(ipart) + pmass*vxyzu(4,jpart)
+          if (gravity) egrav(ipart) = egrav(ipart) + pmass*poten(jpart)
+          if (mhd) emag(ipart) = emag(ipart) + pmass*dot_product(Bxyz(:,jpart), Bxyz(:,jpart))*rhoj1
 
        enddo
 
@@ -333,7 +328,7 @@ end subroutine do_analysis
 
 !-------------------------------------------
 !+
-! Read options for analysis from file
+!  Read options for analysis from file
 !+
 !-------------------------------------------
 subroutine read_analysis_options
@@ -386,21 +381,19 @@ end subroutine read_analysis_options
 
 !--------------------------------------------------------------
 !+
-! Find all particles within a range rscale of the selected particle
-! Uses a linked list search across the neighbour list
+!  Find all particles within a range rscale of the selected particle
+!  Uses a linked list search across the neighbour list
 !+
 !-------------------------------------------------------------
 subroutine find_particles_in_range(ipart,npart,xyzh,particlelist,d)
- implicit none
-
- integer, intent(in) :: ipart,npart
- real, intent(in) :: d
- real, intent(in) :: xyzh(:,:)
+ integer, intent(in)    :: ipart,npart
+ real,    intent(in)    :: d
+ real,    intent(in)    :: xyzh(:,:)
  integer, intent(inout) :: particlelist(:)
 
- real,parameter :: tolerance = 2.0
+ real, parameter :: tolerance = 2.0
 
- integer, allocatable, dimension(:) :: teststack
+ integer, allocatable :: teststack(:)
 
  integer :: jpart,l,nstack
  real :: sep
@@ -468,9 +461,8 @@ end subroutine find_particles_in_range
 !+
 !--------------------------------------------------------------
 subroutine write_output_header(iunit,output,time)
- implicit none
  integer, intent(in) :: iunit
- real, intent(in) :: time
+ real,    intent(in) :: time
  character(len=*) :: output
 
  print '(a,a)', 'Writing to file ',output
@@ -504,7 +496,6 @@ end subroutine write_output_header
 !+
 !-----------------------------------------------------------------
 subroutine write_output_data(iunit,output)
- implicit none
  integer, intent(in) :: iunit
  character(len=*) :: output
 
@@ -520,12 +511,10 @@ end subroutine write_output_data
 
 !--------------------------------------------------------
 !+
-! Deallocate arrays
+!  Deallocate arrays
 !+
 !-------------------------------------------------------
 subroutine deallocate_arrays
-
- implicit none
 
  deallocate(neighcount,neighb)
  deallocate(particlelist,checked,rhosort,rhopart)
@@ -533,5 +522,5 @@ subroutine deallocate_arrays
  deallocate(ekin,egrav,etherm,emag)
 
 end subroutine deallocate_arrays
-!-------------------------------------------------------
+
 end module analysis

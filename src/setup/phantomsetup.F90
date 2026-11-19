@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -15,14 +15,14 @@ program phantomsetup
 ! :Usage: phantomsetup fileprefix --maxp=10000000 --nprocsfake=1
 !
 ! :Dependencies: boundary, checksetup, dim, eos, fileutils, gravwaveutils,
-!   io, io_summary, krome_interface, memory, mpidomain, mpiutils, options,
-!   part, physcon, readwrite_dumps, readwrite_infile, setBfield, setup,
-!   setup_params, systemutils, timestep, units
+!   io, io_summary, krome_interface, memory, metric, mpidomain, mpiutils,
+!   options, part, physcon, readwrite_dumps, readwrite_infile, setBfield,
+!   setup, setup_params, systemutils, timestep, units
 !
  use memory,          only:allocate_memory,deallocate_memory
- use dim,             only:tagline,mpi,maxp_alloc
+ use dim,             only:tagline,mpi,maxp_alloc,gr
  use part,            only:xyzh,massoftype,hfact,vxyzu,npart,npartoftype, &
-                           Bxyz,Bextx,Bexty,Bextz,rhoh,&
+                           Bxyz,Bextx,Bexty,Bextz,&
                            isetphase,igas,iamtype,labeltype,mhd,init_part
  use setBfield,       only:set_Bfield
  use eos,             only:polyk,gamma
@@ -43,6 +43,7 @@ program phantomsetup
  use fileutils,       only:strip_extension
  use gravwaveutils,   only:calc_gravitwaves
  use systemutils,     only:get_command_option
+ use metric,          only:update_metric
 #ifdef KROME
  use krome_interface, only:write_KromeSetupFile
 #endif
@@ -66,6 +67,7 @@ program phantomsetup
  if (nargs < 1) then
     print "(a,/)",trim(tagline)
     print "(a)",' Usage: phantomsetup fileprefix --maxp=10000000 --nprocsfake=1'
+    print "(a)",'        options in the .setup file can be set as --option=value'
     print "(/,a)",' e.g. "phantomsetup mysim"'
     stop
  endif
@@ -94,6 +96,12 @@ program phantomsetup
  call allocate_memory(n_alloc, part_only=.true.)
 
  call set_default_options
+
+!
+!--initialise MPI before anything that uses it (read_infile here)
+!
+ if (mpi) call init_mpi(id,nprocs)
+
 !
 !--if input file exists, read it
 !
@@ -108,9 +116,9 @@ program phantomsetup
 !
  time = 0.
  call init_part
+ if (gr) call update_metric(time)
 
  if (mpi) then
-    call init_mpi(id,nprocs)
     call init_domains(nprocs)
     nprocsfake = 1
  else ! non-mpi

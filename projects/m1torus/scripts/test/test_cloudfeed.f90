@@ -6,7 +6,7 @@
 program test_cloudfeed
  use io,     only:nprocs
  use memory, only:allocate_memory
- use part,   only:istar,massoftype,npart,npartoftype,xyzh,vxyzu,nptmass,xyzmh_ptmass,vxyz_ptmass
+ use part,   only:istar,massoftype,npart,npartoftype,xyzh,vxyzu,rho,nptmass,xyzmh_ptmass,vxyz_ptmass
  use inject, only:inject_particles,feed_mdot,feed_r,feed_dr,feed_frot,feed_s,feed_inc,inject_type
  implicit none
  real, parameter :: pi = 4.*atan(1.)
@@ -73,7 +73,7 @@ subroutine test_ring(nfail)
  ! npairs = feed_mdot dt / (2 pi) / (2 m) = 100
  dt = 2.*pi*200.*massoftype(istar)/feed_mdot
  nold = 0
- call inject_particles(0.,dt,xyzh,vxyzu,xyzmh_ptmass,vxyz_ptmass,npart,nold,npartoftype,dtinj)
+ call inject_particles(0.,dt,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,npart,nold,npartoftype,dtinj)
  call check('clouds injected',real(npart),200.,0.,nfail)
  call check('npartoftype(istar)',real(npartoftype(istar)),200.,0.,nfail)
  errr = 0.; errv = 0.; errrad = 0.; cmin = 1.; tiltmax = 0.
@@ -118,7 +118,7 @@ subroutine test_rate(nfail)
  dt = 2.*pi*2.*0.37*massoftype(istar)/feed_mdot
  do k=1,400
     nold = npart
-    call inject_particles(0.,dt,xyzh,vxyzu,xyzmh_ptmass,vxyz_ptmass,npart,nold,npartoftype,dtinj)
+    call inject_particles(0.,dt,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,npart,nold,npartoftype,dtinj)
  enddo
  expect = 2.*400*0.37
  ! pairs drawn with p = 0.37: sigma of the clouds = 2 sqrt(400 p (1 - p))

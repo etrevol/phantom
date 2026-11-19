@@ -41,3 +41,13 @@ eos_lom.dat
 /results/
 /materials/
 __pycache__/
+# data files downloaded at runtime from Zenodo (see map_dir_to_web in src/main/datafiles.f90)
+data/eos/*/*
+data/forcing/*
+data/velfield/*
+data/galaxy_merger/*
+data/starcluster/*
+data/binarybh/*
+!data/eos/*/README
+!data/*/README
+data/star_data_files/pourmandwd.data*

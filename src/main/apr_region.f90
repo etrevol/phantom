@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -42,12 +42,12 @@ contains
 !+
 !-----------------------------------------------------------------------
 subroutine set_apr_centre(apr_type,apr_centre,ntrack,track_part)
- use part, only:xyzmh_ptmass,xyzh,npart,vxyzu,nptmass,vxyz_ptmass,apr_level
- use part, only:aprmassoftype, poten
+ use part, only:xyzmh_ptmass,xyzh,npart,vxyzu,nptmass,vxyz_ptmass,apr_level,rho
+ use part, only:poten
  use centreofmass, only:get_centreofmass
  integer, intent(in)  :: apr_type
  real,    intent(out) :: apr_centre(3,ntrack_max)
- integer, optional, intent(in) :: ntrack,track_part(:)
+ integer, intent(in), optional :: ntrack,track_part(:)
  real :: xcom(3), vcom(3)
  integer :: ii, ntrack_temp, track_part_temp(ntrack_max)
  integer, save :: count = 0
@@ -68,12 +68,12 @@ subroutine set_apr_centre(apr_type,apr_centre,ntrack,track_part)
     count = count + 1
     if (count == 10) then
        ! find potential clumps
-       call identify_clumps(npart,xyzh,vxyzu,poten,apr_level,xyzmh_ptmass,aprmassoftype, &
+       call identify_clumps(npart,xyzh,vxyzu,rho,poten,apr_level,xyzmh_ptmass, &
                               ntrack_temp,track_part_temp)
 
        ! update or create from existing clumps
-       call create_or_update_apr_clump(npart,xyzh,vxyzu,poten,apr_level,xyzmh_ptmass,&
-                                      aprmassoftype,ntrack_temp,track_part_temp)
+       call create_or_update_apr_clump(npart,xyzh,vxyzu,rho,poten,apr_level,xyzmh_ptmass,&
+                                      ntrack_temp,track_part_temp)
 
        ! now update the clump locations
        do ii = 1,ntrack
@@ -110,9 +110,9 @@ end subroutine set_apr_centre
 !+
 !-----------------------------------------------------------------------
 subroutine set_apr_regions(ref_dir,apr_max,apr_regions,apr_rad,apr_drad)
- integer, intent(in) :: ref_dir,apr_max
- real, intent(in)    :: apr_rad,apr_drad
- real, intent(inout) :: apr_regions(apr_max)
+ integer, intent(in)    :: ref_dir,apr_max
+ real,    intent(in)    :: apr_rad,apr_drad
+ real,    intent(inout) :: apr_regions(apr_max)
  integer :: ii,kk
 
  if (ref_dir == 1) then
@@ -137,19 +137,19 @@ end subroutine set_apr_regions
 !  create_or_update_clumps
 !+
 !-----------------------------------------------------------------------
-subroutine identify_clumps(npart,xyzh,vxyzu,poten,apr_level,xyzmh_ptmass,aprmassoftype, &
+subroutine identify_clumps(npart,xyzh,vxyzu,rho,poten,apr_level,xyzmh_ptmass, &
                            ntrack_temp,track_part_temp)
  use utils_apr, only:find_inner_and_outer_radius
- use part,      only:igas,rhoh,isdead_or_accreted
+ use part,      only:isdead_or_accreted
  use ptmass,    only:rho_crit_cgs
  use units,     only:unit_density
- integer, intent(in) :: npart
- integer(kind=1), intent(in) :: apr_level(:)
- real, intent(in) :: xyzh(:,:), vxyzu(:,:), aprmassoftype(:,:),xyzmh_ptmass(:,:)
- real(kind=4), intent(in) :: poten(:)
- integer, intent(out) :: ntrack_temp, track_part_temp(:)
+ integer,         intent(in)  :: npart
+ integer(kind=1), intent(in)  :: apr_level(:)
+ real,            intent(in)  :: xyzh(:,:), vxyzu(:,:), xyzmh_ptmass(:,:),rho(:)
+ real(kind=4),    intent(in)  :: poten(:)
+ integer,         intent(out) :: ntrack_temp, track_part_temp(:)
  integer :: ii, kk
- real :: pmassi, rhoi, r2test, rminlimit2, rin, rout
+ real :: rhoi, r2test, rminlimit2, rin, rout
 
  ! find the inner and outer radius each time
  call find_inner_and_outer_radius(npart,xyzh,rin,rout)
@@ -164,18 +164,17 @@ subroutine identify_clumps(npart,xyzh,vxyzu,poten,apr_level,xyzmh_ptmass,aprmass
  !iterate over all particles and find the ones that are above a certain density threshold
 
  !$omp parallel do schedule(guided) default(none) &
- !$omp shared(npart,xyzh,apr_level,aprmassoftype,unit_density) &
+ !$omp shared(npart,xyzh,rho,unit_density) &
  !$omp shared(rho_crit_cgs,ntrack_temp,track_part_temp) &
  !$omp shared(rminlimit2,ntrack,track_part) &
- !$omp private(pmassi,rhoi,ii,kk,r2test)
+ !$omp private(rhoi,ii,kk,r2test)
  over_dens: do ii = 1, npart
 
     ! check the particle isn't dead or accreted
     if (isdead_or_accreted(xyzh(4,ii))) cycle over_dens
 
-    ! Obtain particle density
-    pmassi = aprmassoftype(igas,apr_level(ii))
-    rhoi = rhoh(xyzh(4,ii),pmassi)
+    ! Obtain particle density from kernel sum
+    rhoi = rho(ii)
 
     ! does it have the density we need?
     if (rhoi*unit_density < rho_crit_cgs) cycle over_dens
@@ -207,28 +206,26 @@ end subroutine identify_clumps
 !  clumps as appropriate
 !+
 !-----------------------------------------------------------------------
-subroutine create_or_update_apr_clump(npart,xyzh,vxyzu,poten,apr_level,xyzmh_ptmass,&
-                                      aprmassoftype,ntrack_temp,track_part_temp)
+subroutine create_or_update_apr_clump(npart,xyzh,vxyzu,rho,poten,apr_level,xyzmh_ptmass,&
+                                      ntrack_temp,track_part_temp)
  use utils_apr, only:find_closest_region
- use part,      only:igas,rhoh
  use io,        only:fatal
- integer, intent(in) :: npart
+ integer,         intent(in) :: npart
  integer(kind=1), intent(in) :: apr_level(:)
- real, intent(in) :: xyzh(:,:), vxyzu(:,:), aprmassoftype(:,:),xyzmh_ptmass(:,:)
- real(kind=4), intent(in) :: poten(:)
- integer, intent(in) :: ntrack_temp, track_part_temp(:)
+ real,            intent(in) :: xyzh(:,:), vxyzu(:,:), xyzmh_ptmass(:,:),rho(:)
+ real(kind=4),    intent(in) :: poten(:)
+ integer,         intent(in) :: ntrack_temp, track_part_temp(:)
  integer :: ii, ll, jj, kk
- real :: pmassi, rhoitest, rhoiexisting, rtest, xi(3)
+ real :: rhoitest, rhoiexisting, rtest, xi(3)
 
  over_mins: do jj = 1,ntrack_temp
     ii = track_part_temp(jj) ! this is the potential particle to track
 
-    ! density at this location
-    pmassi = aprmassoftype(igas,apr_level(ii))
-    rhoitest = rhoh(xyzh(4,ii),pmassi)
+    ! density at this location from kernel sum
+    rhoitest = rho(ii)
 
     ! check if its inside an existing region
-    call find_closest_region(xyzh(1:3,ii),ll)
+    call find_closest_region(xyzh(1:3,ii),ntrack,apr_centre,ll)
     if (ll > 0) then
        xi = xyzh(1:3,ii) - apr_centre(1:3,ll)
        kk = track_part(ll) ! this is the particle at the centre of the closest region
@@ -240,8 +237,7 @@ subroutine create_or_update_apr_clump(npart,xyzh,vxyzu,poten,apr_level,xyzmh_ptm
     if ((rtest < apr_rad) .and. (ll > 0)) then ! it's already part of the region
 
        ! is it's density higher than the existing centre?
-       pmassi = aprmassoftype(igas,apr_level(kk))
-       rhoiexisting = rhoh(xyzh(4,kk),pmassi)
+       rhoiexisting = rho(kk)
 
        if (rhoitest > rhoiexisting) then
           ! we replace the existing centre but keep ntrack the same

@@ -1,112 +1,138 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
 module moddump
 !
-! Remove particles inside or outside a sphere
+! None
 !
 ! :References: None
 !
-! :Owner: Mike Lau
+! :Owner: Josh Calcino
 !
-! :Runtime parameters: None
+! :Runtime parameters:
+!   - icutinside  : *delete particles inside a given radius*
+!   - icutoutside : *delete particles outside a given radius*
+!   - incenterx   : *x coordinate of the centre of the inner sphere*
+!   - incentery   : *y coordinate of the centre of the inner sphere*
+!   - incenterz   : *z coordinate of the centre of the inner sphere*
+!   - inradius    : *inward radius [au]*
+!   - outcenterx  : *x coordinate of the centre of the outer sphere*
+!   - outcentery  : *y coordinate of the centre of the outer sphere*
+!   - outcenterz  : *z coordinate of the centre of the outer sphere*
+!   - outradius   : *outward radius [au]*
 !
-! :Dependencies: part, prompting, units
+! :Dependencies: moddump_utils, part, prompting
 !
-
- use part,         only:delete_particles_outside_sphere,delete_particles_with_large_h,igas,idust
- use prompting,    only:prompt
- use units,        only:unit_density
-
  implicit none
-
  character(len=*), parameter, public :: moddump_flags = ''
+
+ logical :: icutinside  = .false.
+ logical :: icutoutside = .false.
+ real    :: inradius    = 10.
+ real    :: outradius   = 200.
+ real    :: incenter(3)  = 0.
+ real    :: outcenter(3) = 0.
 
 contains
 
 subroutine modify_dump(npart,npartoftype,massoftype,xyzh,vxyzu)
+ use part,          only:delete_particles_outside_sphere
+ use moddump_utils, only:get_moddump_options
+
  integer, intent(inout) :: npart
- integer, dimension(:), intent(inout) :: npartoftype
- real, dimension(:), intent(inout) :: massoftype
- real, dimension(:,:), intent(inout) :: xyzh,vxyzu
- real, dimension(3) :: incenter,outcenter
- integer :: iremoveparttype,npart_old
- real :: inradius,outradius
- real :: h_on_r_min,rmax,rho_max
- logical :: icutinside,icutoutside,irmlargeh
-
- npart_old = npart
+ integer, intent(inout) :: npartoftype(:)
+ real,    intent(inout) :: massoftype(:)
+ real,    intent(inout) :: xyzh(:,:),vxyzu(:,:)
  !
- !--set the centers and the radius
+ !--read parameters from the .moddump file, prompting if it does not exist
  !
- call prompt('Deleting particles inside a given radius ?',icutinside)
- call prompt('Deleting particles outside a given radius ?',icutoutside)
- if (icutinside) then
-    call prompt('Enter inward radius in code units',inradius,0.)
-    call prompt('Enter x coordinate of the center of that sphere',incenter(1))
-    call prompt('Enter y coordinate of the center of that sphere',incenter(2))
-    call prompt('Enter z coordinate of the center of that sphere',incenter(3))
- endif
- if (icutoutside) then
-    call prompt('Enter outward radius in code units',outradius,0.)
-    call prompt('Enter x coordinate of the center of that sphere',outcenter(1))
-    call prompt('Enter y coordinate of the center of that sphere',outcenter(2))
-    call prompt('Enter z coordinate of the center of that sphere',outcenter(3))
- endif
- irmlargeh = .false.
- if (.not. icutinside .and. .not. icutoutside) then
-    call prompt('Deleting particles with large h?',irmlargeh)
- endif
-
- call prompt('Deleting which particles (0=all, 1=gas only, 2=dust only)?', iremoveparttype)
- ! add other types of particles here if needed
- select case (iremoveparttype)
- case (1)
-    iremoveparttype = igas
- case (2)
-    iremoveparttype = idust
- case default
-    iremoveparttype = 0
- end select
+ call get_moddump_options(read_options_moddump,write_options_moddump,moddump_interactive)
 
  if (icutinside) then
     print*,'Phantommoddump: Remove particles inside a particular radius'
     print*,'Removing particles inside radius ',inradius
-    if (iremoveparttype > 0) then
-       print*,'Removing particles type ',iremoveparttype
-       call delete_particles_outside_sphere(incenter,inradius,npart,revert=.true.,mytype=iremoveparttype)
-    else
-       call delete_particles_outside_sphere(incenter,inradius,npart,revert=.true.)
-    endif
+    call delete_particles_outside_sphere(incenter,inradius,npart,revert=.true.)
  endif
 
  if (icutoutside) then
     print*,'Phantommoddump: Remove particles outside a particular radius'
     print*,'Removing particles outside radius ',outradius
-    if (iremoveparttype > 0) then
-       print*,'Removing particles type ',iremoveparttype
-       call delete_particles_outside_sphere(outcenter,outradius,npart,mytype=iremoveparttype)
-    else
-       call delete_particles_outside_sphere(outcenter,outradius,npart)
-    endif
+    call delete_particles_outside_sphere(outcenter,outradius,npart)
  endif
-
- if (irmlargeh) then
-    h_on_r_min = 0.3
-    rho_max = 1.e-14/unit_density
-    rmax = 1000.
-    outcenter = 0.
-    print*,'Phantommoddump: Removing particles with large h, satisfying all of'
-    print*,'h/r >',h_on_r_min,', rho [code] <',rho_max,', r [code] >',rmax
-    call delete_particles_with_large_h(outcenter,npart,h_on_r_min,rho_max,rmax)
- endif
-
- print*,'Removed a total of ',npart_old-npart,' particles'
 
 end subroutine modify_dump
 
-end module moddump
+!----------------------------------------------------------------
+!+
+!  interactive prompting for moddump parameters
+!+
+!----------------------------------------------------------------
+subroutine moddump_interactive()
+ use prompting, only:prompt
 
+ call prompt('Deleting particles inside a given radius ?',icutinside)
+ call prompt('Deleting particles outside a given radius ?',icutoutside)
+ if (icutinside) then
+    call prompt('Enter inward radius in au',inradius,0.)
+    call prompt('Enter x coordinate of the center of that sphere',incenter(1))
+    call prompt('Enter y coordinate of the center of that sphere',incenter(2))
+    call prompt('Enter z coordinate of the center of that sphere',incenter(3))
+ endif
+ if (icutoutside) then
+    call prompt('Enter outward radius in au',outradius,0.)
+    call prompt('Enter x coordinate of the center of that sphere',outcenter(1))
+    call prompt('Enter y coordinate of the center of that sphere',outcenter(2))
+    call prompt('Enter z coordinate of the center of that sphere',outcenter(3))
+ endif
+
+end subroutine moddump_interactive
+
+!----------------------------------------------------------------
+!+
+!  write moddump options to the .moddump file
+!+
+!----------------------------------------------------------------
+subroutine write_options_moddump(iunit)
+ use moddump_utils, only:write_inopt
+ integer, intent(in) :: iunit
+
+ call write_inopt(icutinside,'icutinside','delete particles inside a given radius',iunit)
+ call write_inopt(icutoutside,'icutoutside','delete particles outside a given radius',iunit)
+ call write_inopt(inradius,'inradius','inward radius [au]',iunit)
+ call write_inopt(incenter(1),'incenterx','x coordinate of the centre of the inner sphere',iunit)
+ call write_inopt(incenter(2),'incentery','y coordinate of the centre of the inner sphere',iunit)
+ call write_inopt(incenter(3),'incenterz','z coordinate of the centre of the inner sphere',iunit)
+ call write_inopt(outradius,'outradius','outward radius [au]',iunit)
+ call write_inopt(outcenter(1),'outcenterx','x coordinate of the centre of the outer sphere',iunit)
+ call write_inopt(outcenter(2),'outcentery','y coordinate of the centre of the outer sphere',iunit)
+ call write_inopt(outcenter(3),'outcenterz','z coordinate of the centre of the outer sphere',iunit)
+
+end subroutine write_options_moddump
+
+!----------------------------------------------------------------
+!+
+!  read moddump options from the .moddump file
+!+
+!----------------------------------------------------------------
+subroutine read_options_moddump(db,nerr)
+ use moddump_utils, only:inopts,read_inopt
+ type(inopts), intent(inout) :: db(:)
+ integer,      intent(inout) :: nerr
+
+ call read_inopt(icutinside,'icutinside',db,errcount=nerr)
+ call read_inopt(icutoutside,'icutoutside',db,errcount=nerr)
+ call read_inopt(inradius,'inradius',db,min=0.,errcount=nerr)
+ call read_inopt(incenter(1),'incenterx',db,errcount=nerr)
+ call read_inopt(incenter(2),'incentery',db,errcount=nerr)
+ call read_inopt(incenter(3),'incenterz',db,errcount=nerr)
+ call read_inopt(outradius,'outradius',db,min=0.,errcount=nerr)
+ call read_inopt(outcenter(1),'outcenterx',db,errcount=nerr)
+ call read_inopt(outcenter(2),'outcentery',db,errcount=nerr)
+ call read_inopt(outcenter(3),'outcenterz',db,errcount=nerr)
+
+end subroutine read_options_moddump
+
+end module moddump

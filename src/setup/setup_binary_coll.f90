@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -24,8 +24,7 @@ module setup
 !   - use_gr_ic     : *whether initial velocity condition computed in GR is used*
 !
 ! :Dependencies: eos, infile_utils, io, kernel, metric, mpidomain, orbits,
-!   part, physcon, relaxstar, setorbit, setstar, setup_params, systemutils,
-!   units
+!   part, physcon, relaxstar, setorbit, setstar, setup_params, units
 !
  use setstar, only:star_t
  use metric,  only:mass1,a
@@ -52,20 +51,19 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
                           nsinkproperties,ihacc
  use io,             only:master,fatal,warning
  use physcon,        only:solarm,pi,solarr
- use systemutils,    only:get_command_option
  use mpidomain,      only:i_belong
  use setup_params,   only:rhozero,npart_total
  use infile_utils,   only:get_options
  use, intrinsic                   :: ieee_arithmetic
- integer,           intent(in)    :: id
- integer,           intent(inout) :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(out)   :: polyk,gamma,hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
- real,              intent(out)   :: vxyzu(:,:)
+ integer,          intent(in)    :: id
+ integer,          intent(inout) :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(out)   :: polyk,gamma,hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
+ real,             intent(out)   :: vxyzu(:,:)
  logical :: use_var_comp
  real    :: mstars(max_stars),rstars(max_stars),haccs(max_stars)
  real    :: r_binary,rtidal,rp,vhat(3),x0,r0,y0,vel,m_binary
@@ -103,7 +101,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  np_default      = 1e6
  ecc             = 1.0
  start_sep       = 5.0
- star%np         = int(get_command_option('np',default=np_default)) ! can set default value with --np=1e5 flag (mainly for testsuite)
+ star%np         = np_default
  beta            = 1.0
  impact_param    = 0.5 ! units of rsun
  semi_maj_val    = 10.130607675019033
@@ -281,8 +279,8 @@ subroutine read_setupfile(filename,ierr)
  use physcon,      only:solarm,solarr
  use units,        only:set_units,umass
  use eos,          only:ieos
- character(len=*), intent(in)    :: filename
- integer,          intent(out)   :: ierr
+ character(len=*), intent(in)  :: filename
+ integer,          intent(out) :: ierr
  integer, parameter :: iunit = 21
  integer :: nerr
  type(inopts), allocatable :: db(:)

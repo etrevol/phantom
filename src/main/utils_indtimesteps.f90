@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -163,17 +163,13 @@ subroutine set_active_particles(npart,nactive,nalive,nactivetot,nalivetot,iphase
     if (mod(istepfrac,2**(nbinmax-i))==0) ibinnow = int(i,kind=1)
     i = i + 1
  enddo
- !
- !--Determine activity to determine if stressmax needs to be reset
- !
- if (nactive==nalive) then
-    all_active = .true.
- else
-    all_active = .false.
- endif
-
  nactivetot = reduceall_mpi('+', nactive)
  nalivetot = reduceall_mpi('+', nalive)
+ !
+ !--Determine activity to determine if stressmax needs to be reset
+ !  (must be the same on all MPI tasks, since stressmax is reduced)
+ !
+ all_active = (nactivetot==nalivetot)
 
 end subroutine set_active_particles
 
@@ -229,9 +225,9 @@ end subroutine change_nbinmax
 !----------------------------------------------------------------
 subroutine get_newbin(dti,dtmax,ibini,allow_decrease,limit_maxbin,dtchar)
  use io, only:warning
- real,            intent(in)    :: dti,dtmax
- integer(kind=1), intent(inout) :: ibini
- logical,         intent(in), optional :: allow_decrease,limit_maxbin
+ real,             intent(in)    :: dti,dtmax
+ integer(kind=1),  intent(inout) :: ibini
+ logical,          intent(in), optional :: allow_decrease,limit_maxbin
  character(len=*), intent(in), optional :: dtchar
  integer(kind=1) :: ibin_oldi
  integer         :: ibin_newi
@@ -441,10 +437,10 @@ end subroutine write_binsummary
 !+
 !----------------------------------------------------------------
 subroutine update_time_per_bin(dtcpu,istepfrac,nbinmax,inbin)
- real(kind=4),    intent(in)    :: dtcpu
- integer,         intent(in)    :: istepfrac
- integer(kind=1), intent(in)    :: nbinmax
- integer,         intent(out)   :: inbin
+ real(kind=4),    intent(in)  :: dtcpu
+ integer,         intent(in)  :: istepfrac
+ integer(kind=1), intent(in)  :: nbinmax
+ integer,         intent(out) :: inbin
  integer :: i
 
  !--work out which bin we are updating
@@ -511,10 +507,10 @@ end subroutine print_dtlog_ind
 !+
 !-----------------------------------------------------------------
 subroutine print_dtind_efficiency(iverbose,nalive,nmoved,tall,tlast,icall)
- integer,      intent(in)    :: iverbose,icall
- integer(kind=8), intent(in) :: nalive,nmoved
- real(kind=4), intent(in)    :: tlast
- real(kind=4), intent(inout) :: tall
+ integer,         intent(in)    :: iverbose,icall
+ integer(kind=8), intent(in)    :: nalive,nmoved
+ real(kind=4),    intent(in)    :: tlast
+ real(kind=4),    intent(inout) :: tall
  real :: fracactive,speedup,efficiency
  character(len=12) :: string
 
@@ -553,10 +549,10 @@ end subroutine print_dtind_efficiency
 !+
 !----------------------------------------------------------------
 subroutine check_dtmin(dtcheck,dti,dtopt,dtrat,ndtopt,dtoptfacmean,dtoptfacmax,dtchar_out,dtchar_in)
- integer, intent(inout) :: ndtopt
- real,    intent(in)    :: dti,dtopt,dtrat
- real,    intent(inout) :: dtoptfacmean,dtoptfacmax
- logical, intent(inout) :: dtcheck
+ integer,          intent(inout) :: ndtopt
+ real,             intent(in)    :: dti,dtopt,dtrat
+ real,             intent(inout) :: dtoptfacmean,dtoptfacmax
+ logical,          intent(inout) :: dtcheck
  character(len=*), intent(out)   :: dtchar_out
  character(len=*), intent(in)    :: dtchar_in
 

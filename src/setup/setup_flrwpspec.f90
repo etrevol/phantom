@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -58,16 +58,16 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  use stretchmap,   only:set_density_profile
  use utils_gr,     only:perturb_metric,get_u0,get_sqrtg
  use infile_utils, only:get_options
- integer,           intent(in)    :: id
- integer,           intent(inout) :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(out)   :: polyk,gamma
- real,              intent(inout) :: hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
- real,              intent(out)   :: vxyzu(:,:)
+ integer,          intent(in)    :: id
+ integer,          intent(inout) :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(out)   :: polyk,gamma
+ real,             intent(inout) :: hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
+ real,             intent(out)   :: vxyzu(:,:)
  character(len=40) :: lattice,pspec_filename1,pspec_filename2,pspec_filename3
  real    :: totmass,deltax,pi
  integer :: i,ierr,ncross
@@ -340,9 +340,9 @@ subroutine read_setupfile(filename,ierr)
 end subroutine read_setupfile
 
 subroutine read_veldata(velarray,vfile,gridsize)
- integer, intent(in) :: gridsize
- character(len=20), intent(in) :: vfile
- real, intent(out) :: velarray(:,:,:)
+ integer,           intent(in)  :: gridsize
+ character(len=20), intent(in)  :: vfile
+ real,              intent(out) :: velarray(:,:,:)
  integer :: i,j,k,iu
 
  open(newunit=iu,file=vfile,status='old')
@@ -360,11 +360,11 @@ subroutine interpolate_val(position,valgrid,gridsize,gridorigin,dxgrid,val)
  ! Subroutine to interpolate quanities to particle positions given a cube
  ! Note we have assumed that the grid will always be cubic!!!!
  use eos_shen, only:linear_interpolator_one_d
- real, intent(in)    :: valgrid(:,:,:)
- real, intent(inout)    :: position(3)
- real, intent(inout) :: dxgrid,gridorigin
- integer, intent(in) :: gridsize
- real, intent(out)   :: val
+ real,    intent(in)    :: valgrid(:,:,:)
+ real,    intent(inout) :: position(3)
+ real,    intent(inout) :: dxgrid,gridorigin
+ integer, intent(in)    :: gridsize
+ real,    intent(out)   :: val
  integer :: xupper,yupper,zupper,xlower,ylower,zlower
  real    :: xlowerpos,ylowerpos,zlowerpos!,xupperpos,yupperpos,zupperpos
  real    :: interptmp(7)
@@ -414,8 +414,8 @@ end subroutine interpolate_val
 subroutine get_grid_neighbours(position,gridorigin,dx,xlower,ylower,zlower)
  ! TODO IDEALLY THIS SHOULDN'T BE HERE AND SHOULD BE IN A UTILS MODULE
  ! WITH THE VERSION USED IN METRIC_ET
- real, intent(in) :: position(3), gridorigin
- real, intent(in) :: dx
+ real,    intent(in)  :: position(3), gridorigin
+ real,    intent(in)  :: dx
  integer, intent(out) :: xlower,ylower,zlower
 
  ! Get the lower grid neighbours of the position

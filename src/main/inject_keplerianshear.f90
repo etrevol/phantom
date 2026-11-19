@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -85,14 +85,16 @@ end subroutine init_inject
 !  Main routine handling wind injection.
 !+
 !-----------------------------------------------------------------------
-subroutine inject_particles(time,dtlast,xyzh,vxyzu,xyzmh_ptmass,vxyz_ptmass,&
+subroutine inject_particles(time,dtlast,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,&
                             npart,npart_old,npartoftype,dtinject)
  use part,      only:igas,iboundary, massoftype
  use physcon,   only:Rg,gg,pi
  use eos,       only:gamma
  use io,        only:master
  real,    intent(in)    :: time, dtlast
- real,    intent(inout) :: xyzh(:,:), vxyzu(:,:), xyzmh_ptmass(:,:), vxyz_ptmass(:,:)
+ real,    intent(inout) :: xyzh(:,:), vxyzu(:,:)
+ real,    intent(in)    :: rho(:)
+ real,    intent(inout) :: xyzmh_ptmass(:,:), vxyz_ptmass(:,:)
  integer, intent(inout) :: npart, npart_old
  integer, intent(inout) :: npartoftype(:)
  real,    intent(out)   :: dtinject
@@ -253,7 +255,7 @@ end subroutine read_options_inject
 !+
 !-----------------------------------------------------------------------
 subroutine set_default_options_inject(flag)
- integer, optional, intent(in) :: flag
+ integer, intent(in), optional :: flag
 
 end subroutine set_default_options_inject
 
@@ -514,7 +516,7 @@ end subroutine rotate_particle_z
 !-----------------------------------
 subroutine rotate_vector_z(oldvec,newvec,phi)
  real, intent(inout) :: oldvec(3), newvec(3)
- real, intent(in) :: phi
+ real, intent(in)    :: phi
 
  newvec(1) = oldvec(1)*cos(phi) - oldvec(2)*sin(phi)
  newvec(2) = oldvec(1)*sin(phi) + oldvec(2)*cos(phi)
@@ -528,7 +530,7 @@ end subroutine rotate_vector_z
 !-----------------------------------------------------------------------
 subroutine calc_polar_coordinates(r,phi,x,y)
 
- real, intent(in) :: x,y
+ real, intent(in)    :: x,y
  real, intent(inout) :: r,phi
 
  r = sqrt(x*x + y*y)

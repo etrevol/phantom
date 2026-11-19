@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -21,8 +21,8 @@ module utils_shuffleparticles
 !
 ! :Runtime parameters: None
 !
-! :Dependencies: allocutils, boundary, densityforce, dim, io, kdtree,
-!   kernel, mpidomain, neighkdtree, part
+! :Dependencies: allocutils, boundary, deriv, dim, io, kdtree, kernel,
+!   mpidomain, neighkdtree, part
 !
  implicit none
  public :: shuffleparticles
@@ -64,14 +64,13 @@ contains
 !     n_ref:     number of reference particles
 !
 !-------------------------------------------------------------------
-subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dmedium,ntab,rtab,dtab,dcontrast, &
+subroutine shuffleparticles(iprint,npart,xyzh,pmass,rho,duniform,rsphere,dsphere,dmedium,ntab,rtab,dtab,dcontrast, &
                             is_setup,prefix)
  use dim,          only:periodic
  use io,           only:id,master,fatal
- use part,         only:vxyzu,divcurlv,divcurlB,Bevol,fxyzu,fext,alphaind
- use part,         only:gradh,rad,radprop,dvdx,rhoh,hrho,apr_level
- use densityforce, only:densityiterate
- use neighkdtree,  only:ncells,leaf_is_active,build_tree,get_neighbour_list,allocate_neigh,listneigh
+ use part,         only:gradh,hn
+ use deriv,        only:get_density_global
+ use neighkdtree,  only:ncells,leaf_is_active,get_neighbour_list,allocate_neigh,listneigh
  use kernel,       only:cnormk,wkern,grkern,radkern2
 #ifdef PERIODIC
  use boundary,     only:dxbound,dybound,dzbound
@@ -80,17 +79,18 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
  use mpidomain,    only:isperiodic
  use kdtree,       only:inodeparts,inoderange
  use allocutils,   only:allocate_array
- integer,           intent(in)    :: iprint
- integer,           intent(inout) :: npart
- real,              intent(in)    :: pmass
- real,              intent(inout) :: xyzh(:,:)
- integer, optional, intent(in)    :: ntab
- real,    optional, intent(in)    :: duniform,rsphere,dsphere,dmedium,dcontrast
- real,    optional, intent(in)    :: rtab(:),dtab(:)
- logical, optional, intent(in)    :: is_setup
- character(len=*) , optional, intent(in)    :: prefix
+ integer,          intent(in)    :: iprint
+ integer,          intent(inout) :: npart
+ real,             intent(in)    :: pmass
+ real,             intent(inout) :: xyzh(:,:)
+ real,             intent(inout) :: rho(:)
+ integer,          intent(in), optional :: ntab
+ real,             intent(in), optional :: duniform,rsphere,dsphere,dmedium,dcontrast
+ real,             intent(in), optional :: rtab(:),dtab(:)
+ logical,          intent(in), optional :: is_setup
+ character(len=*), intent(in), optional :: prefix
  integer      :: i,j,jm1,ip,icell,ineigh,idebug,ishift,nshiftmax,iprofile,nparterr,nneigh,ncross,ntree,n_part
- real         :: stressmax,redge,dedge,dmed
+ real         :: redge,dedge,dmed
  real         :: max_shift2,max_shift_thresh,max_shift_thresh2,tree_shift,treebuild_thresh,radkern12
  real         :: xi,yi,zi,hi,hi12,hi14,radi,radinew,coefi,rhoi,rhoi1,rij2,qi2,qj2,denom,rhoe,drhoe,err
  real         :: xj,yj,zj,hj,hj1,termi
@@ -98,7 +98,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
  real         :: dx_shift(3,npart),rij(3),runi(3),grrhoonrhoe(3),grrhoonrhoi(3)
  real         :: errmin(3,2),errmax(3,2),errave(3,2),stddev(2,2),rthree(3),totalshift(3,npart)
  real         :: kernsum
- real,save    :: xyzcache(maxcellcache,4)
+ real, save    :: xyzcache(4,maxcellcache)
  logical      :: shuffle,at_interface,use_ref_h,call_treebuild
  character(len=128) :: prefix0,fmt1,fmt2,fmt3
  !$omp threadprivate(xyzcache)
@@ -173,8 +173,8 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
     if (id==master) write(iprint,'(1x,a)') 'Shuffling: Density profile undefined.  Aborting.'
     return
  endif
- rinner = redge - 4.*hrho(dedge,pmass)
- router = redge + 4.*hrho(dedge,pmass)
+ rinner = redge - 4.*hn(dedge/pmass)
+ router = redge + 4.*hn(dedge/pmass)
 
  !--Open debugging files and print the initial particle placements
  if (idebug > 0 .and. id==master) then
@@ -235,7 +235,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
  endif
  if (idebug > 1 .and. id==master) then
     do i = 1,npart
-       write(333,'(I18,1x,11(es18.10,1x),I18)') i,xyzh(1:4,i),rhoh(xyzh(4,i),pmass),rthree,rthree,ncall
+       write(333,'(I18,1x,11(es18.10,1x),I18)') i,xyzh(1:4,i),rho(i),rthree,rthree,ncall
     enddo
     write(333,'(a)') ' '
  endif
@@ -256,12 +256,10 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
 
     ! update densities
     if (call_treebuild) then
-       call build_tree(npart,npart,xyzh,vxyzu)
        ntree      = ntree + 1
        tree_shift = 0.
     endif
-    call densityiterate(2,npart,npart,xyzh,vxyzu,divcurlv,divcurlB,Bevol,stressmax,&
-                               fxyzu,fext,alphaind,gradh,rad,radprop,dvdx,apr_level)
+    call get_density_global(2,make_tree=call_treebuild)
 
     ! initialise variables for this loop
     dx_shift   = 0.
@@ -276,7 +274,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
 
     ! determine how much to shift by
 !$omp parallel default (none) &
-!$omp shared(xyzh,npart,pmass,dx_shift,gradh,max_shift_thresh2,redge,iprofile,dedge,dmed,idebug) &
+!$omp shared(xyzh,npart,pmass,dx_shift,gradh,max_shift_thresh2,redge,iprofile,dedge,dmed,idebug,rho) &
 !$omp shared(use_ref_h,totalshift,radkern12,ishift) &
 !$omp shared(rtab,dtab,ntab,rinner,router,inodeparts,inoderange,leaf_is_active,ncells,ncall) &
 #ifdef PERIODIC
@@ -310,7 +308,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
           hi = xyzh(4,i)
           hi12   = 1.0/(hi*hi)
           hi14   = hi12*hi12
-          rhoi   = rhoh(hi,pmass)
+          rhoi   = rho(i)
           rhoi1  = 1.0/rhoi
           termi  = cnormk*gradh(1,i)*hi14*rhoi1
           coefi  = 0.25*hi*hi
@@ -327,10 +325,10 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
 
              if (ineigh <= maxcellcache) then
                 ! positions from cache are already mod boundary
-                xj  = xyzcache(ineigh,1)
-                yj  = xyzcache(ineigh,2)
-                zj  = xyzcache(ineigh,3)
-                hj1 = xyzcache(ineigh,4)
+                xj  = xyzcache(1,ineigh)
+                yj  = xyzcache(2,ineigh)
+                zj  = xyzcache(3,ineigh)
+                hj1 = xyzcache(4,ineigh)
                 hj  = 1./hj1
              else
                 xj  = xyzh(1,j)
@@ -363,7 +361,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
                    grrhoonrhoi = grrhoonrhoi - runi*termi*grkern(qi2,sqrt(qi2))
                 endif
                 if (qj2 < radkern2) then
-                   denom = hj**4 * rhoh(hj,pmass)
+                   denom = hj**4 * rho(j)
                    grrhoonrhoi = grrhoonrhoi - runi*cnormk*gradh(1,j)*grkern(qj2,sqrt(qj2))/denom
                 endif
              endif
@@ -505,7 +503,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
        endif
        if (idebug==3) then
           do i = 1,npart
-             write(333,'(I18,1x,11(es18.10,1x),I18)') i,xyzh(1:4,i),rhoh(xyzh(4,i),pmass),&
+             write(333,'(I18,1x,11(es18.10,1x),I18)') i,xyzh(1:4,i),rho(i),&
              totalshift(:,i),dx_shift(:,i),ncall
           enddo
           write(333,'(a)') ' '
@@ -556,7 +554,7 @@ subroutine shuffleparticles(iprint,npart,xyzh,pmass,duniform,rsphere,dsphere,dme
  if (idebug > 0 .and. id==master) then
     if (idebug > 1) then
        do i = 1,npart
-          write(333,'(i18,1x,11(es18.10,1x),i18)') i,xyzh(1:4,i),rhoh(xyzh(4,i),pmass),totalshift(1:3,i),rthree,ncall
+          write(333,'(i18,1x,11(es18.10,1x),i18)') i,xyzh(1:4,i),rho(i),totalshift(1:3,i),rthree,ncall
        enddo
     endif
     close(333)

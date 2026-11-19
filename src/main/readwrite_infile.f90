@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -15,22 +15,22 @@ module readwrite_infile
 !
 ! :Runtime parameters:
 !   - dumpfile : *dump file to start from*
-!   - hfact    : *h in units of particle spacing [h = hfact(m/rho)^(1/3)]*
+!   - hfact    : *h in units of particle spacing [h = hfact*n^(-1/3)]*
 !   - logfile  : *file to which output is directed*
-!   - tolh     : *tolerance on h-rho iterations*
+!   - tolh     : *tolerance on h-n iterations*
 !
 ! :Dependencies: HIIRegion, boundary_dyn, cooling, damping, dim, dust,
-!   dust_formation, eos, externalforces, forcing, gravwaveutils, growth,
-!   infile_utils, injection, io, io_control, mcfost_utils, metric,
-!   mpiutils, neighkdtree, nicil_sup, options, part, porosity, ptmass,
-!   ptmass_radiation, radiation_utils, shock_capturing, timestep,
-!   utils_apr, viscosity
+!   dust_formation, eos, externalforces, fileutils, forcing, gravwaveutils,
+!   growth, growth_coala, infile_utils, injection, io, io_control,
+!   mcfost_utils, metric, mpiutils, neighkdtree, nicil_sup, options, part,
+!   porosity, ptmass, ptmass_radiation, radiation_utils, shock_capturing,
+!   timestep, utils_apr, viscosity
 !
  use options,   only:iexternalforce
  use part,      only:hfact,tolh,hsoft_nbody
  use cloudcollisions, only:r_cloud,e_rest,C_coll,heat_s,heat_tau,heat_phi,sf_n,v_alfven
  use dim,       only:do_radiation,nucleation,use_dust,use_dustgrowth,mhd_nonideal,compiled_with_mcfost,&
-                     inject_parts,curlv,driving,track_lum,disc_viscosity,isothermal
+                     inject_parts,curlv,driving,track_lum,disc_viscosity,isothermal,use_dustgrowth_coala
  implicit none
 
 contains
@@ -50,13 +50,14 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
  use neighkdtree,      only:write_options_tree
  use dust,             only:write_options_dust
  use growth,           only:write_options_growth
+ use growth_coala,     only:write_options_growth_coala
  use porosity,         only:write_options_porosity
  use injection,        only:write_options_injection
  use utils_apr,        only:write_options_apr
  use dust_formation,   only:write_options_dust_formation
  use nicil_sup,        only:write_options_nicil
  use metric,           only:write_options_metric
- use eos,              only:write_options_eos
+ use eos,              only:write_options_eos,ishock_heating
  use ptmass,           only:write_options_ptmass
  use ptmass_radiation, only:write_options_ptmass_radiation
  use cooling,          only:write_options_cooling
@@ -105,8 +106,8 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
  write(iwritein,"(/,a)") '# options controlling accuracy'
  call write_options_timestep(iwritein)
  call write_options_tree(iwritein)
- call write_inopt(hfact,'hfact','h in units of particle spacing [h = hfact(m/rho)^(1/3)]',iwritein)
- call write_inopt(tolh,'tolh','tolerance on h-rho iterations',iwritein,exp=.true.)
+ call write_inopt(hfact,'hfact','h in units of particle spacing [h = hfact*n^(-1/3)]',iwritein)
+ call write_inopt(tolh,'tolh','tolerance on h-n iterations',iwritein,exp=.true.)
  if (hsoft_nbody > 0.) call write_inopt(hsoft_nbody,'hsoft_nbody',&
     'fixed softening of star and dark-matter particles (0 = adaptive)',iwritein)
  if (r_cloud > 0.) then
@@ -123,7 +124,8 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
     if (sf_n > 0) call write_inopt(sf_n,'sf_n','overlapping clouds that turn a bound clump into a sink (0 = off)',iwritein)
  endif
 
- call write_options_shock_capturing(iwritein)
+ ! in GR energy variable is an entropy, so ishock_heating=0 also switches off conductivity
+ call write_options_shock_capturing(iwritein,use_conductivity=.not.(gr .and. ishock_heating == 0))
  call write_options_damping(iwritein)
  !
  ! thermodynamics
@@ -145,6 +147,7 @@ subroutine write_infile(infile,logfile,evfile,dumpfile,iwritein,iprint)
     call write_options_growth(iwritein)
     call write_options_porosity(iwritein)
  endif
+ if (use_dustgrowth_coala) call write_options_growth_coala(iwritein)
 
  ! injection and related options
  call write_options_injection(iwritein)
@@ -179,22 +182,43 @@ end subroutine write_infile
 subroutine read_infile(infile,logfile,evfile,dumpfile)
  use io,           only:ireadin,iwritein,iprint,warn,die,error,fatal,id,master,fileprefix
  use infile_utils, only:open_db_from_file,close_db,inopts,check_and_unroll_infile
- use mpiutils,     only:bcast_mpi
- character(len=*), intent(in)  :: infile
- character(len=*), intent(out) :: logfile,evfile,dumpfile
+ use mpiutils,     only:bcast_mpi,barrier_mpi
+ character(len=*), intent(inout) :: infile
+ character(len=*), intent(out)   :: logfile,evfile,dumpfile
  character(len=*), parameter   :: label = 'read_infile'
  character(len=len(infile)+4)  :: infilenew
+ character(len=len(dumpfile))  :: dumpfilenew
  integer :: ierr,idot,nerr,i
- logical :: igotloops
+ logical :: igotloops,iexist
  type(inopts), allocatable :: db(:)
 
  ierr     = 0
  idot     = index(infile,'.in') - 1
- if (idot <= 1) idot = len_trim(infile)
+ if (idot < 1) idot = len_trim(infile)
  logfile    = infile(1:idot)//'01.log'
  dumpfile   = infile(1:idot)//'_00000.tmp'
  fileprefix = infile(1:idot)
  infilenew  = infile
+
+ ! if the input file is specified as a dump file (name matches string_NNNNN and file exists)
+ ! then set the infile name using the prefix of the dump file, e.g. blah_00010 -> blah.in
+ dumpfilenew = ''
+ if (is_dumpfile_name(fileprefix)) then
+    inquire(file=trim(fileprefix),exist=iexist)
+    if (iexist) then
+       dumpfilenew = trim(fileprefix)
+       ! prefix is the string before the last underscore
+       idot = index(dumpfilenew,'_',back=.true.) - 1
+       if (idot < 1) idot = len_trim(dumpfilenew)
+       fileprefix = dumpfilenew(1:idot)
+       ! set the infile name to prefix.in
+       infile = trim(fileprefix)//'.in'
+       logfile = trim(fileprefix)//'01.log'
+       evfile = trim(fileprefix)//'01.ev'
+       write(*,"(a)") ' --> input file '//trim(dumpfilenew)// &
+                      ' is a dump file, setting infile name to '//trim(infile)
+    endif
+ endif
 
  ! check for loops in the input file and unroll them into a series of input files
  igotloops = .false.
@@ -210,6 +234,7 @@ subroutine read_infile(infile,logfile,evfile,dumpfile)
 
  ! if the input file is not found, create a default one
  if (ierr /= 0) then
+    call barrier_mpi()  ! wait for all ranks to finish opening before writing
     if (id == master) then
        call error('Phantom','input file '//trim(infile)//' not found')
        if (adjustl(infile(1:1)) /= ' ') then
@@ -218,10 +243,14 @@ subroutine read_infile(infile,logfile,evfile,dumpfile)
           call write_infile(infilenew,logfile,evfile,dumpfile,iwritein,iprint)
        endif
     endif
+    call barrier_mpi()  ! wait for master to finish writing before aborting
     call die
  endif
 
  call read_options_from_db(db,nerr,logfile,dumpfile,evfile)
+
+ ! overwrite the dumpfile name if it was specified on the command line
+ if (len_trim(dumpfilenew) > 0) dumpfile = dumpfilenew
 
  ! warn about unknown variables in the input file
  do i=1,size(db)
@@ -248,6 +277,7 @@ subroutine read_infile(infile,logfile,evfile,dumpfile)
           write(*,"(/,a)") ' (try again using revised input file)'
        endif
     endif
+    call barrier_mpi()
     call die
  endif
 
@@ -278,6 +308,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  use neighkdtree,      only:read_options_tree
  use dust,             only:read_options_dust
  use growth,           only:read_options_growth
+ use growth_coala,     only:read_options_growth_coala
  use porosity,         only:read_options_porosity
  use metric,           only:read_options_metric
  use injection,        only:read_options_injection
@@ -345,6 +376,7 @@ subroutine read_options_from_db(db,nerr,logfile,dumpfile,evfile)
  if (driving) call read_options_forcing(db,nerr)
  if (use_dust) call read_options_dust(db,nerr)
  if (use_dustgrowth) call read_options_growth(db,nerr)
+ if (use_dustgrowth_coala) call read_options_growth_coala(db,nerr)
  if (use_porosity) call read_options_porosity(db,nerr)
 
  ! injection and related options
@@ -370,14 +402,43 @@ end subroutine read_options_from_db
 !+
 !-----------------------------------------------------------------
 function logfile2evfile(logfile) result(evfile)
- character(len=*), intent(in)  :: logfile
+ character(len=*), intent(in) :: logfile
  character(len=len(logfile)+4) :: evfile
  integer :: idot
 
  idot = index(logfile,'.log') - 1
- if (idot <= 1) idot = len_trim(logfile)
+ if (idot < 1) idot = len_trim(logfile)
  evfile  = logfile(1:idot)//'.ev'
 
 end function logfile2evfile
+
+!-----------------------------------------------------------------
+!+
+!  query if a file is a dump file name (snap_NNNNN)
+!+
+!-----------------------------------------------------------------
+function is_dumpfile_name(filename) result(is_dumpfile)
+ use fileutils, only:is_digit
+ character(len=*), intent(in) :: filename
+ logical :: is_dumpfile
+ integer :: iunderscore,ndigits,i
+
+ is_dumpfile = .false.
+ iunderscore = index(filename,'_',back=.true.)
+ if (iunderscore <= 0) return
+ if (index(filename,'.in') > 0) return
+ if (index(filename,'.setup') > 0) return
+
+ ndigits = 0
+ do i=iunderscore+1,len_trim(filename)
+    if (is_digit(filename(i:i))) then
+       ndigits = ndigits + 1
+    else
+       exit
+    endif
+ enddo
+ is_dumpfile = ndigits >= 5
+
+end function is_dumpfile_name
 
 end module readwrite_infile

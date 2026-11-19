@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -17,10 +17,10 @@ module evolve
 ! :Runtime parameters: None
 !
 ! :Dependencies: HIIRegion, apr, boundary_dyn, centreofmass,
-!   checkconserved, dim, dynamic_dtmax, easter_egg, energies, evolve_utils,
-!   forcing, inject, io, io_control, io_summary, mpiutils, part,
-!   partinject, ptmass, radiation_utils, step_lf_global, timestep,
-!   timestep_ind, timing
+!   checkconserved, dim, divb_projection, dynamic_dtmax, easter_egg,
+!   energies, evolve_utils, forcing, growth_coala, inject, io, io_control,
+!   io_summary, mpiutils, part, partinject, ptmass, radiation_utils,
+!   step_lf_global, timestep, timestep_ind, timing
 !
  use dim, only:ind_timesteps
  implicit none
@@ -104,16 +104,18 @@ end subroutine evol_init
 !+
 !----------------------------------------------------------------
 subroutine evol(infile,logfile,evfile,dumpfile,flag)
- use dim,              only:do_radiation
+ use dim,              only:do_radiation,use_dustgrowth_coala
  use io_control,       only:at_simulation_end
- use part,             only:npart,xyzh,fxyzu,vxyzu,rad,radprop
+ use part,             only:npart,xyzh,fxyzu,vxyzu,rad,radprop,rho
+ use part,             only:grainsize,dustevol,deltav,eos_vars,fext,dustfrac
  use radiation_utils,  only:update_radenergy,exchange_radiation_energy,implicit_radiation
  use step_lf_global,   only:step
  use timestep,         only:time,dt,dtmax,nsteps,dtextforce,rhomaxnow
  use timestep_ind,     only:nactive
- integer, optional, intent(in)   :: flag
+ use growth_coala,     only:get_growth_rate_coala
  character(len=*), intent(in)    :: infile
  character(len=*), intent(inout) :: logfile,evfile,dumpfile
+ integer,          intent(in), optional :: flag
  real            :: dtnew
  real(kind=4)    :: t1,tcpu1
  logical         :: do_radiation_update,abortrun
@@ -133,7 +135,7 @@ subroutine evol(infile,logfile,evfile,dumpfile,flag)
     !
     ! Strang splitting: implicit update for half step
     !
-    if (do_radiation_update) call update_radenergy(npart,xyzh,fxyzu,vxyzu,rad,radprop,0.5*dt)
+    if (do_radiation_update) call update_radenergy(npart,fxyzu,vxyzu,rho,rad,radprop,0.5*dt)
     !
     !--evolve data for one timestep
     !  for individual timesteps this is the shortest timestep
@@ -142,7 +144,10 @@ subroutine evol(infile,logfile,evfile,dumpfile,flag)
     !
     ! Strang splitting: implicit update for another half step
     !
-    if (do_radiation_update) call update_radenergy(npart,xyzh,fxyzu,vxyzu,rad,radprop,0.5*dt)
+    if (do_radiation_update) call update_radenergy(npart,fxyzu,vxyzu,rho,rad,radprop,0.5*dt)
+
+    if (use_dustgrowth_coala) call get_growth_rate_coala(npart,xyzh,vxyzu,rho,fxyzu,fext,&
+                               grainsize,dustfrac,dustevol,deltav,dt,eos_vars)
 
     call evol_poststep(infile,logfile,evfile,dumpfile,&
                        time,t1,tcpu1,dt,dtmax,nactive,abortrun)
@@ -159,28 +164,27 @@ end subroutine evol
 !----------------------------------------------------------------
 subroutine evol_prestep(time,dtmax,dt,t1,tcpu1,nactive,inject_flag_present)
  use dim,          only:inject_parts,use_apr,ind_timesteps
- use io,           only:fatal,id,master,iprint,iverbose
+ use io,           only:fatal,iprint,iverbose
  use apr,          only:update_apr
  use boundary_dyn, only:dynamic_bdy,update_boundaries
  use dynamic_dtmax,only:check_dtmax_for_decrease
  use evolve_utils, only:ptmass_create_and_update_forces
  use inject,       only:inject_particles
- use HIIRegion,    only:HII_feedback,iH2R,HIIuprate
+ use HIIRegion,    only:iH2R,HIIuprate,HIIdt,HIIupdateflag
  use io_control,   only:nfulldump
  use mpiutils,     only:reduceall_mpi
- use part,         only:npart,npartoftype,nptmass,xyzh,vxyzu,fxyzu,apr_level,&
-                        xyzmh_ptmass,vxyz_ptmass,gravity,iboundary,ntot,ibin,iphase,&
-                        isionised
+ use part,         only:npart,npartoftype,xyzh,vxyzu,fxyzu,apr_level,&
+                        xyzmh_ptmass,vxyz_ptmass,gravity,iboundary,ntot,ibin,iphase,rho
  use partinject,   only:update_injected_particles
  use ptmass,       only:icreate_sinks,ipart_createstars
  use timestep,     only:dtextforce,dtinject,rhomaxnow
  use timestep_ind, only:istepfrac,nbinmax,set_active_particles,write_binsummary,nactivetot,maxbins
  use timing,       only:get_timings,timers,itimer_lastdump
- real,            intent(in)    :: time
- real,            intent(inout) :: dt,dtmax
- real(kind=4),    intent(out)   :: t1,tcpu1
- integer,         intent(out)   :: nactive
- logical,         intent(in)    :: inject_flag_present
+ real,         intent(in)    :: time
+ real,         intent(inout) :: dt,dtmax
+ real(kind=4), intent(out)   :: t1,tcpu1
+ integer,      intent(out)   :: nactive
+ logical,      intent(in)    :: inject_flag_present
  real(kind=4) :: twallperdump
  integer :: npart_old,nalive,istepHII
  !
@@ -188,7 +192,7 @@ subroutine evol_prestep(time,dtmax,dt,t1,tcpu1,nactive,inject_flag_present)
  !
  if (inject_parts .and. .not. inject_flag_present) then
     npart_old = npart
-    call inject_particles(time,dtlast,xyzh,vxyzu,xyzmh_ptmass,vxyz_ptmass,npart,npart_old,npartoftype,dtinject)
+    call inject_particles(time,dtlast,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,npart,npart_old,npartoftype,dtinject)
     call update_injected_particles(npart_old,npart,istepfrac,nbinmax,time,dtmax,dt,dtinject)
     dtlast = dt
  endif
@@ -236,14 +240,15 @@ subroutine evol_prestep(time,dtmax,dt,t1,tcpu1,nactive,inject_flag_present)
 
  if (gravity .and. icreate_sinks > 0) call ptmass_create_and_update_forces(time,dtextforce)
 
- if (iH2R > 0 .and. id==master) then
+ if (iH2R > 0) then
     istepHII = 1
     if (ind_timesteps) then
        istepHII = 2**nbinmax/HIIuprate
        if (istepHII==0) istepHII = 1
     endif
     if (mod(istepfrac,istepHII) == 0 .or. istepfrac == 1 .or. (icreate_sinks == 2 .and. ipart_createstars /= 0)) then
-       call HII_feedback(nptmass,npart,xyzh,xyzmh_ptmass,vxyzu,isionised)
+       HIIupdateflag = .true.
+       HIIdt = dtmax/real(HIIuprate)
     endif
  endif
 
@@ -257,20 +262,21 @@ end subroutine evol_prestep
 !+
 !----------------------------------------------------------------
 subroutine evol_poststep(infile,logfile,evfile,dumpfile,time,t1,tcpu1,dt,dtmax,nactive,abortrun)
- use dim,           only:driving
- use io,            only:id,master,iprint
- use boundary_dyn,  only:dynamic_bdy,update_boundaries
- use centreofmass,  only:correct_bulk_motions
- use dynamic_dtmax, only:check_dtmax_for_decrease
- use easter_egg,    only:egged,bring_the_egg
- use evolve_utils,  only:update_time_and_dt,write_ev_files,check_and_write_dump,print_log
- use forcing,       only:correct_bulk_motion
- use io_control,    only:nout,nmaxdumps,twallmax,nfulldump
- use io_summary,    only:iosum_nreal,summary_counter,summary_printout,summary_printnow
- use part,          only:npart,nptmass,ntot
- use timing,        only:get_timings,increment_timer,itimer_step,itimer_lastdump,timers,print_time
- use timestep,      only:nsteps,rhomaxnow
- use timestep_ind,  only:istepfrac
+ use dim,             only:driving,mhd
+ use io,              only:id,master,iprint
+ use boundary_dyn,    only:dynamic_bdy,update_boundaries
+ use centreofmass,    only:correct_bulk_motions
+ use dynamic_dtmax,   only:check_dtmax_for_decrease
+ use easter_egg,      only:egged,bring_the_egg
+ use evolve_utils,    only:update_time_and_dt,write_ev_files,check_and_write_dump,print_log
+ use forcing,         only:correct_bulk_motion
+ use io_control,      only:nout,nmaxdumps,twallmax,nfulldump
+ use io_summary,      only:iosum_nreal,summary_counter,summary_printout,summary_printnow
+ use part,            only:npart,nptmass,ntot,xyzh,rho,gradh,Bevol,Bxyz,dBevol,divcurlB
+ use timing,          only:get_timings,increment_timer,itimer_step,itimer_lastdump,timers,print_time
+ use timestep,        only:nsteps,rhomaxnow,use_divb_proj,divb_tol,divb_maxit
+ use timestep_ind,    only:istepfrac
+ use divb_projection, only:project_divb
  character(len=*), intent(in)    :: infile
  character(len=*), intent(inout) :: logfile,evfile,dumpfile
  real,             intent(inout) :: time
@@ -280,6 +286,7 @@ subroutine evol_poststep(infile,logfile,evfile,dumpfile,time,t1,tcpu1,dt,dtmax,n
  logical,          intent(out)   :: abortrun
  real(kind=4) :: t2,tcpu2,twallperdump
  logical      :: at_dump_time,iexist
+ integer      :: ierr_divb
 
  abortrun =.false.
 
@@ -297,6 +304,15 @@ subroutine evol_poststep(infile,logfile,evfile,dumpfile,time,t1,tcpu1,dt,dtmax,n
  !
  call get_timings(t2,tcpu2)
  call increment_timer(itimer_lastdump,t2-t1,tcpu2-tcpu1)
+ !
+ !--div B projection to zero, once per dtmax
+ !
+ if (at_dump_time .and. mhd .and. use_divb_proj) then
+    call project_divb(npart,xyzh,rho,gradh,Bevol,Bxyz,dBevol,divcurlB,&
+                      divb_tol,divb_maxit,nsteps,ierr_divb)
+    if (ierr_divb /= 0 .and. id == master) write(iprint,'(a,i2)') &
+       ' div B projection did not update the field, ierr =',ierr_divb
+ endif
  !
  !--Calculate total energy etc and write to ev file. Do this before writing dumps
  !   so that values calculated in energies are correctly included in the dumpfiles
@@ -420,8 +436,8 @@ subroutine update_dump_counters(nsteps,dtmax)
  use dynamic_dtmax, only:idtmax_n_next,idtmax_frac,idtmax_frac_next,&
                          dtmax_ifactorWT,dtmax_ifactor,idtmax_n
  use timestep_ind,  only:istepfrac
- integer, intent(in)    :: nsteps
- real,    intent(in)    :: dtmax
+ integer, intent(in) :: nsteps
+ real,    intent(in) :: dtmax
 
  ! number of steps since last dump
  nsteplast = nsteps

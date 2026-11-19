@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -30,6 +30,7 @@ module dim
 
  ! maximum number of particles
  integer :: maxp = 0 ! memory not allocated initially
+ integer :: maxp_requested = 0 ! number of particles memory was requested for
  !
  ! how much memory to allocate, e.g. to allow space for injected particles
  ! this can be changed with the --maxp= option on the command line and
@@ -43,7 +44,7 @@ module dim
 #else
  integer, parameter :: maxptmass = 1000
 #endif
- integer, parameter :: nsinkproperties = 26
+ integer, parameter :: nsinkproperties = 30
 
  ! storage of thermal energy or not
 #ifdef ISOTHERMAL
@@ -64,7 +65,20 @@ module dim
 
 ! maxmimum storage in node list
  integer         :: ncellsmax
- integer(kind=8) :: ncellsmaxglobal
+
+ ! the most nodes each MPI task copies from its local tree into the global tree, and
+ ! the most copied by all tasks together: these bound the memory of the global tree
+ integer, parameter :: maxmirror_task  = 2**16
+ integer, parameter :: maxmirror_total = 2**20
+
+ ! for force, each MPI task sends another task the particles of its leaves whose reach is
+ ! more than reach_import_factor times the typical reach of all tasks' active leaves
+ ! (large leaves in sparse regions), which the cells of many other tasks meet, so that those
+ ! cells need not be sent: at most maximport_leaves leaves holding at most maximport_part
+ ! particles
+ real,    parameter :: reach_import_factor = 10.
+ integer, parameter :: maximport_leaves = 256
+ integer, parameter :: maximport_part   = 4096
  integer         :: nnodeptmassmax
 
 !------
@@ -86,11 +100,18 @@ module dim
  integer, parameter :: maxdustsmall = 11
 #endif
 
+#ifdef COALA
+ logical, parameter :: use_dustgrowth_coala = .true.
+ logical, parameter :: use_dustgrowth = .false.
+#else
+ logical, parameter :: use_dustgrowth_coala = .false.
 #ifdef DUSTGROWTH
  logical, parameter :: use_dustgrowth = .true.
 #else
  logical, parameter :: use_dustgrowth = .false.
 #endif
+#endif
+
 #else
  logical, parameter :: use_dust = .false.
  ! integer, parameter :: ndustfluids = 0
@@ -98,6 +119,7 @@ module dim
  integer, parameter :: maxdustlarge = 1
  integer, parameter :: maxdustsmall = 1
  logical, parameter :: use_dustgrowth = .false.
+ logical, parameter :: use_dustgrowth_coala = .false.
 #endif
  integer, parameter :: maxdusttypes = maxdustsmall + maxdustlarge
 
@@ -115,24 +137,25 @@ module dim
 #else
  logical, parameter :: do_radiation = .false.
 #endif
- ! rhosum
- integer, parameter :: maxrhosum = 39 + &
+ ! rhosum (two extra slots for number density and dWtilde/dh,
+ ! plus 38 for derivative sums with grad Wtilde used with unequal masses)
+ integer, parameter :: maxrhosum = 79 + &
                                    maxdustlarge - 1 + &
                                    radensumden
 
  ! fsum
- integer, parameter :: fsumvars = 25 ! Number of scalars in fsum
+ integer, parameter :: fsumvars = 32 ! Number of scalars in fsum
  integer, parameter :: fsumarrs = 5  ! Number of arrays  in fsum
  integer, parameter :: maxfsum  = fsumvars + &                  ! Total number of values
                                   fsumarrs*(maxdusttypes-1) + &
                                   radensumforce
 
 ! xpartveci
- integer, parameter :: maxxpartvecidens = 14 + radenxpartvetden
+ integer, parameter :: maxxpartvecidens = 15 + radenxpartvetden
 
  integer, parameter :: maxxpartvecvars = 63 ! Number of scalars in xpartvec
  integer, parameter :: maxxpartvecarrs = 2  ! Number of arrays in xpartvec
- integer, parameter :: maxxpartvecGR   = 33 ! Number of GR values in xpartvec (1 for dens, 16 for gcov, 16 for gcon)
+ integer, parameter :: maxxpartvecGR   = 33 ! dens, 16 gcov, 16 gcon
  integer, parameter :: maxxpartveciforce = maxxpartvecvars + &              ! Total number of values
                                            maxxpartvecarrs*(maxdusttypes-1) + &
                                            radenxpartvecforce + &
@@ -231,12 +254,15 @@ module dim
 ! Self-gravity
 !--------------------
  integer :: maxgrav = 0
+ integer, parameter :: igradomega = 1  ! 1/OmegaTilde
+ integer, parameter :: igradzeta  = 2  ! hydro zeta
+ integer, parameter :: igradsoft  = 3  ! PM07 softening zeta^phi (gravity only)
 #ifdef GRAVITY
  logical, parameter :: gravity = .true.
- integer, parameter :: ngradh = 2
+ integer, parameter :: ngradh = 3
 #else
  logical, parameter :: gravity = .false.
- integer, parameter :: ngradh = 1
+ integer, parameter :: ngradh = 2
 #endif
 
 !--------------------
@@ -353,9 +379,10 @@ module dim
 contains
 
 subroutine update_max_sizes(n,ntot)
- integer,                   intent(in) :: n
- integer(kind=8), optional, intent(in) :: ntot
+ integer,         intent(in) :: n
+ integer(kind=8), intent(in), optional :: ntot
 
+ maxp_requested = n
  maxp = n
  if (use_apr) then
     maxp = 8*n
@@ -364,7 +391,7 @@ subroutine update_max_sizes(n,ntot)
 
  maxpsph = maxp
  if (use_sinktree) then
-    maxp = n+maxptmass
+    maxp = maxpsph + maxptmass
  endif
 
  if (use_krome) maxp_krome = maxp
@@ -380,14 +407,8 @@ subroutine update_max_sizes(n,ntot)
 
 #ifdef NCELLSMAX
  ncellsmax       = NCELLSMAX
- ncellsmaxglobal = NCELLSMAX
 #else
  ncellsmax = 2*maxp
- if (present(ntot)) then
-    ncellsmaxglobal = 2*ntot
- else
-    ncellsmaxglobal = ncellsmax
- endif
 #endif
 
  nnodeptmassmax = 2*maxptmass

@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -28,7 +28,7 @@ module setup
 !   setup_params, timestep, unifdis, units
 !
  use dim,          only:mhd,use_dust,maxdustsmall
- use dust,         only:grainsizecgs,graindenscgs,ilimitdustflux
+ use dust,         only:grainsizecgs,graindenscgs
  use part,         only:ndustsmall
  use setup_params, only:rhozero
  implicit none
@@ -61,17 +61,17 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  use mpidomain,    only:i_belong
  use infile_utils, only:get_options,infile_exists
  use kernel,       only:hfact_default
- use set_dust_options, only:dustbinfrac,set_dust_grain_distribution,ilimitdustfluxinp,&
+ use set_dust_options, only:dustbinfrac,set_dust_grain_distribution,&
                             ndustsmallinp,set_dust_default_options,dust_to_gas
- integer,           intent(in)    :: id
- integer,           intent(inout) :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(out)   :: vxyzu(:,:)
- real,              intent(out)   :: polyk,gamma,hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
+ integer,          intent(in)    :: id
+ integer,          intent(inout) :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(out)   :: vxyzu(:,:)
+ real,             intent(out)   :: polyk,gamma,hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
  integer :: i,ierr
  real :: totmass,deltax
  real :: Bz_0
@@ -135,7 +135,6 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
     ! set dust grid
     ndustsmall = ndustsmallinp
     call set_dust_grain_distribution(ndusttypes,dustbinfrac,grainsize,graindens,udist,umass)
-    ilimitdustflux = ilimitdustfluxinp
  endif
 
  if (mhd) print "(/,a,/)",' MHD turbulence w/uniform field in z-direction'
