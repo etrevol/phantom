@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -70,19 +70,19 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  use table_utils,        only:yinterp
  use units,              only:unit_density,unit_velocity
  use infile_utils,       only:get_options
- integer,           intent(in)    :: id
- integer,           intent(inout) :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:),vxyzu(:,:),massoftype(:),polyk,gamma,hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
+ integer,          intent(in)    :: id
+ integer,          intent(inout) :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:),vxyzu(:,:),massoftype(:),polyk,gamma,hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
  real               :: rhocentre,rmin,densi,presi,ri
- real, allocatable  :: r(:),den(:),pres(:),Xfrac(:),Yfrac(:),mu(:)
+ real, allocatable  :: r(:),den(:),pres(:),temp(:),Xfrac(:),Yfrac(:),mu(:)
  integer            :: ierr,ierr_relax,npts,np,i,iptmass_core
  logical            :: use_exactN,use_var_comp
  character(len=30)  :: lattice
 
- call set_units(mass=solarm,dist=solarr,G=1.)
+ call set_units(mass=solarm,dist=solarr,G=1.d0)
  !
  ! Initialise parameters, including those that will not be included in *.setup
  !
@@ -154,9 +154,10 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
 
  ! Set polytropic star
  if (add_star) then
-    allocate(r(nrhotab),den(nrhotab),pres(nrhotab))
+    allocate(r(nrhotab),den(nrhotab),pres(nrhotab),temp(nrhotab))
     call rho_polytrope(gamma,polyk,Mstar,r,den,npts,rhocentre,set_polyk=.true.,Rstar=Rstar)
     pres = polyk*den**gamma
+    temp = 0.
     rmin = r(1)
     call set_star_density(lattice,id,master,rmin,Rstar,Mstar,hfact,&
                        npts,den,r,npart,npartoftype,massoftype,xyzh,&
@@ -164,7 +165,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
     nstar = npart
     use_var_comp = .false.
     iptmass_core = 0
-    call relax_star(npts,den,pres,r,npart,xyzh,use_var_comp,Xfrac,Yfrac,mu,iptmass_core,xyzmh_ptmass,ierr_relax)
+    call relax_star(npts,den,pres,temp,r,npart,xyzh,use_var_comp,Xfrac,Yfrac,mu,iptmass_core,xyzmh_ptmass,ierr_relax)
 
     ! Set thermal energy
     do i = 1,npart
@@ -174,7 +175,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
        vxyzu(4,i) =  presi / ( (gamma-1.) * densi)
     enddo
 
-    deallocate(r,den,pres)
+    deallocate(r,den,pres,temp)
  endif
 
 end subroutine setpart
@@ -286,7 +287,7 @@ end subroutine read_setupfile
 !+
 !-----------------------------------------------------------------------
 subroutine check_setup(pmass,ierr)
- real, intent(in)     :: pmass
+ real,    intent(in)  :: pmass
  integer, intent(out) :: ierr
  real                 :: min_layer_sep
 

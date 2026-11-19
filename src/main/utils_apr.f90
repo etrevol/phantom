@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -22,7 +22,7 @@ module utils_apr
 !   - split_dir    : *1: tangent to boundary, 2: along trajectory, 3: purely randomly*
 !   - track_part   : *number of sink to track*
 !
-! :Dependencies: infile_utils, io, part, ptmass
+! :Dependencies: fileutils, infile_utils, io, part, ptmass
 !
 
  use ptmass, only:rho_crit_cgs
@@ -53,9 +53,9 @@ contains
 !-----------------------------------------------------------------------
 subroutine find_inner_and_outer_radius(npart,xyzh,rmin,rmax)
  use part, only:xyzmh_ptmass, isdead_or_accreted
- integer, intent(in) :: npart
- real, intent(in)    :: xyzh(:,:)
- real, intent(out)   :: rmin,rmax
+ integer, intent(in)  :: npart
+ real,    intent(in)  :: xyzh(:,:)
+ real,    intent(out) :: rmin,rmax
  integer :: ii
  real    :: rmin_test, rmax_test, xi, yi, zi, r2_test
 
@@ -88,9 +88,9 @@ end subroutine find_inner_and_outer_radius
 !  routine to find the closest apr centre to a position
 !+
 !-----------------------------------------------------------------------
-
-subroutine find_closest_region(pos,iclosest)
- real, intent(in) :: pos(3)
+subroutine find_closest_region(pos,ntrack,apr_centre,iclosest)
+ real,    intent(in)  :: pos(3),apr_centre(:,:)
+ integer, intent(in)  :: ntrack
  integer, intent(out) :: iclosest
  real :: r2,rtest,dx,dy,dz
  integer :: ii
@@ -181,7 +181,8 @@ end subroutine read_options_apr
 !+
 !-----------------------------------------------------------------------
 subroutine write_aprtrack(tdump,dumpfile)
- use io, only:iaprdump,error
+ use io,        only:iaprdump,error
+ use fileutils, only:numfromfile
  real,             intent(in) :: tdump
  character(len=*), intent(in) :: dumpfile
  integer :: ierr, i, j
@@ -189,15 +190,13 @@ subroutine write_aprtrack(tdump,dumpfile)
  character(len=3)  :: padded_ntrack
  character(len=11) :: label
  character(len=256) :: fmt
- integer :: dumpfile_int, dump_length, start_pos
+ integer :: dumpfile_int
  logical :: iexist
 
  if (ntrack == 0) return ! nothing to do here
 
- ! clever formatting
- dump_length = len_trim(dumpfile)
- start_pos = dump_length - 5 + 1
- read(dumpfile(start_pos:dump_length), *) dumpfile_int
+ ! number at the end of the dump file name
+ dumpfile_int = numfromfile(dumpfile)
  ! dynamically make the formatting string to accomodate the right number of regions
  fmt = '(ES18.10,2X,I16.5,2X,3(ES18.10,1X)'
  do j = 1,apr_max_in - 1

@@ -68,13 +68,14 @@ end subroutine set_default_options_inject
 !  inject the clouds due over the last step, dtlast
 !+
 !-----------------------------------------------------------------------
-subroutine inject_particles(time,dtlast,xyzh,vxyzu,xyzmh_ptmass,vxyz_ptmass,&
+subroutine inject_particles(time,dtlast,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,&
                             npart,npart_old,npartoftype,dtinject)
  use part,       only:massoftype,istar,iphase,iamtype,isdead_or_accreted
  use partinject, only:add_or_update_particle
  use random,     only:ran2,gauss_random
  real,    intent(in)    :: time,dtlast
  real,    intent(inout) :: xyzh(:,:),vxyzu(:,:),xyzmh_ptmass(:,:),vxyz_ptmass(:,:)
+ real,    intent(in)    :: rho(:)
  integer, intent(inout) :: npart,npart_old
  integer, intent(inout) :: npartoftype(:)
  real,    intent(out)   :: dtinject

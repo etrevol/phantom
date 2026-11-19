@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -15,17 +15,18 @@ module setstar_utils
 ! :Runtime parameters: None
 !
 ! :Dependencies: dim, eos, eos_piecewise, extern_densprofile, io, kernel,
-!   part, physcon, radiation_utils, readwrite_kepler, readwrite_mesa,
-!   rho_profile, setsoftenedcore, sortutils, spherical, table_utils,
-!   unifdis, units
+!   mpiutils, part, physcon, radiation_utils, readwrite_aton,
+!   readwrite_kepler, readwrite_mesa, rho_profile, setsoftenedcore,
+!   sortutils, spherical, table_utils, unifdis, units
 !
  use extern_densprofile, only:nrhotab
  use readwrite_kepler,   only:write_kepler_comp
+ use readwrite_aton,     only:read_aton,write_aton
  implicit none
  !
  ! Index of setup options
  !
- integer, parameter, public :: nprofile_opts =  7 ! maximum number of initial configurations
+ integer, parameter, public :: nprofile_opts =  8 ! maximum number of initial configurations
  integer, parameter, public :: ipointmass = 0
  integer, parameter, public :: iuniform   = 1
  integer, parameter, public :: ipoly      = 2
@@ -34,6 +35,7 @@ module setstar_utils
  integer, parameter, public :: imesa      = 5
  integer, parameter, public :: ibpwpoly   = 6
  integer, parameter, public :: ievrard    = 7
+ integer, parameter, public :: iaton      = 8
 
  character(len=*), parameter, public :: profile_opt(0:nprofile_opts) = &
     (/'Sink particle/point mass    ', &
@@ -43,7 +45,8 @@ module setstar_utils
       'KEPLER star from file       ', &
       'MESA star from file         ', &
       'Piecewise polytrope         ', &
-      'Evrard collapse             '/)
+      'Evrard collapse             ', &
+      'ATON star from file         '/)
 
  public :: read_star_profile
  public :: set_star_density
@@ -81,42 +84,43 @@ subroutine read_star_profile(iprofile,ieos,input_profile,gamma,polyk,ui_coef,&
  use io,                 only:fatal
  use units,              only:udist,umass
  use physcon,            only:solarr,solarm
- integer,           intent(in)    :: iprofile,ieos
- character(len=*),  intent(in)    :: input_profile,outputfilename
- real,              intent(in)    :: ui_coef
- real,              intent(inout) :: gamma,polyk,hsoft
- real,              intent(in)    :: X_in,Z_in
- real, allocatable, intent(out)   :: r(:),den(:),pres(:),temp(:),en(:),mtab(:)
- real, allocatable, intent(out)   :: Xfrac(:),Yfrac(:),mu(:),composition(:,:)
- integer,           intent(out)   :: npts
- real,              intent(inout) :: rmin,Rstar,Mstar,rhocentre
- integer,           intent(in)    :: isoftcore,isofteningopt
- real,              intent(inout) :: rcore,mcore
- integer,           intent(out)   :: columns_compo
- character(len=20), allocatable, intent(out) :: comp_label(:)
+ integer,                        intent(in)    :: iprofile,ieos
+ character(len=*),               intent(in)    :: input_profile,outputfilename
+ real,                           intent(in)    :: ui_coef
+ real,                           intent(inout) :: gamma,polyk,hsoft
+ real,                           intent(in)    :: X_in,Z_in
+ real, allocatable,              intent(out)   :: r(:),den(:),pres(:),temp(:),en(:),mtab(:)
+ real, allocatable,              intent(out)   :: Xfrac(:),Yfrac(:),mu(:),composition(:,:)
+ integer,                        intent(out)   :: npts
+ real,                           intent(inout) :: rmin,Rstar,Mstar,rhocentre
+ integer,                        intent(in)    :: isoftcore,isofteningopt
+ real,                           intent(inout) :: rcore,mcore
+ integer,                        intent(out)   :: columns_compo
+ character(len=20), allocatable, intent(out)   :: comp_label(:)
  integer :: ierr,eos_type
  logical :: calc_polyk,iexist,regrid_core
  procedure(func), pointer :: get_dPdrho
  !
  ! set up tabulated density profile
  !
+ character(len=120) :: profile_filename
  calc_polyk = .true.
  allocate(r(ng_max),den(ng_max),pres(ng_max),temp(ng_max),en(ng_max),mtab(ng_max))
-
+ temp = 0.  ! Initialize temperature array for non-file-based profiles
  print "(/,a,/)",' Using '//trim(profile_opt(iprofile))
  select case(iprofile)
  case(ipoly)
     polyk = 1.  ! overwrite initial value of polyk
     call rho_polytrope(gamma,polyk,Mstar,r,den,npts,rhocentre,calc_polyk,Rstar)
     rmin = r(1)
-    pres = polyk*den**gamma
+    pres(1:npts) = polyk*den(1:npts)**gamma
  case(ifromfile)
     call read_rhotab_wrapper(trim(input_profile),ng_max,r,den,npts,&
                              polyk,gamma,rhocentre,Mstar,iexist,ierr)
     if (.not.iexist) call fatal('setup','density file does not exist')
     if (ierr > 0)    call fatal('setup','error in reading density file')
     rmin = r(1)
-    pres = polyk*den**gamma
+    pres(1:npts) = polyk*den(1:npts)**gamma
  case(ibpwpoly)
     get_dPdrho => get_dPdrho_piecewise
     call rho_piecewise_polytrope(r,den,rhocentre,Mstar,get_dPdrho,npts,ierr)
@@ -124,19 +128,19 @@ subroutine read_star_profile(iprofile,ieos,input_profile,gamma,polyk,ui_coef,&
     if (ierr == 2) call fatal('setup','failed to converge to a self-consistent density profile')
     rmin  = r(1)
     Rstar = r(npts)
-    pres = polyk*den**gamma
- case(imesa,ikepler)
+    pres(1:npts) = polyk*den(1:npts)**gamma
+ case(imesa,ikepler,iaton)
     deallocate(r,den,pres,temp,en,mtab)
     if (isoftcore > 0) then
        if (iprofile == imesa) then
-          call read_mesa(input_profile,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,Mstar,ierr,cgsunits=.true.)
+          call read_mesa(input_profile,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,mu,Mstar,ierr,cgsunits=.true.)
+       elseif (iprofile == iaton) then
+          call read_aton(input_profile,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,mu,Mstar,ierr,cgsunits=.true.)
        else
           call read_kepler_file(trim(input_profile),ng_max,npts,r,den,pres,mtab,temp,en,&
                            Mstar,composition,comp_label,Xfrac,Yfrac,columns_compo,ierr,cgsunits=.true.)
        endif
-       allocate(mu(size(den)))
-       mu = 0.
-       if (ierr /= 0) call fatal('setup','error in reading stellar profile from'//trim(input_profile))
+       if (ierr /= 0) call fatal('setup','error in reading stellar profile from '//trim(input_profile))
        if (do_radiation) then
           eos_type = 12
        else
@@ -151,21 +155,31 @@ subroutine read_star_profile(iprofile,ieos,input_profile,gamma,polyk,ui_coef,&
        hsoft = rcore/radkern
 
        call solve_uT_profiles(eos_type,r,den,pres,Xfrac,Yfrac,regrid_core,temp,en,mu)
-       call write_mesa(outputfilename,mtab,pres,temp,r,den,en,Xfrac,Yfrac,mu=mu)
-       ! now read the softened profile instead
-       call read_mesa(outputfilename,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,Mstar,ierr)
+       if (iprofile == iaton) then
+          call write_aton(outputfilename,mtab,pres,temp,r,den,en,Xfrac,Yfrac,mu=mu)
+          ! now read the softened profile instead
+          call read_aton(outputfilename,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,mu,Mstar,ierr)
+       else
+          call write_mesa(outputfilename,mtab,pres,temp,r,den,en,Xfrac,Yfrac,mu=mu)
+          ! now read the softened profile instead
+          call read_mesa(outputfilename,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,mu,Mstar,ierr)
+       endif
+       profile_filename = outputfilename
     else
        if (iprofile == imesa) then
-          call read_mesa(input_profile,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,Mstar,ierr)
+          call read_mesa(input_profile,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,mu,Mstar,ierr)
+       elseif (iprofile == iaton) then
+          call read_aton(input_profile,den,r,pres,mtab,en,temp,X_in,Z_in,Xfrac,Yfrac,mu,Mstar,ierr)
        else
           call read_kepler_file(trim(input_profile),ng_max,npts,r,den,pres,mtab,temp,en,&
                 Mstar,composition,comp_label,Xfrac,Yfrac,columns_compo,ierr)
        endif
+       profile_filename = input_profile
     endif
-    if (ierr==1) call fatal('set_star',trim(input_profile)//' does not exist')
+    if (ierr==1) call fatal('set_star',trim(profile_filename)//' does not exist')
     if (ierr==2) call fatal('set_star','insufficient data points read from file')
     if (ierr==3) call fatal('set_star','too many data points; increase ng')
-    if (ierr /= 0) call fatal('set_star','error in reading stellar profile from'//trim(input_profile))
+    if (ierr /= 0) call fatal('set_star','error in reading stellar profile from '//trim(profile_filename))
     npts = size(den)
     rmin  = r(1)
     Rstar = r(npts)
@@ -195,7 +209,7 @@ logical function need_inputprofile(iprofile)
  integer, intent(in) :: iprofile
 
  select case(iprofile)
- case(imesa,ikepler,ifromfile)
+ case(imesa,ikepler,iaton,ifromfile)
     need_inputprofile = .true.
  case default
     need_inputprofile = .false.
@@ -263,6 +277,7 @@ subroutine set_star_density(lattice,id,master,rmin,Rstar,Mstar,hfact,&
  use spherical,    only:set_sphere
  use unifdis,      only:mask_prototype
  use physcon,      only:pi
+ use mpiutils,     only:reduceall_mpi
  character(len=*), intent(in)    :: lattice
  integer,          intent(in)    :: id,master,npts,np
  integer(kind=8),  intent(out)   :: npart_total
@@ -274,6 +289,7 @@ subroutine set_star_density(lattice,id,master,rmin,Rstar,Mstar,hfact,&
  logical,          intent(in)    :: use_exactN
  procedure(mask_prototype) :: mask
  integer :: nx,i,ntot,npart_old,n
+ integer(kind=8) :: npart_old_total
  real :: vol_sphere,psep
  logical :: mass_is_set
 
@@ -297,6 +313,9 @@ subroutine set_star_density(lattice,id,master,rmin,Rstar,Mstar,hfact,&
  vol_sphere  = 4./3.*pi*Rstar**3
  nx          = int(n**(1./3.))
  psep        = vol_sphere**(1./3.)/real(nx)
+ ! set_sphere adds the new particles to the total number across all MPI threads
+ npart_old_total = reduceall_mpi('+',int(npart_old,kind=8))
+ npart_total     = npart_old_total
  call set_sphere(lattice,id,master,rmin,Rstar,psep,hfact,npart,xyzh, &
                  rhotab=den(1:npts),rtab=r(1:npts),nptot=npart_total, &
                  exactN=use_exactN,np_requested=n,mask=mask)
@@ -304,7 +323,7 @@ subroutine set_star_density(lattice,id,master,rmin,Rstar,Mstar,hfact,&
  ! get total particle number across all MPI threads
  ! and use this to set the particle mass
  !
- ntot = int(npart_total,kind=(kind(ntot)))
+ ntot = int(npart_total - npart_old_total,kind=(kind(ntot)))  ! number of particles in this star
  if (.not.mass_is_set) then
     massoftype(igas) = Mstar/ntot
  endif
@@ -312,7 +331,7 @@ subroutine set_star_density(lattice,id,master,rmin,Rstar,Mstar,hfact,&
  ! set particle type as gas particles
  !
  npartoftype(igas) = npartoftype(igas) + npart - npart_old   ! npart is number on this thread only
- do i=npart_old+1,npart_old+npart
+ do i=npart_old+1,npart
     call set_particle_type(i,igas)
  enddo
  !
@@ -330,8 +349,8 @@ end subroutine set_star_density
 subroutine set_stellar_core(nptmass,xyzmh_ptmass,vxyz_ptmass,ihsoft,mcore,&
                             hsoft,ilum,lcore,iptmass_core,ierr)
  integer, intent(out) :: nptmass,ierr,iptmass_core
- real, intent(out)    :: xyzmh_ptmass(:,:),vxyz_ptmass(:,:)
- real, intent(in)     :: mcore,hsoft,lcore
+ real,    intent(out) :: xyzmh_ptmass(:,:),vxyz_ptmass(:,:)
+ real,    intent(in)  :: mcore,hsoft,lcore
  integer, intent(in)  :: ihsoft,ilum
  integer              :: n
 
@@ -369,17 +388,20 @@ end subroutine set_stellar_core
 !----------------------------------------------------------------
 subroutine get_mass_coord(i1,npart,xyzh,mass_enclosed_r,x0)
  use dim,       only:use_apr
- use part,      only:igas,apr_level,massoftype,aprmassoftype
+ use part,      only:igas,apr_level,massoftype,aprmassoftype,sync_aprmassoftype
  use sortutils, only:sort_by_radius
- integer, intent(in)  :: i1,npart
- real,    intent(in)  :: xyzh(:,:),x0(3)
- real,    intent(out), allocatable :: mass_enclosed_r(:)
+ integer,           intent(in)  :: i1,npart
+ real,              intent(in)  :: xyzh(:,:),x0(3)
+ real, allocatable, intent(out) :: mass_enclosed_r(:)
  integer, allocatable :: iorder(:)
  real :: massri,mass_at_r,pmassi,r2,r2prev
  integer :: i,j,iprev
 
  ! allocate memory
  allocate(mass_enclosed_r(npart-i1),iorder(npart-i1))
+
+ ! massoftype may have just been set by the calling routine
+ call sync_aprmassoftype()
 
  ! sort particles by radius
  call sort_by_radius(npart-i1,xyzh(:,i1+1:npart),iorder,x0)
@@ -422,14 +444,14 @@ end subroutine get_mass_coord
 !  Set the composition, if variable composition is used
 !+
 !-----------------------------------------------------------------------
-subroutine set_star_composition(use_var_comp,use_mu,npart,xyzh,Xfrac,Yfrac,&
-           mu,mtab,Mstar,eos_vars,npin,x0)
+subroutine set_star_composition(eos_outputs_mu,npart,xyzh,Xfrac,Yfrac,&
+           mu,mtab,eos_vars,npin,x0)
  use part,        only:iX,iZ,imu
  use table_utils, only:yinterp
- logical, intent(in)  :: use_var_comp,use_mu
+ logical, intent(in)  :: eos_outputs_mu
  integer, intent(in)  :: npart
  real,    intent(in)  :: xyzh(:,:)
- real,    intent(in)  :: Xfrac(:),Yfrac(:),mu(:),mtab(:),Mstar
+ real,    intent(in)  :: Xfrac(:),Yfrac(:),mu(:),mtab(:)
  real,    intent(out) :: eos_vars(:,:)
  real,    intent(in), optional :: x0(3)
  integer, intent(in), optional :: npin
@@ -446,13 +468,17 @@ subroutine set_star_composition(use_var_comp,use_mu,npart,xyzh,Xfrac,Yfrac,&
  ! this does NOT work with MPI
  call get_mass_coord(i1,npart,xyzh,mass_enclosed_r,xorigin)
 
+ !$omp parallel do schedule(guided) default(none) &
+ !$omp shared(i1,npart,mass_enclosed_r,eos_outputs_mu) &
+ !$omp shared(Xfrac,Yfrac,mtab,mu,eos_vars) &
+ !$omp private(i,massri)
  do i = i1+1,npart
-    massri = mass_enclosed_r(i-i1)/Mstar
-    if (use_var_comp) then
-       eos_vars(iX,i) = yinterp(Xfrac,mtab,massri)
-       eos_vars(iZ,i) = 1. - eos_vars(iX,i) - yinterp(Yfrac,mtab,massri)
-    endif
+    massri = mass_enclosed_r(i-i1)
+    eos_vars(iX,i) = yinterp(Xfrac,mtab,massri)
+    eos_vars(iZ,i) = 1. - eos_vars(iX,i) - yinterp(Yfrac,mtab,massri)
+    if (.not. eos_outputs_mu) eos_vars(imu,i) = yinterp(mu,mtab,massri)
  enddo
+ !$omp end parallel do
 
 end subroutine set_star_composition
 
@@ -461,19 +487,18 @@ end subroutine set_star_composition
 !  Set the thermal energy profile
 !+
 !-----------------------------------------------------------------------
-subroutine set_star_thermalenergy(ieos,den,pres,r,npts,npart,xyzh,vxyzu,rad,eos_vars,&
+subroutine set_star_thermalenergy(ieos,den,pres,temp,r,npts,npart,xyzh,vxyzu,rad,eos_vars,&
                                   relaxed,use_var_comp,initialtemp,polyk_in,npin,x0)
- use part,            only:rhoh,massoftype,igas,itemp,igasP,iX,iZ,imu,iradxi,icv,&
-                           aprmassoftype,apr_level,radprop
+ use part,            only:rho,itemp,igasP,iX,iZ,imu,iradxi,icv,radprop
  use eos,             only:equationofstate,calc_temp_and_ene,eos_outputs_mu,get_cv,gmw
  use radiation_utils, only:radxi_from_Trad
  use table_utils,     only:yinterp
  use units,           only:unit_density,unit_ergg,unit_pressure
- use dim,             only:use_apr,do_radiation
+ use dim,             only:do_radiation
  use physcon,         only:Rg,radconst
  use io,              only:fatal
  integer, intent(in)    :: ieos,npart,npts
- real,    intent(in)    :: den(:), pres(:), r(:)  ! density and pressure tables
+ real,    intent(in)    :: den(:),pres(:),temp(:),r(:)  ! density, pressure, and temperature tables
  real,    intent(in)    :: xyzh(:,:)
  real,    intent(inout) :: vxyzu(:,:),eos_vars(:,:),rad(:,:)
  logical, intent(in)    :: relaxed,use_var_comp
@@ -481,8 +506,8 @@ subroutine set_star_thermalenergy(ieos,den,pres,r,npts,npart,xyzh,vxyzu,rad,eos_
  integer, intent(in), optional :: npin
  real,    intent(in), optional :: x0(3)
  integer :: eos_type,cv_type,i,ierr
- real    :: xi,yi,zi,hi,presi,densi,tempi,eni,ri,p_on_rhogas,spsoundi,egasrad,eint,mu
- real    :: rho_cgs,p_cgs,u_gasrec,xorigin(3),pmassi,dum
+ real    :: presi,densi,tempi,eni,ri,egasrad,eint,mu
+ real    :: rho_cgs,p_cgs,u_gasrec,xorigin(3),dum
  logical :: do_radiation_local
  integer :: i1
 
@@ -494,28 +519,36 @@ subroutine set_star_thermalenergy(ieos,den,pres,r,npts,npart,xyzh,vxyzu,rad,eos_
  xorigin = 0.
  if (present(x0)) xorigin = x0
 
+ !$omp parallel do schedule(guided) default(none) &
+ !$omp shared(i1,npart,xyzh,vxyzu,rad,eos_vars,den,pres,temp,r,npts) &
+ !$omp shared(relaxed,use_var_comp,ieos,initialtemp,polyk_in,rho) &
+ !$omp shared(xorigin,unit_density,unit_ergg,unit_pressure) &
+ !$omp shared(radprop,gmw) &
+ !$omp private(i,densi,presi,ri,tempi,eni,rho_cgs,p_cgs) &
+ !$omp private(egasrad,eint,mu,u_gasrec) &
+ !$omp private(dum,eos_type,cv_type,ierr,do_radiation_local)
  do i = i1+1,npart
-    if (relaxed) then
-       hi = xyzh(4,i)
-       if (use_apr) then
-          pmassi = aprmassoftype(igas,apr_level(i))
-       else
-          pmassi = massoftype(igas)
-       endif
-       densi = rhoh(hi,pmassi)
+    ri = sqrt(dot_product(xyzh(1:3,i)-xorigin,xyzh(1:3,i)-xorigin))
+    if (relaxed .and. rho(i) > tiny(rho)) then
+       densi = rho(i)
        presi = eos_vars(igasP,i)  ! retrieve pressure from relax_star calculated with the fake (ieos=2) internal energy
     else
-       !  Interpolate density and pressure from table
-       ri    = sqrt(dot_product(xyzh(1:3,i)-xorigin,xyzh(1:3,i)-xorigin))
+       ! interpolate density and pressure from table
        densi = yinterp(den(1:npts),r(1:npts),ri)
        presi = yinterp(pres(1:npts),r(1:npts),ri)
     endif
 
-    if (do_radiation) then
-       rho_cgs = densi*unit_density
-       p_cgs = presi*unit_pressure
+    rho_cgs = densi*unit_density
+    p_cgs = presi*unit_pressure
+    if (ieos==15 .and. temp(1) > 0.) then       ! should really be a check if we actually have the temperature table
+       tempi = yinterp(temp(1:npts),r(1:npts),ri)  ! use MESA temperature as initial guess for Helmholtz
+    elseif (rho_cgs > tiny(rho_cgs)) then
        tempi = min((3.*p_cgs/radconst)**0.25, p_cgs/(rho_cgs*Rg))  ! temperature guess
+    else
+       tempi = (3.*p_cgs/radconst)**0.25
+    endif
 
+    if (do_radiation) then
        select case(ieos)
        case(2)
           eos_type = 12  ! Calculate temperature from both gas and radiation pressure
@@ -547,25 +580,13 @@ subroutine set_star_thermalenergy(ieos,den,pres,r,npts,npart,xyzh,vxyzu,rad,eos_
        rad(iradxi,i) = radxi_from_Trad(densi,tempi)
        eos_vars(itemp,i) = tempi
        vxyzu(4,i) = radprop(icv,i)*tempi
-
     else
        select case(ieos)
        case(23) ! Tillotson
           vxyzu(4,i) = 1.5*polyk_in
        case(16) ! Shen EoS
           vxyzu(4,i) = initialtemp
-       case(15) ! Helmholtz EoS
-          xi    = xyzh(1,i) - xorigin(1)
-          yi    = xyzh(2,i) - xorigin(2)
-          zi    = xyzh(3,i) - xorigin(3)
-          tempi = initialtemp
-          call equationofstate(ieos,p_on_rhogas,spsoundi,densi,xi,yi,zi,tempi,eni)
-          vxyzu(4,i) = eni
-          eos_vars(itemp,i) = initialtemp
        case default ! Recalculate eint and temp for each particle according to EoS
-          rho_cgs = densi*unit_density
-          p_cgs = presi*unit_pressure
-          tempi = min((3.*p_cgs/radconst)**0.25, p_cgs/(rho_cgs*Rg))  ! temperature guess
           if (use_var_comp) then
              call calc_temp_and_ene(ieos,rho_cgs,p_cgs,eni,tempi,ierr,&
                                     mu_local=eos_vars(imu,i),X_local=eos_vars(iX,i),Z_local=eos_vars(iZ,i))
@@ -577,9 +598,9 @@ subroutine set_star_thermalenergy(ieos,den,pres,r,npts,npart,xyzh,vxyzu,rad,eos_
           eos_vars(itemp,i) = tempi
           vxyzu(4,i) = eni / unit_ergg
        end select
-
     endif
  enddo
+ !$omp end parallel do
 
 end subroutine set_star_thermalenergy
 
@@ -591,9 +612,9 @@ end subroutine set_star_thermalenergy
 subroutine solve_uT_profiles(eos_type,r,den,pres,Xfrac,Yfrac,regrid_core,temp,en,mu)
  use eos,     only:get_mean_molecular_weight,calc_temp_and_ene
  use physcon, only:radconst,Rg
- integer, intent(in) :: eos_type
- real, intent(in)    :: r(:),den(:),pres(:),Xfrac(:),Yfrac(:)
- logical, intent(in) :: regrid_core
+ integer,           intent(in)    :: eos_type
+ real,              intent(in)    :: r(:),den(:),pres(:),Xfrac(:),Yfrac(:)
+ logical,           intent(in)    :: regrid_core
  real, allocatable, intent(inout) :: temp(:),en(:),mu(:)
  integer             :: i,ierr
  real                :: guessene,tempi,eni

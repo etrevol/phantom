@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -80,15 +80,15 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  use infile_utils,   only:get_options
  use set_dust,       only:set_dustfrac
  use kernel,         only:hfact_default
- integer,           intent(in)    :: id
- integer,           intent(out)   :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: polyk,gamma,hfact
- real,              intent(out)   :: vxyzu(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
+ integer,          intent(in)    :: id
+ integer,          intent(out)   :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: polyk,gamma,hfact
+ real,             intent(out)   :: vxyzu(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
  integer :: i,ierr,iseed
  real :: h2ratio,gmw
 
@@ -308,6 +308,7 @@ subroutine add_component(file_in,itype,istart,iend,xyzh,vxyzu,massoftype,npartof
  use part,      only:set_particle_type
  use units,     only:udist,umass,unit_velocity
  use datafiles, only:find_phantom_datafile
+ use io,        only:fatal
  character(len=*), intent(in)    :: file_in,component_name
  integer,          intent(in)    :: itype,istart,iend
  real,             intent(inout) :: xyzh(:,:),vxyzu(:,:),massoftype(:)
@@ -315,13 +316,14 @@ subroutine add_component(file_in,itype,istart,iend,xyzh,vxyzu,massoftype,npartof
  real,             intent(inout) :: totmass
  real,             intent(in)    :: thermal,hfact,totvol
  character(len=120) :: filename
- integer :: i,lu
+ integer :: i,lu,ierr
  real :: xis,yis,zis,mis,vxis,vyis,vzis,phaseis
  real :: rhozero,h
 
  filename = find_phantom_datafile(file_in,'isolatedgalaxy/arpic_lowrestest')
 
- open(newunit=lu,file=filename,form='formatted')
+ open(newunit=lu,file=filename,form='formatted',status='old',iostat=ierr)
+ if (ierr /= 0) call fatal('setup_galdisc','data file not found: '//trim(filename))
  i = istart
  do while(i <= iend)
     read(lu,*) xis,yis,zis,mis,vxis,vyis,vzis,phaseis
@@ -431,13 +433,13 @@ subroutine setup_gas_only_disc(xyzh,massoftype,npartoftype,npart,totmass,rhozero
  use physcon,        only:pi,kpc,solarm
  use units,          only:udist,umass
  use random,         only:ran2
- integer,          intent(out)   :: iseed
- real,             intent(inout) :: xyzh(:,:),massoftype(:)
- integer,          intent(inout) :: npartoftype(:)
- integer,          intent(out)   :: npart
- real,             intent(inout) :: totmass
- real,             intent(in)    :: hfact
- real,             intent(out)   :: rhozero
+ integer, intent(out)   :: iseed
+ real,    intent(inout) :: xyzh(:,:),massoftype(:)
+ integer, intent(inout) :: npartoftype(:)
+ integer, intent(out)   :: npart
+ real,    intent(inout) :: totmass
+ real,    intent(in)    :: hfact
+ real,    intent(out)   :: rhozero
  real :: faclod,xmin,xmax,ymin,ymax,zmin,zmax
  real :: rmax,rcyl2,rcylin2,totvol
  real :: xmax5,ymax5,zmax5,xi,yi,zi,r2,h1
@@ -540,12 +542,12 @@ subroutine setup_live_stars(id,xyzh,vxyzu,massoftype,npartoftype,npart,totmass,t
  use datafiles, only:find_phantom_datafile
  use physcon,   only:pi,kpc
  use units,     only:udist
- integer,          intent(in)    :: id
- real,             intent(inout) :: xyzh(:,:),vxyzu(:,:),massoftype(:)
- integer,          intent(inout) :: npartoftype(:)
- integer,          intent(out)   :: npart
- real,             intent(out)   :: totmass
- real,             intent(in)    :: thermal,hfact
+ integer, intent(in)    :: id
+ real,    intent(inout) :: xyzh(:,:),vxyzu(:,:),massoftype(:)
+ integer, intent(inout) :: npartoftype(:)
+ integer, intent(out)   :: npart
+ real,    intent(out)   :: totmass
+ real,    intent(in)    :: thermal,hfact
  character(120) :: galsetupic
  real :: totmassD,totmassG,totmassB,totmassH
  real :: totvol,totvolB,totvolH
@@ -649,12 +651,14 @@ end subroutine setup_live_stars
 !-----------------------------------------------------------------------
 subroutine read_ic_parameters(filename,npartoftype)
  use part, only:igas,istar,ibulge,idarkmatter
- character(len=*), intent(in)    :: filename
- integer,          intent(out)   :: npartoftype(:)
- integer :: i,lu
+ use io,   only:fatal
+ character(len=*), intent(in)  :: filename
+ integer,          intent(out) :: npartoftype(:)
+ integer :: i,lu,ierr
  character(30) :: sometext
 
- open(newunit=lu,file=filename,form='formatted')
+ open(newunit=lu,file=filename,form='formatted',status='old',iostat=ierr)
+ if (ierr /= 0) call fatal('setup_galdisc','data file not found: '//trim(filename))
  do i=1,5
     if (i==1) then
        read(lu,*) sometext,npartoftype(igas)

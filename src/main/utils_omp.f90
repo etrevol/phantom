@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -33,7 +33,7 @@ contains
 subroutine info_omp
 !$ integer, external :: omp_get_num_threads
 
-!$omp parallel
+!$omp parallel default(none)
 !$omp single
 !$ print "(a,i4,a)",' Running in openMP on',omp_get_num_threads(),' threads'
 !$omp end single
@@ -61,7 +61,7 @@ subroutine init_omp
 !$  call omp_init_lock(ipart_omp_lock(i))
 !$ enddo
 
-!$omp parallel
+!$omp parallel default(none) shared(omp_num_threads)
 !$ omp_num_threads = omp_get_num_threads()
 !$omp end parallel
 

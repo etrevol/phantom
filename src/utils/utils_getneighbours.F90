@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -20,8 +20,8 @@ module getneighbours
  implicit none
 
  public :: generate_neighbour_lists, neighbours_stats, read_neighbours, write_neighbours
- integer, public, allocatable, dimension(:)   :: neighcount
- integer, public, allocatable, dimension(:,:) :: neighb
+ integer, public, allocatable :: neighcount(:)
+ integer, public, allocatable :: neighb(:,:)
  real,    public            :: meanneigh, sdneigh, neighcrit
  logical                    :: neigh_overload
  integer,         parameter :: maxcellcache =  50000
@@ -42,15 +42,15 @@ subroutine generate_neighbour_lists(xyzh,vxyzu,npart,dumpfile,write_neighbour_li
  use kernel,      only:radkern2
  use neighkdtree, only:ncells, leaf_is_active, build_tree, get_neighbour_list
  use part,        only:get_partinfo, igas, maxphase, iphase, iamboundary, iamtype
- use kdtree,      only:inodeparts,inoderange
+ use kdtree,      only:inodeparts,inoderange,ix,iy,iz,ih1
 #ifdef PERIODIC
  use boundary,    only:dxbound,dybound,dzbound
 #endif
- real,             intent(in)     :: xyzh(:,:),vxyzu(:,:)
- integer,          intent(in)     :: npart
- character(len=*), intent(in)     :: dumpfile
- logical,          intent(in)     :: write_neighbour_list
- real, allocatable, dimension(:,:) :: dumxyzh
+ real,             intent(in) :: xyzh(:,:),vxyzu(:,:)
+ integer,          intent(in) :: npart
+ character(len=*), intent(in) :: dumpfile
+ logical,          intent(in) :: write_neighbour_list
+ real, allocatable :: dumxyzh(:,:)
 
  integer      :: i,j,k,p,ip,icell,ineigh,nneigh,dummynpart
  integer      :: ineigh_all(neighall)
@@ -102,7 +102,7 @@ subroutine generate_neighbour_lists(xyzh,vxyzu,npart,dumpfile,write_neighbour_li
  ! Allocate threadprivate arrays within parallel region
  ! to ensure each thread gets allocated copy
  if (.not.allocated(listneigh)) allocate(listneigh(maxp))
- if (.not.allocated(xyzcache)) allocate(xyzcache(maxcellcache,4))
+ if (.not.allocated(xyzcache)) allocate(xyzcache(4,maxcellcache))
 
  !$omp do schedule(runtime)
  over_cells: do icell=1,int(ncells)
@@ -133,18 +133,25 @@ subroutine generate_neighbour_lists(xyzh,vxyzu,npart,dumpfile,write_neighbour_li
           ! Skip self
           if (i==j) cycle over_neighbours
 
-          dx = xyzh(1,i) - xyzh(1,j)
-          dy = xyzh(2,i) - xyzh(2,j)
-          dz = xyzh(3,i) - xyzh(3,j)
+          if (ineigh <= maxcellcache) then
+             ! positions from cache are already mod boundary
+             dx = xyzh(1,i) - xyzcache(ix,ineigh)
+             dy = xyzh(2,i) - xyzcache(iy,ineigh)
+             dz = xyzh(3,i) - xyzcache(iz,ineigh)
+             hj1  = xyzcache(ih1,ineigh)
+          else
+             dx = xyzh(1,i) - xyzh(1,j)
+             dy = xyzh(2,i) - xyzh(2,j)
+             dz = xyzh(3,i) - xyzh(3,j)
 #ifdef PERIODIC
-          if (abs(dx) > 0.5*dxbound) dx = dx - dxbound*SIGN(1.0,dx)
-          if (abs(dy) > 0.5*dybound) dy = dy - dybound*SIGN(1.0,dy)
-          if (abs(dz) > 0.5*dzbound) dz = dz - dzbound*SIGN(1.0,dz)
+             if (abs(dx) > 0.5*dxbound) dx = dx - dxbound*SIGN(1.0,dx)
+             if (abs(dy) > 0.5*dybound) dy = dy - dybound*SIGN(1.0,dy)
+             if (abs(dz) > 0.5*dzbound) dz = dz - dzbound*SIGN(1.0,dz)
 #endif
+             hj1  = 1.0/xyzh(4,j)
+          endif
           rij2 = dx*dx + dy*dy + dz*dz
           q2i  = rij2*hi21
-
-          hj1  = 1.0/xyzh(4,j)
           hj21 = hj1*hj1
           q2j  = rij2*hj21
 

@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -61,15 +61,15 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,&
  use timestep,     only:dtmax,tmax
  use infile_utils, only:infile_exists,get_options
  use kernel,       only:hfact_default
- integer,           intent(in)    :: id
- integer,           intent(inout) :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(out)   :: polyk,gamma,hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
- real,              intent(out)   :: vxyzu(:,:)
+ integer,          intent(in)    :: id
+ integer,          intent(inout) :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(out)   :: polyk,gamma,hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
+ real,             intent(out)   :: vxyzu(:,:)
  character(len=26)                :: filename
  integer :: i,ierr
  real    :: totmass
@@ -129,8 +129,8 @@ end function rhofunc
 !+
 !---------------------------------------------------
 real function Rfunc(y)
- real, parameter  :: delta = 0.05
  real, intent(in) :: y
+ real, parameter  :: delta = 0.05
  real :: fac1,fac2,yedgel,yedger
 
  yedgel = 0.5*ysize - 0.5*dy2

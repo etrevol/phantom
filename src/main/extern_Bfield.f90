@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -63,12 +63,12 @@ subroutine externBfield(xi,yi,zi,hi,vxi,vyi,vzi,rhoi, &
                         string)
 
  use io,  only:warning,error
- real, intent(in) :: xi,yi,zi,hi,vxi,vyi,vzi,rhoi
- real, intent(in) :: Bintx,Binty,Bintz
- real, intent(in) :: currJintx,currJinty,currJintz
- character(len=*), intent(in) :: string
- real, intent(out) :: Bextx,Bexty,Bextz,fextx,fexty,fextz
- real, intent(out) :: vdotgradBx,vdotgradBy,vdotgradBz
+ real,             intent(in)  :: xi,yi,zi,hi,vxi,vyi,vzi,rhoi
+ real,             intent(in)  :: Bintx,Binty,Bintz
+ real,             intent(in)  :: currJintx,currJinty,currJintz
+ character(len=*), intent(in)  :: string
+ real,             intent(out) :: Bextx,Bexty,Bextz,fextx,fexty,fextz
+ real,             intent(out) :: vdotgradBx,vdotgradBy,vdotgradBz
 
  ! local variables
  real rcyl,drcyl,rintorus2,rintorus,ra2,term
@@ -84,6 +84,12 @@ subroutine externBfield(xi,yi,zi,hi,vxi,vyi,vzi,rhoi, &
 !
  call get_torus_factors(xi,yi,zi,costheta,sintheta,cosphi,sinphi, &
                         rcyl,drcyl,rintorus,rintorus2,drintorus)
+!
+!--set defaults in case of early return / no external B field
+!
+ Bextx = 0.; Bexty = 0.; Bextz = 0.
+ fextx = 0.; fexty = 0.; fextz = 0.
+ vdotgradBx = 0.; vdotgradBy = 0.; vdotgradBz = 0.
 !
 !--get 1/rho
 !
@@ -160,15 +166,6 @@ subroutine externBfield(xi,yi,zi,hi,vxi,vyi,vzi,rhoi, &
 !
 !   Default: no external B field; do nothing and return
 !
-    Bextx = 0.
-    Bexty = 0.
-    Bextz = 0.
-    fextx = 0.
-    fexty = 0.
-    fextz = 0.
-    vdotgradBx = 0.
-    vdotgradBy = 0.
-    vdotgradBz = 0.
     return
  end select
 
@@ -368,7 +365,7 @@ end subroutine vec_xyz_to_rthetaphi
 !------------------------------------------------------------
 subroutine get_torus_factors(xi,yi,zi,costheta,sintheta,cosphi,sinphi,&
            rcyl,drcyl,rintorus,rintorus2,drintorus)
- real, intent(in) :: xi,yi,zi
+ real, intent(in)  :: xi,yi,zi
  real, intent(out) :: rcyl,drcyl,rintorus,rintorus2,drintorus
  real, intent(out) :: costheta,sintheta,cosphi,sinphi
 

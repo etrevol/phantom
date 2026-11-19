@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -66,7 +66,7 @@ subroutine compute_energies(t)
  use dim,            only:maxp,maxvxyzu,maxalpha,maxtypes,mhd_nonideal,&
                           use_dust,maxdusttypes,do_radiation,gr,use_krome,&
                           use_apr,use_sinktree,maxpsph
- use part,           only:rhoh,xyzh,vxyzu,massoftype,npart,maxphase,iphase,&
+ use part,           only:rho,xyzh,vxyzu,massoftype,npart,maxphase,iphase,&
                           alphaind,Bevol,divcurlB,iamtype,igamma,&
                           igas,idust,iboundary,istar,idarkmatter,ibulge,&
                           nptmass,xyzmh_ptmass,vxyz_ptmass,fxyz_ptmass,isdeadh,&
@@ -82,7 +82,7 @@ subroutine compute_energies(t)
  use io,             only:id,fatal,master
  use externalforces, only:externalforce,externalforce_vdependent,was_accreted,accradius1
  use options,        only:iexternalforce,calc_erot,alpha,ieos,use_dustfrac,implicit_radiation
- use mpiutils,       only:reduceall_mpi
+ use mpiutils,       only:reduceall_mpi,reduce_in_place_mpi
  use ptmass,         only:get_accel_sink_gas,use_regnbody
  use subgroup,       only:get_pot_subsys
  use viscosity,      only:irealvisc,shearfunc
@@ -92,7 +92,7 @@ subroutine compute_energies(t)
  use kernel,         only:radkern
  use timestep,       only:dtmax
  use part,           only:metrics,metrics_ptmass
- use metric_tools,   only:unpack_metric
+ use metric_tools,   only:unpack_metric,imet_binarybh,imetric
  use utils_gr,       only:dot_product_gr,get_geodesic_accel
  use part,           only:luminosity
  use dust,           only:get_ts,idrag
@@ -172,7 +172,7 @@ subroutine compute_energies(t)
 
 !$omp parallel default(none) &
 !$omp shared(maxp,maxphase,maxalpha,maxpsph) &
-!$omp shared(xyzh,vxyzu,pxyzu,rad,iexternalforce,npart,t,id) &
+!$omp shared(xyzh,vxyzu,pxyzu,rad,iexternalforce,npart,t,id,rho) &
 !$omp shared(alphaind,massoftype,irealvisc,iu,aprmassoftype) &
 !$omp shared(ieos,gamma,nptmass,xyzmh_ptmass,vxyz_ptmass,xyzcom) &
 !$omp shared(Bevol,divcurlB,iphase,poten,dustfrac,use_dustfrac) &
@@ -204,7 +204,7 @@ subroutine compute_energies(t)
 !$omp reduction(+:ekinacc,ethermacc,emagacc,epotacc,eradacc) &
 !$omp reduction(+:ekin,etherm,emag,epot,erad,vrms,rmsmach,ierrlist)
  call initialise_ev_data(ev_data_thread)
- np_rho_thread  = 0
+ np_rho_thread = 0
 !$omp do
  do i=1,npart
     xi = xyzh(1,i)
@@ -212,7 +212,7 @@ subroutine compute_energies(t)
     zi = xyzh(3,i)
     hi = xyzh(4,i)
     was_not_accreted = .not.was_accreted(iexternalforce,hi)
-    if (.not.isdead_or_accreted(hi) .or. .not. was_not_accreted) then
+    if (.not.isdead_or_accreted(hi) .or. (.not. was_not_accreted .and. .not.(gr .and. imetric==imet_binarybh))) then
        if (maxphase==maxp) then
           itype = iamtype(iphase(i))
           if (itype <= 0) call fatal('energies','particle type <= 0')
@@ -229,7 +229,7 @@ subroutine compute_energies(t)
           endif
        endif
 
-       rhoi = rhoh(hi,pmassi)
+       rhoi = rho(i)
        if (was_not_accreted) then
           call ev_data_update(ev_data_thread,iev_rho,rhoi)
           if (.not.gas_only) then
@@ -339,7 +339,7 @@ subroutine compute_energies(t)
           dumy = 0.
           dumz = 0.
           epottmpi = 0.
-          call externalforce(iexternalforce,xi,yi,zi,hi,t,dumx,dumy,dumz,epottmpi,ii=i)
+          call externalforce(iexternalforce,xi,yi,zi,hi,t,dumx,dumy,dumz,epottmpi,ii=i,rhoi=rho(i))
           call externalforce_vdependent(iexternalforce,xyzh(1:3,i),vxyzu(1:3,i),fdum,epottmpi)
           epoti = pmassi*epottmpi
        endif
@@ -404,7 +404,11 @@ subroutine compute_energies(t)
           endif
 
           ! thermal energy
-          ponrhoi  = eos_vars(igasP,i)/rhoi
+          if (rhoi > tiny(rhoi)) then
+             ponrhoi  = eos_vars(igasP,i)/rhoi
+          else
+             ponrhoi  = 0.
+          endif
           spsoundi = eos_vars(ics,i)
           gammai   = eos_vars(igamma,i)
           if (maxvxyzu >= 4) then
@@ -416,7 +420,7 @@ subroutine compute_energies(t)
                 if (spsoundi < tiny(spsoundi) .and. vxyzu(iu,i) > 0. ) np_cs_eq_0 = np_cs_eq_0 + 1
              endif
           else
-             if ((ieos==2 .or. ieos == 5 .or. ieos == 17) .and. gammai > 1.001) then
+             if ((ieos==2 .or. ieos == 5) .and. gammai > 1.001) then
                 !--thermal energy using polytropic equation of state
                 ethermi = pmassi*ponrhoi/(gammai-1.)*gasfrac
              elseif (ieos==9) then
@@ -618,8 +622,6 @@ subroutine compute_energies(t)
        angy   = angy + xyzmh_ptmass(ispiny,i)
        angz   = angz + xyzmh_ptmass(ispinz,i)
 
-       if (use_sinktree) epot = epot + poten(i+maxpsph)
-
        ! rotational energy around each axis through the origin
        if (calc_erot) then
           call get_erot(xi,yi,zi,vxi,vyi,vzi,xyzcom,pmassi,erotxi,erotyi,erotzi)
@@ -679,6 +681,14 @@ subroutine compute_energies(t)
  !LS I don't know what to do here ? gamma should be replaced by gammai ?
  if (maxvxyzu >= 4 .or. gamma >= 1.0001) etherm = reduceall_mpi('+',etherm)
  emag = reduceall_mpi('+',emag)
+
+ ! with sinks in the tree, the potential of each sink is set only on the task that holds it
+ if (use_sinktree) then
+    do i=1,nptmass
+       if (xyzmh_ptmass(4,i) < 0.) cycle
+       epot = epot + poten(i+maxpsph)
+    enddo
+ endif
  epot = reduceall_mpi('+',epot)
  erad = reduceall_mpi('+',erad)
  if (nptmass > 1) then
@@ -747,8 +757,8 @@ subroutine compute_energies(t)
  endif
 
  if (use_dust) then
-    mgas  = reduceall_mpi('+',mgas)
-    mdust = reduceall_mpi('+',mdust)
+    mgas = reduceall_mpi('+',mgas)
+    call reduce_in_place_mpi('+',mdust,ndusttypes)
  endif
 
  if (.not. gas_only) then
@@ -839,7 +849,7 @@ subroutine compute_energies(t)
 
  if (dynamic_bdy) then
     ev_data(iev_sum,iev_mass) = mtot
-    call find_dynamic_boundaries(npart,nptmass,dtmax,xyz_n_all,xyz_x_all,ierr)
+    call find_dynamic_boundaries(npart,nptmass,dtmax,xyz_n_all,xyz_x_all,ierr,rho)
     ev_data(iev_sum,iev_bdy(1,1)) = xyz_n_all(1)
     ev_data(iev_sum,iev_bdy(1,2)) = xyz_x_all(1)
     ev_data(iev_sum,iev_bdy(2,1)) = xyz_n_all(2)
@@ -891,7 +901,7 @@ end subroutine get_erot
 !+
 !----------------------------------------------------------------
 subroutine initialise_ev_data(evdata)
- real,    intent(inout) :: evdata(4,0:inumev)
+ real, intent(inout) :: evdata(4,0:inumev)
 
  evdata            = 0.0
  evdata(iev_max,:) = -huge(evdata(iev_max,:))
@@ -919,8 +929,8 @@ end subroutine ev_data_update
 !+
 !----------------------------------------------------------------
 subroutine collate_ev_data(evdata_thread,evdata)
- real,            intent(in)    :: evdata_thread(4,0:inumev)
- real,            intent(inout) :: evdata(4,0:inumev)
+ real, intent(in)    :: evdata_thread(4,0:inumev)
+ real, intent(inout) :: evdata(4,0:inumev)
  integer                        :: i
 
  do i = 1,iquantities
@@ -937,8 +947,8 @@ end subroutine collate_ev_data
 !----------------------------------------------------------------
 subroutine finalise_ev_data(evdata,dnptot)
  use mpiutils, only:reduceall_mpi
- real,            intent(inout) :: evdata(4,0:inumev)
- real,            intent(in)    :: dnptot
+ real, intent(inout) :: evdata(4,0:inumev)
+ real, intent(in)    :: dnptot
  integer                        :: i
 
  do i = 1,iquantities

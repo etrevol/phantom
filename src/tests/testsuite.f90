@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -16,13 +16,13 @@ module test
 ! :Runtime parameters: None
 !
 ! :Dependencies: dim, io, io_summary, memory, mpiutils, options, testapr,
-!   testcooling, testcorotate, testdamping, testderivs, testdust, testeos,
-!   testexternf, testgeometry, testgnewton, testgr, testgravity,
-!   testgrowth, testindtstep, testiorig, testkdtree, testkernel,
-!   testlinalg, testlum, testmpi, testneigh, testnimhd, testorbits,
-!   testpart, testpoly, testptmass, testradiation, testrwdump, testsedov,
-!   testsetdisc, testsethier, testsetstar, testsmol, teststep, testunits,
-!   testwind, timing
+!   testcoala, testcooling, testcorotate, testdamping, testderivs,
+!   testdivbproj, testdust, testeos, testexternf, testgeometry,
+!   testgnewton, testgr, testgravity, testgrowth, testindtstep, testinfile,
+!   testiorig, testkdtree, testkernel, testlinalg, testlum, testmpi,
+!   testneigh, testnimhd, testorbits, testpart, testpoly, testptmass,
+!   testradiation, testrwdump, testsedov, testsetdisc, testsethier,
+!   testsetstar, teststep, testunits, testwind, timing
 !
  implicit none
  public :: testsuite
@@ -35,6 +35,7 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  use io,           only:iprint,id,master,iverbose,error
  use io_summary,   only:summary_initialise
  use testderivs,   only:test_derivs
+ use testdivbproj, only:test_divb_projection
  use teststep,     only:test_step
  use testneigh,    only:test_neigh
  use testkdtree,   only:test_kdtree
@@ -42,7 +43,7 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  use testgravity,  only:test_gravity
  use testdust,     only:test_dust
  use testgrowth,   only:test_growth
- use testsmol,     only:test_smol
+ use testcoala,    only:test_coala
  use testpart,     only:test_part
  use testnimhd,    only:test_nonidealmhd
  use testapr,      only:test_apr
@@ -66,22 +67,23 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  use testdamping,  only:test_damping
  use testradiation,only:test_radiation
  use testunits,    only:test_units
+ use testinfile,   only:test_infile
  use testorbits,   only:test_orbits
  use testlum,      only:test_lum
  use testmpi,      only:test_mpi
  use testlinalg,   only:test_linalg
  use timing,       only:get_timings,print_time
  use mpiutils,     only:barrier_mpi
- use dim,          only:do_radiation,use_apr,gr,mpi,use_sinktree,maxp
+ use dim,          only:do_radiation,use_apr,gr,mpi,use_sinktree,maxp_requested,gravity
  use memory,       only:deallocate_memory,allocate_memory
  character(len=*), intent(in)    :: string
  logical,          intent(in)    :: first,last
  integer,          intent(inout) :: ntests,npass,nfail
- logical :: testall,doneigh,dokdtree,doderivs,dokernel,dostep,dorwdump,dosmol
+ logical :: testall,doneigh,dokdtree,doderivs,dokernel,dostep,dorwdump,docoala
  logical :: doptmass,dognewton,dosedov,doexternf,doindtstep,dogravity,dogeom
  logical :: dosetdisc,dosetstar,doeos,docooling,dodust,donimhd,docorotate,doany,dogrowth
  logical :: dogr,doradiation,dopart,dopoly,dompi,dohier,dodamp,dowind
- logical :: doiorig,doapr,dounits,dolum,dosinktree,doorbits,dolinalg
+ logical :: doiorig,doapr,dounits,dolum,dosinktree,doorbits,dolinalg,dodivb,doinfile
  real(kind=4) :: twall1,tcpu1,twall2,tcpu2
 
  call summary_initialise
@@ -127,7 +129,7 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  docooling   = .false.
  dogeom      = .false.
  dogr        = .false.
- dosmol      = .false.
+ docoala     = .false.
  doradiation = .false.
  dopoly      = .false.
  dompi       = .false.
@@ -137,10 +139,12 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  doapr       = .false.
  doiorig     = .false.
  dounits     = .false.
+ doinfile    = .false.
  dolum       = .false.
  dosinktree  = .false.
  doorbits    = .false.
  dolinalg    = .false.
+ dodivb      = .false.
 
  if (index(string,'deriv')     /= 0) doderivs    = .true.
  if (index(string,'grav')      /= 0) dogravity   = .true.
@@ -155,7 +159,7 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  if (index(string,'cool')      /= 0) docooling   = .true.
  if (index(string,'geom')      /= 0) dogeom      = .true.
  if (index(string,'gr')        /= 0) dogr        = .true.
- if (index(string,'smol')      /= 0) dosmol      = .true.
+ if (index(string,'coala')     /= 0) docoala      = .true.
  if (index(string,'rad')       /= 0) doradiation = .true.
  if (index(string,'poly')      /= 0) dopoly      = .true.
  if (index(string,'mpi')       /= 0) dompi       = .true.
@@ -166,12 +170,14 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  if (index(string,'ptmass')    /= 0) doptmass    = .true.
  if (index(string,'apr')       /= 0) doapr       = .true.
  if (index(string,'units')     /= 0) dounits     = .true.
+ if (index(string,'infile')    /= 0) doinfile    = .true.
  if (index(string,'sinktree')  /= 0) dosinktree  = .true.
  if (index(string,'orbits')    /= 0) doorbits    = .true.
+ if (index(string,'divb')      /= 0) dodivb      = .true.
 
  doany = any((/doderivs,dogravity,dodust,dogrowth,donimhd,dorwdump,&
-               doptmass,docooling,dogeom,dogr,dosmol,doradiation,&
-               dopart,dopoly,dohier,dodamp,dowind,doiorig,doapr,dounits,dolum,doorbits/))
+               doptmass,docooling,dogeom,dogr,docoala,doradiation,&
+               dopart,dopoly,dohier,dodamp,dowind,doiorig,doapr,dounits,dolum,doorbits,dodivb,doinfile/))
 
  select case(trim(string))
  case('kernel','kern')
@@ -194,7 +200,7 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
     dosedov = .true.
  case('indtstep','ind')
     doindtstep = .true.
- case('gravity','grav')
+ case('gravity','grav','plummer','hernquist','fmm','taylorseries','directsum','selfgrav_comp')
     dogravity = .true.
  case('dump','rwdump','dumprw')
     dorwdump = .true.
@@ -222,6 +228,8 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
     doapr = .true.
  case('units')
     dounits = .true.
+ case('infile','options')
+    doinfile = .true.
  case('orbits')
     doorbits = .true.
  case('lum')
@@ -230,6 +238,8 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
     dosinktree = .true.
  case('linalg')
     dolinalg = .true.
+ case('divb')
+    dodivb = .true.
  case default
     if (.not.doany) testall = .true.
  end select
@@ -238,12 +248,7 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
 !
 !--apr test
 !
- if (use_apr.and.testall) then
-    write(*,*) '-DAPR not currently compatible with test suite, recompile with APR=no'
-    return
- elseif (use_apr.and.doapr) then
-    call test_apr(ntests,npass)
- endif
+ if (use_apr .and. (doapr .or. testall)) call test_apr(ntests,npass)
 
 !
 !--test kernel module
@@ -316,10 +321,10 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
     call set_default_options_testsuite(iverbose) ! restore defaults
  endif
 !
-!--test of smoluchowsky growth solver
+!--test of COALA growth solver
 !
- if (dosmol.or.testall) then
-    call test_smol(ntests,npass)
+ if (docoala.or.testall) then
+    call test_coala(ntests,npass)
     call set_default_options_testsuite(iverbose) ! restore defaults
  endif
 !
@@ -356,6 +361,12 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
  if (dounits.or.testall) then
     call test_units(ntests,npass)
     call set_default_options_testsuite(iverbose) ! restore defaults
+ endif
+!
+!--test of parameter file handling
+!
+ if (doinfile.or.testall) then
+    call test_infile(ntests,npass)
  endif
 !
 !--test of orbits utilities
@@ -449,6 +460,13 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
     call set_default_options_testsuite(iverbose) ! restore defaults
  endif
 !
+!--adjoint div B projection
+!
+ if (dodivb.or.testall) then
+    call test_divb_projection(ntests,npass)
+    call set_default_options_testsuite(iverbose) ! restore defaults
+ endif
+!
 !--test of damping module
 !
  if (dodamp.or.testall) then
@@ -484,13 +502,13 @@ subroutine testsuite(string,first,last,ntests,npass,nfail)
     call set_default_options_testsuite(iverbose) ! restore defaults
  endif
 !
-!--test of sink in tree
+!--test of sink in tree (needs self-gravity)
 !
- use_sinktree = dosinktree
+ use_sinktree = dosinktree .and. gravity
  if ((dosinktree.or.testall) .and. use_sinktree) then
-    call allocate_memory(int8(maxp),reallocation=.true.)
+    call allocate_memory(int8(maxp_requested),reallocation=.true.)
     call test_gravity(ntests,npass,string)
-    call test_ptmass(ntests,npass,string)
+    if (string /= 'sinktreegrav') call test_ptmass(ntests,npass,string)
     call set_default_options_testsuite(iverbose) ! restore defaults
     use_sinktree = .false.
  endif

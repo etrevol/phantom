@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -50,16 +50,16 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  use io,           only:master
  use physcon,      only:pi
  use infile_utils, only:get_options
- integer,           intent(in)    :: id
- integer,           intent(out)   :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: vxyzu(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(out)   :: polyk,gamma
- real,              intent(in)    :: hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
+ integer,          intent(in)    :: id
+ integer,          intent(out)   :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: vxyzu(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(out)   :: polyk,gamma
+ real,             intent(in)    :: hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
  integer :: i,ierr
  real    :: rcyl,gam1,uuzero,costheta,sintheta
 

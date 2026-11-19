@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -20,12 +20,12 @@ module analysis
 ! :Dependencies: centreofmass, extern_gwinspiral, io, part, physcon,
 !   prompting, readwrite_dumps, units
 !
- use io,              only: fatal
- use part,            only: rhoh
- use physcon,         only: pi
- use centreofmass,    only: get_centreofmass
+ use io,              only:fatal
+ use part,            only:rho
+ use physcon,         only:pi
+ use centreofmass,    only:get_centreofmass
  use readwrite_dumps, only:opened_full_dump
- use extern_gwinspiral, only:Nstar
+ use extern_gwinspiral, only:Nstar_gw
  implicit none
  character(len=20), parameter, public :: analysistype = 'NSmerger'
  !
@@ -50,8 +50,8 @@ module analysis
 contains
 !--------------------------------------------------------------------------
 subroutine do_analysis(dumpfile,num,xyzh,vxyzu,particlemass,npart,time,iunit)
- use prompting,      only: prompt
- use units,          only: unit_density
+ use prompting,      only:prompt
+ use units,          only:unit_density
  character(len=*), intent(in) :: dumpfile
  integer,          intent(in) :: num,npart,iunit
  real,             intent(in) :: xyzh(:,:),vxyzu(:,:)
@@ -75,8 +75,8 @@ subroutine do_analysis(dumpfile,num,xyzh,vxyzu,particlemass,npart,time,iunit)
     !
     !--Get the index range for each star
     ! (Note from DJP: This should now be automatically read from the dump header)
-    if (Nstar(1) <= 0) call fatal('analysis_NSmerger','Require Nstar(1) > 0 in header of dump file')
-    if (Nstar(2) <= 0) call fatal('analysis_NSmerger','Require Nstar(2) > 0 in header of dump file')
+    if (Nstar_gw(1) <= 0) call fatal('analysis_NSmerger','Require Nstar_gw(1) > 0 in header of dump file')
+    if (Nstar_gw(2) <= 0) call fatal('analysis_NSmerger','Require Nstar_gw(2) > 0 in header of dump file')
     !
     !--Prompt for the density_cut off
     if (choice > 1) then
@@ -148,8 +148,8 @@ subroutine trace_com(dumpfile,xyzh,vxyzu,time,npart,iunit)
  endif
  !
  !--Get centre of masses of the stars
- call get_centreofmass(com1,vcom1,nstar(1),xyzh(:,1:nstar(1)),vxyzu(:,1:nstar(1)))
- call get_centreofmass(com2,vcom2,nstar(2),xyzh(:,nstar(1)+1:npart),vxyzu(:,nstar(1)+1:npart))
+ call get_centreofmass(com1,vcom1,Nstar_gw(1),xyzh(:,1:Nstar_gw(1)),vxyzu(:,1:Nstar_gw(1)))
+ call get_centreofmass(com2,vcom2,Nstar_gw(2),xyzh(:,Nstar_gw(1)+1:npart),vxyzu(:,Nstar_gw(1)+1:npart))
  !
  rad = sqrt( (com1(1)-com2(1))**2 + (com1(2)-com2(2))**2 + (com1(3)-com2(3))**2 )
  !
@@ -199,13 +199,13 @@ subroutine calculate_TW(dumpfile,xyzh,vxyzu,time,npart,iunit,particlemass)
  eroty = 0.
  erotz = 0.
 !$omp parallel default(none) &
-!$omp shared(npart,xyzh,vxyzu,particlemass,com,vcom,density_cutoff) &
+!$omp shared(npart,xyzh,vxyzu,particlemass,com,vcom,density_cutoff,rho) &
 !$omp private(i,r,v,rcrossvx,rcrossvy,rcrossvz,radxy2,radyz2,radxz2,rad2) &
 !$omp reduction(+:erotx,eroty,erotz,npartmeasured) &
 !$omp reduction(max:rmax2)
 !$omp do
  do i=1,npart
-    if (rhoh(xyzh(4,i),particlemass) > density_cutoff) then
+    if (rho(i) > density_cutoff) then
        r = xyzh(1:3,i)  - com
        v = vxyzu(1:3,i) - vcom
        ! r cross v
@@ -238,14 +238,14 @@ subroutine calculate_TW(dumpfile,xyzh,vxyzu,time,npart,iunit,particlemass)
  !--Calculate gravitational potential energy
  grav = 0.
 !$omp parallel default(none) &
-!$omp shared(npart,xyzh,particlemass,density_cutoff) &
+!$omp shared(npart,xyzh,particlemass,density_cutoff,rho) &
 !$omp private(i,j,r,rad2) &
 !$omp reduction(+:grav)
 !$omp do
  do i=1,npart
-    if (rhoh(xyzh(4,i),particlemass) > density_cutoff) then
+    if (rho(i) > density_cutoff) then
        do j=i+1,npart
-          if (rhoh(xyzh(4,j),particlemass) > density_cutoff) then
+          if (rho(j) > density_cutoff) then
              r    = xyzh(1:3,i) - xyzh(1:3,j)
              rad2 = dot_product(r,r)
              if (rad2 > 0.0) grav = grav + 1.0/sqrt(rad2)
@@ -505,11 +505,11 @@ end subroutine calculate_midplane_profile
 !+
 !-----------------------------------------------------------------------
 subroutine get_momentofinertia(xyzh,npart,npartused,principle,evectors,particlemass,rmax)
- integer,          intent(in)  :: npart
- integer,          intent(out) :: npartused
- real,             intent(in)  :: xyzh(:,:)
- real,             intent(in)  :: particlemass
- real,             intent(out) :: principle(3), evectors(3,3),rmax
+ integer, intent(in)  :: npart
+ integer, intent(out) :: npartused
+ real,    intent(in)  :: xyzh(:,:)
+ real,    intent(in)  :: particlemass
+ real,    intent(out) :: principle(3), evectors(3,3),rmax
  integer                       :: i
  real                          :: inertia(3,3)
  real                          :: x,y,z,r2,rmax2
@@ -518,7 +518,7 @@ subroutine get_momentofinertia(xyzh,npart,npartused,principle,evectors,particlem
  npartused = 0
  rmax2     = 0.0
  do i = 1,npart
-    if (rhoh(xyzh(4,i),particlemass) > density_cutoff) then
+    if (rho(i) > density_cutoff) then
        x = xyzh(1,i) - com(1)
        y = xyzh(2,i) - com(2)
        z = xyzh(3,i) - com(3)
@@ -569,7 +569,7 @@ subroutine jacobi(a,n,np,d,v,nrot)
 ! nrot returns the number  of Jacobi rotations that were required.
 !
  integer :: i,ip,iq,j
- real ::  c,g,h,s,sm,t,tau,theta,tresh,b(NMAX),z(NMAX)
+ real :: c,g,h,s,sm,t,tau,theta,tresh,b(NMAX),z(NMAX)
  do 12, ip=1,n  !Initialize  to  the  identity  matrix.
     do 11, iq=1,n
        v(ip,iq)=0.

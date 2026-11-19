@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -52,15 +52,15 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
  use ptmass,      only:use_fourthorder,use_regnbody
  use setup_params,only:npart_total
  use infile_utils,only:get_options
- integer,           intent(in)    :: id
- integer,           intent(inout) :: npart
- integer,           intent(out)   :: npartoftype(:)
- real,              intent(out)   :: xyzh(:,:)
- real,              intent(out)   :: massoftype(:)
- real,              intent(out)   :: polyk,gamma,hfact
- real,              intent(inout) :: time
- character(len=20), intent(in)    :: fileprefix
- real,              intent(out)   :: vxyzu(:,:)
+ integer,          intent(in)    :: id
+ integer,          intent(inout) :: npart
+ integer,          intent(out)   :: npartoftype(:)
+ real,             intent(out)   :: xyzh(:,:)
+ real,             intent(out)   :: massoftype(:)
+ real,             intent(out)   :: polyk,gamma,hfact
+ real,             intent(inout) :: time
+ character(len=*), intent(in)    :: fileprefix
+ real,             intent(out)   :: vxyzu(:,:)
  character(len=len(datafile)) :: filename
  integer :: ntot
  integer :: ierr,i
@@ -109,6 +109,7 @@ subroutine setpart(id,npart,npartoftype,xyzh,massoftype,vxyzu,polyk,gamma,hfact,
 !
  filename = find_phantom_datafile(datafile,"starcluster")
  call read_ptmass_data(filename,xyzmh_ptmass,vxyz_ptmass,nptmass,ierr)
+ if (ierr /= 0) call fatal('setup','data file not found: '//trim(filename))
 
  mtot = sum(xyzmh_ptmass(4,:))
 
@@ -152,10 +153,10 @@ end subroutine setpart
 subroutine read_ptmass_data(filename,xyzmh_ptmass,vxyz_ptmass,n,ierr)
  use io,    only:error
  use units, only:unit_velocity
- character(len=*), intent(in) :: filename
- real,    intent(out)   :: xyzmh_ptmass(:,:), vxyz_ptmass(:,:)
- integer, intent(inout) :: n
- integer, intent(out)   :: ierr
+ character(len=*), intent(in)    :: filename
+ real,             intent(out)   :: xyzmh_ptmass(:,:), vxyz_ptmass(:,:)
+ integer,          intent(inout) :: n
+ integer,          intent(out)   :: ierr
  integer :: iunit,n_input
 
  n_input = n
@@ -219,8 +220,8 @@ subroutine read_setupfile(filename,ierr)
  use infile_utils, only:open_db_from_file,inopts,close_db,read_inopt
  use dim,          only:maxvxyzu
  character(len=*), intent(in)  :: filename
- integer,          parameter   :: lu = 21
  integer,          intent(out) :: ierr
+ integer,          parameter   :: lu = 21
  integer                       :: nerr
  type(inopts), allocatable     :: db(:)
 

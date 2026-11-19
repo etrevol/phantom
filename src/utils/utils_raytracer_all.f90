@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -49,17 +49,17 @@ contains
  !--------------------------------------------------------------------------
 subroutine get_all_tau_adaptive(npart, primary, xyzh, kappa, Rstar, minOrder,&
                                  refineLevel, refineScheme, taus, companion, Rcomp)
- integer, intent(in) :: npart, minOrder, refineLevel, refineScheme
- real, intent(in)    :: primary(3), kappa(:), xyzh(:,:), Rstar
+ integer, intent(in)  :: npart, minOrder, refineLevel, refineScheme
+ real,    intent(in)  :: primary(3), kappa(:), xyzh(:,:), Rstar
+ real,    intent(out) :: taus(:)
  real, optional      :: Rcomp, companion(3)
- real, intent(out)   :: taus(:)
 
  integer     :: i, nrays, nsides, index
  real        :: normCompanion, theta0, unitCompanion(3), theta, root, dist, vec(3), dir(3)
- real, dimension(:,:), allocatable :: dirs
- real, dimension(:,:), allocatable :: listsOfDists, listsOfTaus
- integer, dimension(:), allocatable :: indices, rays_dim
- real, dimension(:), allocatable    :: tau, dists
+ real, allocatable :: dirs(:,:)
+ real, allocatable :: listsOfDists(:,:), listsOfTaus(:,:)
+ integer, allocatable :: indices(:), rays_dim(:)
+ real, allocatable :: tau(:), dists(:)
 
  if (present(companion) .and. present(Rcomp)) then
     unitCompanion = companion-primary
@@ -74,7 +74,10 @@ subroutine get_all_tau_adaptive(npart, primary, xyzh, kappa, Rstar, minOrder,&
     allocate(dists(size(listsOfDists(:,1))))
     allocate(rays_dim(nrays))
 
-    !$omp parallel do private(tau,dist,dir,dists,root,theta)
+    !$omp parallel do default(none) &
+    !$omp shared(nrays,dirs,unitCompanion,theta0,normCompanion,Rcomp,primary,xyzh) &
+    !$omp shared(kappa,Rstar,rays_dim,listsOfTaus,listsOfDists) &
+    !$omp private(tau,dist,dir,dists,root,theta,i)
     do i = 1, nrays
        tau=0.
        dists=0.
@@ -94,7 +97,9 @@ subroutine get_all_tau_adaptive(npart, primary, xyzh, kappa, Rstar, minOrder,&
 
     nsides = 2**(minOrder+refineLevel)
     taus = 0.
-    !$omp parallel do private(index,vec)
+    !$omp parallel do default(none) &
+    !$omp shared(npart,xyzh,primary,nsides,indices,listsOfTaus,listsOfDists,rays_dim,taus) &
+    !$omp private(index,vec,i)
     do i = 1, npart
        vec = xyzh(1:3,i)-primary
        call vec2pix_nest(nsides, vec, index)
@@ -132,16 +137,16 @@ end subroutine get_all_tau_adaptive
  !+
  !--------------------------------------------------------------------------
 subroutine get_rays(npart, primary, companion, Rcomp, xyzh, minOrder, refineLevel, refineScheme, rays, indices, nrays)
- integer, intent(in)  :: npart, minOrder, refineLevel, refineScheme
- real, intent(in)     :: primary(3), companion(3), xyzh(:,:), Rcomp
- real, allocatable, intent(out)    :: rays(:,:)
+ integer,              intent(in)  :: npart, minOrder, refineLevel, refineScheme
+ real,                 intent(in)  :: primary(3), companion(3), xyzh(:,:), Rcomp
+ real, allocatable,    intent(out) :: rays(:,:)
  integer, allocatable, intent(out) :: indices(:)
- integer, intent(out) :: nrays
+ integer,              intent(out) :: nrays
 
  real    :: theta, dist, phi, cosphi, sinphi
- real, dimension(:,:), allocatable  :: circ
+ real, allocatable :: circ(:,:)
  integer :: i, j, minNsides, minNrays, ind,n, maxOrder, max, distr(12*4**(minOrder+refineLevel))
- integer, dimension(:,:), allocatable  :: distrs
+ integer, allocatable :: distrs(:,:)
 
  maxOrder = minOrder+refineLevel
  nrays = 12*4**(maxOrder)
@@ -163,9 +168,11 @@ subroutine get_rays(npart, primary, companion, Rcomp, xyzh, minOrder, refineLeve
 
  !Fill a list to have the number distribution in angular space
  distr = 0
- !$omp parallel do private(ind)
+ !$omp parallel do default(none) &
+ !$omp shared(npart,maxOrder,xyzh,primary,distr) private(ind,i)
  do i = 1, npart
     call vec2pix_nest(2**maxOrder, xyzh(1:3, i)-primary, ind)
+    !$omp atomic update
     distr(ind+1) = distr(ind+1)+1
  enddo
  max = maxval(distr)
@@ -258,10 +265,10 @@ end subroutine get_rays
  !+
  !--------------------------------------------------------------------------
 subroutine merge_argsort(r,d)
- integer, intent(in), dimension(:) :: r
- integer, intent(out), dimension(size(r)) :: d
+ integer, intent(in)  :: r(:)
+ integer, intent(out) :: d(size(r))
 
- integer, dimension(size(r)) :: il
+ integer :: il(size(r))
 
  integer :: stepsize
  integer :: i,j,n,left,k,ksize
@@ -331,10 +338,10 @@ end subroutine merge_argsort
  !+
  !--------------------------------------------------------------------------
 subroutine get_all_tau_outwards(npart, primary, xyzh, kappa, Rstar, order, raypolation, taus, companion, Rcomp)
- integer, intent(in) :: npart, order, raypolation
- real, intent(in)    :: primary(3), kappa(:), Rstar, xyzh(:,:)
+ integer, intent(in)  :: npart, order, raypolation
+ real,    intent(in)  :: primary(3), kappa(:), Rstar, xyzh(:,:)
+ real,    intent(out) :: taus(:)
  real, optional      :: Rcomp, companion(3)
- real, intent(out)   :: taus(:)
 
  if (present(companion) .and. present(Rcomp)) then
     call get_all_tau_outwards_companion(npart, primary, xyzh, kappa, Rstar, companion, Rcomp, order, raypolation, taus)
@@ -363,14 +370,14 @@ end subroutine get_all_tau_outwards
  !--------------------------------------------------------------------------
 subroutine get_all_tau_outwards_single(npart, primary, xyzh, kappa, Rstar, order, raypolation, tau)
  use part, only:isdead_or_accreted
- integer, intent(in) :: npart,order, raypolation
- real, intent(in)    :: primary(3), kappa(:), Rstar, xyzh(:,:)
- real, intent(out)   :: tau(:)
+ integer, intent(in)  :: npart,order, raypolation
+ real,    intent(in)  :: primary(3), kappa(:), Rstar, xyzh(:,:)
+ real,    intent(out) :: tau(:)
 
  integer  :: i, nrays, nsides
  real     :: ray_dir(3),part_dir(3)
- real, dimension(:,:), allocatable  :: rays_dist, rays_tau
- integer, dimension(:), allocatable :: rays_dim
+ real, allocatable :: rays_dist(:,:), rays_tau(:,:)
+ integer, allocatable :: rays_dim(:)
  integer, parameter :: ndim = 200
 
  nrays = 12*4**order ! The number of rays traced given the healpix order
@@ -441,16 +448,16 @@ end subroutine get_all_tau_outwards_single
  !--------------------------------------------------------------------------
 subroutine get_all_tau_outwards_companion(npart, primary, xyzh, kappa, Rstar, companion, Rcomp, order, raypolation, tau)
  use part, only:isdead_or_accreted
- integer, intent(in) :: npart, order, raypolation
- real, intent(in)    :: primary(3), companion(3), kappa(:), Rstar, xyzh(:,:), Rcomp
- real, intent(out)   :: tau(:)
+ integer, intent(in)  :: npart, order, raypolation
+ real,    intent(in)  :: primary(3), companion(3), kappa(:), Rstar, xyzh(:,:), Rcomp
+ real,    intent(out) :: tau(:)
 
  integer  :: i, nrays, nsides
  real     :: normCompanion,theta0,phi,cosphi,sinphi,theta,sep,root
  real     :: ray_dir(3),part_dir(3),uvecCompanion(3)
- real, dimension(:,:), allocatable  :: dirs
- real, dimension(:,:), allocatable  :: rays_dist, rays_tau
- integer, dimension(:), allocatable :: rays_dim
+ real, allocatable :: dirs(:,:)
+ real, allocatable :: rays_dist(:,:), rays_tau(:,:)
+ integer, allocatable :: rays_dim(:)
  integer, parameter :: ndim = 200
 
  nrays = 12*4**order ! The number of rays traced given the healpix order
@@ -543,9 +550,9 @@ end subroutine get_all_tau_outwards_companion
  !+
  !--------------------------------------------------------------------------
 subroutine interpolate_tau(nsides, vec, rays_tau, rays_dist, rays_dim, raypolation, tau)
- integer, intent(in) :: nsides, rays_dim(:), raypolation
- real, intent(in)    :: vec(:), rays_tau(:,:), rays_dist(:,:)
- real, intent(out)   :: tau
+ integer, intent(in)  :: nsides, rays_dim(:), raypolation
+ real,    intent(in)  :: vec(:), rays_tau(:,:), rays_dist(:,:)
+ real,    intent(out) :: tau
 
  integer :: rayIndex, neighbours(8), nneigh, i, k
  real    :: tautemp, ray(3), vectemp(3), weight, tempdist(8), distRay_sq, vec_norm2
@@ -820,9 +827,9 @@ end subroutine interpolate_tau
  !+
  !--------------------------------------------------------------------------
 subroutine get_tau_on_ray(distance, tau_along_ray, dist_along_ray, len, tau)
- real, intent(in)    :: distance, tau_along_ray(:), dist_along_ray(:)
- integer, intent(in) :: len
- real, intent(out)   :: tau
+ real,    intent(in)  :: distance, tau_along_ray(:), dist_along_ray(:)
+ integer, intent(in)  :: len
+ real,    intent(out) :: tau
 
  integer :: L, R, m ! left, right and middle index for binary search
 
@@ -870,10 +877,10 @@ subroutine ray_tracer(primary, ray, xyzh, kappa, Rstar, tau_along_ray, dist_alon
  use neighkdtree, only:getneigh_pos,leaf_is_active,listneigh
  use kernel,      only:radkern
  use units,       only:umass,udist
- real, intent(in)     :: primary(3), ray(3), Rstar, xyzh(:,:), kappa(:)
- real, optional       :: maxDistance
- real, intent(out)    :: dist_along_ray(:), tau_along_ray(:)
+ real,    intent(in)  :: primary(3), ray(3), Rstar, xyzh(:,:), kappa(:)
+ real,    intent(out) :: dist_along_ray(:), tau_along_ray(:)
  integer, intent(out) :: len
+ real, optional       :: maxDistance
 
  integer, parameter :: maxcache = 0
  real, allocatable  :: xyzcache(:,:)
@@ -912,7 +919,7 @@ end subroutine ray_tracer
 
 logical function hasNext(inext, tau, distance, maxDistance)
  integer, intent(in) :: inext
- real, intent(in)    :: distance, tau
+ real,    intent(in) :: distance, tau
  real, optional      :: maxDistance
  real, parameter :: tau_max = 99.
  if (present(maxDistance)) then
@@ -946,10 +953,10 @@ end function hasNext
  !+
  !--------------------------------------------------------------------------
 subroutine get_all_tau_inwards(npart, primary, xyzh, neighbors, kappa, Rstar, tau, companion, R)
- real, intent(in)    :: primary(3), kappa(:), Rstar, xyzh(:,:)
- integer, intent(in) :: npart, neighbors(:,:)
+ real,    intent(in)  :: primary(3), kappa(:), Rstar, xyzh(:,:)
+ integer, intent(in)  :: npart, neighbors(:,:)
+ real,    intent(out) :: tau(:)
  real, optional      :: R, companion(3)
- real, intent(out)   :: tau(:)
 
  if (present(companion) .and. present(R)) then
     call get_all_tau_inwards_companion(npart, primary, xyzh, neighbors, kappa, Rstar, companion, R, tau)
@@ -975,13 +982,14 @@ end subroutine get_all_tau_inwards
  !+
  !--------------------------------------------------------------------------
 subroutine get_all_tau_inwards_single(npart, primary, xyzh, neighbors, kappa, Rstar, tau)
- real, intent(in)    :: primary(3), kappa(:), Rstar, xyzh(:,:)
- integer, intent(in) :: npart, neighbors(:,:)
- real, intent(out)   :: tau(:)
+ real,    intent(in)  :: primary(3), kappa(:), Rstar, xyzh(:,:)
+ integer, intent(in)  :: npart, neighbors(:,:)
+ real,    intent(out) :: tau(:)
 
  integer :: i
 
- !$omp parallel do
+ !$omp parallel do default(none) &
+ !$omp shared(npart,primary,xyzh,neighbors,kappa,Rstar,tau) private(i)
  do i = 1, npart
     call get_tau_inwards(i, primary, xyzh, neighbors, kappa, Rstar, tau(i))
  enddo
@@ -1007,9 +1015,9 @@ end subroutine get_all_tau_inwards_single
  !+
  !--------------------------------------------------------------------------
 subroutine get_all_tau_inwards_companion(npart, primary, xyzh, neighbors, kappa, Rstar, companion, Rcomp, tau)
- real, intent(in)    :: primary(3), companion(3), kappa(:), Rstar, xyzh(:,:), Rcomp
- integer, intent(in) :: npart, neighbors(:,:)
- real, intent(out)   :: tau(:)
+ real,    intent(in)  :: primary(3), companion(3), kappa(:), Rstar, xyzh(:,:), Rcomp
+ integer, intent(in)  :: npart, neighbors(:,:)
+ real,    intent(out) :: tau(:)
 
  integer :: i
  real    :: normCompanion, theta0, uvecCompanion(3), norm, theta, root, norm0
@@ -1019,7 +1027,9 @@ subroutine get_all_tau_inwards_companion(npart, primary, xyzh, neighbors, kappa,
  uvecCompanion = uvecCompanion/normCompanion
  theta0        = asin(Rcomp/normCompanion)
 
- !$omp parallel do private(norm,theta,root,norm0)
+ !$omp parallel do default(none) &
+ !$omp shared(npart,xyzh,primary,uvecCompanion,theta0,normCompanion,Rcomp) &
+ !$omp shared(neighbors,kappa,Rstar,tau) private(norm,theta,root,norm0,i)
  do i = 1, npart
     norm  = norm2(xyzh(1:3,i)-primary)
     theta = acos(dot_product(uvecCompanion, xyzh(1:3,i)-primary)/norm)
@@ -1058,13 +1068,13 @@ subroutine get_tau_inwards(point, primary, xyzh, neighbors, kappa, Rstar, tau)
  use neighkdtree, only:getneigh_pos,leaf_is_active,listneigh
  use kernel,      only:radkern
  use units,       only:umass,udist
- real, intent(in)    :: primary(3), xyzh(:,:), kappa(:), Rstar
- integer, intent(in) :: point, neighbors(:,:)
- real, intent(out)   :: tau
+ real,    intent(in)  :: primary(3), xyzh(:,:), kappa(:), Rstar
+ integer, intent(in)  :: point, neighbors(:,:)
+ real,    intent(out) :: tau
 
  integer :: i, next, previous, nneigh
  integer, parameter :: nmaxcache = 0
- real  :: xyzcache(0,nmaxcache)
+ real :: xyzcache(3, max(1,nmaxcache))
  real    :: ray(3), nextDist, previousDist, maxDist, dtaudr, previousdtaudr, nextdtaudr
 
  ray = primary - xyzh(1:3,point)
@@ -1123,9 +1133,9 @@ end subroutine get_tau_inwards
  !--------------------------------------------------------------------------
 subroutine find_next(inpoint, ray, dist, xyzh, neighbors, inext, nneighin)
  integer, intent(in)    :: neighbors(:)
- real, intent(in)       :: xyzh(:,:), inpoint(:), ray(:)
+ real,    intent(in)    :: xyzh(:,:), inpoint(:), ray(:)
  integer, intent(inout) :: inext
- real, intent(inout)    :: dist
+ real,    intent(inout) :: dist
  integer, optional      :: nneighin
 
  real     :: trace_point(3), dmin, vec(3), tempdist, raydist
@@ -1179,11 +1189,11 @@ end subroutine find_next
  !--------------------------------------------------------------------------
 subroutine calc_opacity(r0, xyzh, opacities, listneigh, nneigh, dtaudr)
  use kernel,   only:cnormk,wkern
- use part,     only:hfact,rhoh,massoftype,igas
+ use part,     only:rho,hfact
  use dim,      only:maxpsph
- real, intent(in)    :: r0(:), xyzh(:,:), opacities(:)
- integer, intent(in) :: listneigh(:), nneigh
- real, intent(out)   :: dtaudr
+ real,    intent(in)  :: r0(:), xyzh(:,:), opacities(:)
+ integer, intent(in)  :: listneigh(:), nneigh
+ real,    intent(out) :: dtaudr
 
  integer :: i,j
  real    :: q
@@ -1193,7 +1203,7 @@ subroutine calc_opacity(r0, xyzh, opacities, listneigh, nneigh, dtaudr)
     j = listneigh(i)
     if (j > maxpsph) cycle
     q = norm2(r0 - xyzh(1:3,j))/xyzh(4,j)
-    dtaudr=dtaudr+wkern(q*q,q)*opacities(j)*rhoh(xyzh(4,j), massoftype(igas))
+    dtaudr=dtaudr+wkern(q*q,q)*opacities(j)*rho(j)
  enddo
  dtaudr = dtaudr*cnormk/hfact**3
 end subroutine calc_opacity

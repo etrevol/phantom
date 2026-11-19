@@ -1,6 +1,6 @@
 !--------------------------------------------------------------------------!
 ! The Phantom Smoothed Particle Hydrodynamics code, by Daniel Price et al. !
-! Copyright (c) 2007-2025 The Authors (see AUTHORS)                        !
+! Copyright (c) 2007-2026 The Authors (see AUTHORS)                        !
 ! See LICENCE file for usage and distribution conditions                   !
 ! http://phantomsph.github.io/                                             !
 !--------------------------------------------------------------------------!
@@ -21,16 +21,16 @@ module analysis
 !
 ! :Dependencies: dim, getneighbours, kernel, part
 !
- use getneighbours,    only:generate_neighbour_lists, read_neighbours, write_neighbours, &
+ use getneighbours,    only:generate_neighbour_lists,read_neighbours,write_neighbours,&
                            neighcount,neighb,neighmax
  implicit none
  character(len=20), parameter, public :: analysistype = 'velocityshear'
 
  integer, parameter                     :: it_max = 10
- integer, allocatable, dimension(:)     ::  eigenpart
- real,    allocatable, dimension(:)     :: xbin,ybin,zbin
- real,    allocatable, dimension(:,:)   :: eigenvalues
- real,    allocatable, dimension(:,:,:) :: eigenvectors
+ integer, allocatable :: eigenpart(:)
+ real, allocatable :: xbin(:),ybin(:),zbin(:)
+ real, allocatable :: eigenvalues(:,:)
+ real, allocatable :: eigenvectors(:,:,:)
  logical                                :: write_neighbour_list = .true.  ! Write the neighbour list to file, if true
 
  public :: do_analysis
@@ -42,7 +42,7 @@ contains
 subroutine do_analysis(dumpfile,num,xyzh,vxyzu,particlemass,npart,time,iunit)
 
  use dim, only:maxp
- use part, only:iphase,maxphase, igas, get_partinfo
+ use part, only:iphase,maxphase,igas,get_partinfo
 
  implicit none
 
@@ -54,8 +54,8 @@ subroutine do_analysis(dumpfile,num,xyzh,vxyzu,particlemass,npart,time,iunit)
  integer :: i, iwrite, iamtypei
  integer :: it_num, rot_num, ndigits
 
- real, dimension(3)   :: eigen
- real, dimension(3,3) :: eigenvec, tensor
+ real :: eigen(3)
+ real :: eigenvec(3,3), tensor(3,3)
 
  logical :: iactivei, iamdusti,iamgasi
  logical :: existneigh
@@ -116,7 +116,7 @@ subroutine do_analysis(dumpfile,num,xyzh,vxyzu,particlemass,npart,time,iunit)
     !***********************************************
 
     tensor(:,:) = 0.0
-    call calc_velocitysheartensor(i,tensor, xyzh,vxyzu)
+    call calc_velocitysheartensor(i,tensor, particlemass, xyzh,vxyzu)
 
     !print*, tensor(:,:)
     !***********************************************
@@ -167,21 +167,22 @@ end subroutine do_analysis
 ! Calculates the velocity shear tensor for particle ipart
 !+
 !-----------------------------------------------------
-subroutine calc_velocitysheartensor(ipart,tensor, xyzh,vxyzu)
- use dim, only:gravity, maxp
- use kernel, only:get_kernel, get_kernel_grav1
- use part, only:igas, iphase, maxphase, rhoh, massoftype, get_partinfo
+subroutine calc_velocitysheartensor(ipart,tensor, pmass, xyzh,vxyzu)
+ use dim, only:gravity,maxp
+ use kernel, only:get_kernel,get_kernel_grav1
+ use part, only:rho,igas,iphase,maxphase,get_partinfo
 
- integer, intent(in) :: ipart
- real,    intent(in) :: xyzh(:,:), vxyzu(:,:)
- real,    dimension(3,3), intent(out) :: tensor
+ integer, intent(in)  :: ipart
+ real,    intent(in)  :: pmass
+ real,    intent(in)  :: xyzh(:,:), vxyzu(:,:)
+ real,    intent(out) :: tensor(3,3)
 
  integer :: j,k, imat, jmat, iamtypei
  real    :: rij,rij2, hj1,hj21,hj41,q2i,qi
  real    :: rhoj, wabi, grkerni, dphidhi, grpmrho1
  logical :: iactivei,iamdusti, iamgasi
 
- real, dimension(3) :: dr
+ real :: dr(3)
 
  over_neighbours: do k = 1, neighcount(ipart)
 
@@ -229,8 +230,8 @@ subroutine calc_velocitysheartensor(ipart,tensor, xyzh,vxyzu)
     endif
 
     ! Prefactor to SPH sum = grad*mass/rho
-    rhoj = rhoh(xyzh(4,j),massoftype(igas))
-    grpmrho1 = grkerni*massoftype(igas)/rhoj
+    rhoj = rho(j)
+    grpmrho1 = grkerni*pmass/rhoj
 
     ! Loops for matrix elements i,j
     tensor_calc: do imat = 1,3
