@@ -1353,3 +1353,12 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   ones' less (0.36 against 0.38). The vertical segregation coincides with the mode growth
   (collective, plausible); the radial one grows steadily (two-body or secular: the 4k
   and 8k runs decide).
+- **A18 regressions, master against merged (same inputs, 8 threads).** Adaptive softening,
+  5 orbits from A3 t = 100: <A1/S0> 0.3551 / 0.3551, end 0.362 / 0.361, |r_c| 0.0223 /
+  0.0222, dE/E -1.7e-5 / -2.5e-5. Fixed softening, 5 orbits from the start: <A1/S0>
+  0.0127 / 0.0127, |r_c| 0.0006 / 0.0005, dE/E within 5e-5. Clouds (e 0.5), 3 orbits:
+  radiated 0.1275 / 0.1286 of |E0|, clouds left 14651 / 14648, |z|/R 0.050 / 0.051,
+  A1/S0 0.309 / 0.312. Two masses at 2k, 1 orbit: momentum 7.6e-6 / 7.1e-6, dE/E 1.72e-3
+  / 1.74e-3. All within run-to-run noise: the earlier runs need no recomputation. Master
+  takes the merge after the A17 particle-number runs, so that 4k, 8k and 16k share one
+  code.
