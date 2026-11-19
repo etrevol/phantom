@@ -39,7 +39,7 @@ ISTAR, IDARK = 4, 5      # gas clouds and collisionless stars of two-component r
 GAS = "#d81bd8"
 # the type drawn in one colour over the density map, and its legend: the gas clouds of a
 # two-component run, or the heavy particles of a two-mass collisionless torus (f_heavy)
-OVER = dict(itype=ISTAR, label="gas clouds")
+OVER = dict(itype=ISTAR, label="gas clouds", scale=1.0, alpha=0.55)
 NORM = LogNorm(1e-4, 1e-1)
 CMAP = "turbo"
 ARROW_FULL = 1.6        # arrow length at the paper's saturated A_1/Sigma_0 = 0.368
@@ -88,8 +88,9 @@ def build_figure(setup, n, tm, a1, rc, corotate=False, run=None, twocomp=False):
     cb.ax.tick_params(direction="out")
 
     # two-component runs: the gas clouds in one colour over the stars' density map
-    gas_f = ax_f.scatter([], [], s=size, color=GAS, lw=0, alpha=0.55, rasterized=True, zorder=4)
-    gas_e = ax_e.scatter([], [], s=size, color=GAS, lw=0, alpha=0.55, rasterized=True, zorder=4)
+    so, ao = OVER["scale"] * size, OVER["alpha"]
+    gas_f = ax_f.scatter([], [], s=so, color=GAS, lw=0, alpha=ao, rasterized=True, zorder=4)
+    gas_e = ax_e.scatter([], [], s=so, color=GAS, lw=0, alpha=ao, rasterized=True, zorder=4)
     bh_f, = ax_f.plot([], [], "o", color="k", ms=5, zorder=6)
     bh_e, = ax_e.plot([], [], "o", color="k", ms=5, zorder=6)
     tb_f, = ax_f.plot([], [], "x", color="k", ms=7, mew=1.6, zorder=6)
@@ -217,7 +218,8 @@ def main(argv=None):
     rc = np.hypot(m1["xc"], m1["yc"])
     if float(str(setup.get("f_heavy", 0) or 0).split()[0]) > 0:
         mu = float(str(setup.get("mu_heavy", 10)).split()[0])
-        OVER.update(itype=IDARK, label=f"heavy particles ({mu:g}" + r"$\times$ mass)")
+        # few and heavy: drawn larger so that they stand out of the light ones' density map
+        OVER.update(itype=IDARK, label=f"heavy particles ({mu:g}" + r"$\times$ mass)", scale=3.0, alpha=0.9)
     art = build_figure(setup, n, tm, a1, rc, a.corotate, run,
                        twocomp=np.any(pio.read_dump(dumps[0])["gas"]["itype"] == IDARK))
 
