@@ -1410,3 +1410,12 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   et al. 2019 is not seen at pc scale), and the torus as a ring joined by two nascent
   spiral arms. What the physics must add: gas inside the ring down to the BH, gas
   beyond the ring edge (inflow arms), a flatter rotation curve, ~15% more dispersion.
+- **B40 step 2, option 1 (2026-11-19, the user's choice): inflow with a spread of
+  angular momentum.** `feed_dfrot` (commit 2b1931e79, tested): each pair's speed is
+  uniform in feed_frot +- feed_dfrot, so clouds circularise at r = frot^2 feed_r over
+  a range instead of on the torus radius (the old fed run put all of them at 1.0 R_tor).
+  Run `B/runs/20261119-231504-fed-dfrot04-from-a3t100`: the fed run with one change,
+  feed_dfrot 0.4 (frot 0.31-1.11, r_circ 0.19-2.5 R_tor), t 100 -> 110. Stop
+  criterion: success if a gas snapshot reaches cube chi2 <= 14227 (B30 + hand-made
+  stream) with A1 >= 0.1 and the right phase; failure if no snapshot beats b5 early
+  (15058) by >= 500 by t = 110.
