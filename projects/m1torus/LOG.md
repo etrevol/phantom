@@ -1362,3 +1362,17 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   / 1.74e-3. All within run-to-run noise: the earlier runs need no recomputation. Master
   takes the merge after the A17 particle-number runs, so that 4k, 8k and 16k share one
   code.
+- **A17 particle-number test (4k, 8k, 16k; seed 1, eps 0.01, two masses 1:10).**
+  Rates per 100 orbits over the common window t 64-150 (4k / 8k / 16k): Delta a 0.063 /
+  0.046 / 0.018, Delta i 2.6 / 1.8 / 0.6 deg, spreading of the light particles (slope of
+  <a>) 0.107 / 0.065 / 0.035; totals over 150 orbits Delta a 0.106 / 0.069 / 0.031, Delta
+  i 4.3 / 2.7 / 1.1 deg. Rate ~ N^-p from 4k to 16k: p = 0.89 (Delta a), 1.05 (Delta i),
+  0.81 (spreading); the segments scatter (4k -> 8k 0.4-0.7, 8k -> 16k 0.9-1.6; one
+  realisation each). Reading: the segregation, radial and vertical, and the extra
+  spreading are carried by two-body relaxation of the super-particles (p ~ 1), not a
+  collective effect; in a real torus of ~1e6 or more clouds they would be far slower.
+  The vertical-segregation-with-the-mode reading of the 16k run is withdrawn. The
+  saturated mode grows with N (A1/S0 0.21 / 0.26 / 0.30; one mass at 16k 0.33): the
+  heating by the heavy particles weakens the mode at small N and the effect fades with N.
+  Answer to the question: the mode does not care about a 1:10 mass spectrum once N is
+  large enough; the mass segregation seen is numerical (plausible, single seeds).
