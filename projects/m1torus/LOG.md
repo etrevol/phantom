@@ -1318,3 +1318,15 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   systemic velocity is off by ~36 km/s or the disc's mean velocity is shifted (a test
   with an independent v_sys is open). NGC 1672 reads as an eccentric inner disc (e ~0.3-
   0.4 inside 3 pc, nearly circular outside), plausible.
+- **A18, upstream merge (2026-11-19, with the user: merge carefully, avoid recomputing).**
+  Merge base 2025-11-10, 1610 upstream commits. Conflicts in six files: `.gitignore`,
+  `build/Makefile` (cloud_collisions.f90 in the source list, utils_indtimesteps renamed),
+  `readwrite_infile.f90` (our cloud options kept below upstream's hfact/tolh), `step_
+  leapfrog.f90` (the collision hook, massoftype imported), `force.F90` (upstream's own
+  unequal-mass fix taken), `dens.F90` (fixed softening in upstream's number-density
+  arrays: treecache, gradh(igradomega) = 1, gradh(igradzeta) = gradh(igradsoft) = 0).
+  The inflow module and its test take upstream's new `rho` argument of inject_particles.
+  All builds pass (m1torus default; IND_TIMESTEPS=no NCELLSMAX SRCINJECT; setup, moddump;
+  ppitorus); unit tests pass (cloud collisions, cloud feed). Branch `merge-upstream`
+  (6489d85e3) in `~/phantom-merge`; master stays until the regression restarts
+  (adaptive and fixed softening, clouds, two masses at 2k; old against merged) agree.
