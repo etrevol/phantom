@@ -13,7 +13,9 @@ module inject
 ! isotropic dispersion feed_s v_K. Clouds come in point-symmetric pairs
 ! (x, v) and (-x, -v): both carry the same angular momentum and the pair adds
 ! no m = 1 harmonic and no centre-of-mass shift, so a lopsided mode cannot be
-! seeded by the feeding itself. Stands for the bar-driven inflow from the
+! seeded by the feeding itself. With feed_dfrot > 0 the speed of each pair is
+! drawn uniformly in feed_frot +- feed_dfrot, so the clouds circularise over a
+! range of radii (r_circ = frot^2 r) inside and outside the torus. Stands for the bar-driven inflow from the
 ! circumnuclear disc that replaces gas lost to the black hole and spreading.
 !
 ! :References: Hopkins & Quataert (2010), MNRAS 407, 1529
@@ -22,6 +24,7 @@ module inject
 !
 ! :Runtime parameters:
 !   - feed_dr   : *Gaussian width of the injection ring [R_tor]*
+!   - feed_dfrot : *half-width of the uniform spread of feed_frot*
 !   - feed_frot : *rotation speed of injected clouds / v_K*
 !   - feed_inc  : *maximum tilt of the injected orbits [deg]*
 !   - feed_mdot : *injected mass per orbit at R_tor (2 pi code time) [M_BH]*
@@ -40,6 +43,7 @@ module inject
  real, public :: feed_r    = 2.
  real, public :: feed_dr   = 0.
  real, public :: feed_frot = 1.
+ real, public :: feed_dfrot = 0.
  real, public :: feed_s    = 0.
  real, public :: feed_inc  = 0.
  integer(kind=8), public :: nfeed = 0   ! clouds injected since the start of this run
@@ -80,7 +84,7 @@ subroutine inject_particles(time,dtlast,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,
  integer, intent(inout) :: npartoftype(:)
  real,    intent(out)   :: dtinject
  real, parameter :: pi = 4.*atan(1.)
- real :: x0(3),v0(3),mbh,dmin,d,hguess,npairs,r,phi,vk,inc,node,xi(3),vi(3),u0(3),u1(3)
+ real :: x0(3),v0(3),mbh,dmin,d,hguess,npairs,r,phi,vk,inc,node,xi(3),vi(3),u0(3),u1(3),frot
  integer :: i,k,ni
 
  dtinject = huge(dtinject)
@@ -111,9 +115,11 @@ subroutine inject_particles(time,dtlast,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,
     r   = abs(feed_r + feed_dr*gauss_random(iseed))
     phi = 2.*pi*ran2(iseed)
     vk  = sqrt(mbh/r)
+    frot = feed_frot
+    if (feed_dfrot > 0.) frot = max(feed_frot + feed_dfrot*(2.*ran2(iseed) - 1.),0.)
     ! circular orbit in the plane z = 0, then tilted about a random line of nodes
     xi = r*(/cos(phi),sin(phi),0./)
-    vi = feed_frot*vk*(/-sin(phi),cos(phi),0./)
+    vi = frot*vk*(/-sin(phi),cos(phi),0./)
     inc  = feed_inc*pi/180.*(2.*ran2(iseed) - 1.)
     node = 2.*pi*ran2(iseed)
     u0 = (/cos(node),sin(node),0./)
@@ -150,6 +156,7 @@ subroutine write_options_inject(iunit)
  call write_inopt(feed_r,'feed_r','radius of the injection ring [R_tor]',iunit)
  call write_inopt(feed_dr,'feed_dr','Gaussian width of the injection ring [R_tor]',iunit)
  call write_inopt(feed_frot,'feed_frot','rotation speed of injected clouds / v_K',iunit)
+ call write_inopt(feed_dfrot,'feed_dfrot','half-width of the uniform spread of feed_frot',iunit)
  call write_inopt(feed_s,'feed_s','isotropic velocity dispersion of injected clouds / v_K',iunit)
  call write_inopt(feed_inc,'feed_inc','maximum tilt of the injected orbits [deg]',iunit)
 
@@ -164,6 +171,7 @@ subroutine read_options_inject(db,nerr)
  call read_inopt(feed_r,'feed_r',db,errcount=nerr,min=0.)
  call read_inopt(feed_dr,'feed_dr',db,errcount=nerr,min=0.)
  call read_inopt(feed_frot,'feed_frot',db,errcount=nerr,min=0.)
+ call read_inopt(feed_dfrot,'feed_dfrot',db,errcount=nerr,min=0.)
  call read_inopt(feed_s,'feed_s',db,errcount=nerr,min=0.)
  call read_inopt(feed_inc,'feed_inc',db,errcount=nerr,min=0.,max=180.)
 

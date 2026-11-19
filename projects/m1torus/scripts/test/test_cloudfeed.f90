@@ -7,7 +7,7 @@ program test_cloudfeed
  use io,     only:nprocs
  use memory, only:allocate_memory
  use part,   only:istar,massoftype,npart,npartoftype,xyzh,vxyzu,rho,nptmass,xyzmh_ptmass,vxyz_ptmass
- use inject, only:inject_particles,feed_mdot,feed_r,feed_dr,feed_frot,feed_s,feed_inc,inject_type
+ use inject, only:inject_particles,feed_mdot,feed_r,feed_dr,feed_frot,feed_dfrot,feed_s,feed_inc,inject_type
  implicit none
  real, parameter :: pi = 4.*atan(1.)
  integer :: nfail
@@ -18,6 +18,7 @@ program test_cloudfeed
  call check('module is cloudfeed',merge(1.,0.,inject_type=='cloudfeed'),1.,0.,nfail)
  call test_ring(nfail)
  call test_rate(nfail)
+ call test_spread(nfail)
  if (nfail == 0) then
     print "(a)",'ALL PASSED'
  else
@@ -135,5 +136,43 @@ subroutine test_rate(nfail)
  call check('ring radius (mean |r|)',sum(norm2(xyzh(1:3,1:npart),dim=1))/npart,feed_r,0.05,nfail)
 
 end subroutine test_rate
+
+! 2000 pairs with frot drawn in 0.7 +- 0.3: bounds, pair partners equal, mean and sigma
+subroutine test_spread(nfail)
+ integer, intent(inout) :: nfail
+ real :: x0(3),v0(3),dt,dtinj,f(4000),fmin,fmax,pairerr
+ integer :: i,nold
+
+ x0 = 0.
+ v0 = 0.
+ call reset(x0,v0)
+ feed_mdot  = 0.01
+ feed_r     = 2.
+ feed_dr    = 0.
+ feed_frot  = 0.7
+ feed_dfrot = 0.3
+ feed_s     = 0.
+ feed_inc   = 0.
+ dt = 2.*pi*2.*2000.*massoftype(istar)/feed_mdot
+ nold = 0
+ call inject_particles(0.,dt,xyzh,vxyzu,rho,xyzmh_ptmass,vxyz_ptmass,npart,nold,npartoftype,dtinj)
+ call check('clouds injected',real(npart),4000.,0.,nfail)
+ do i=1,npart
+    f(i) = norm2(vxyzu(1:3,i))/sqrt(1./feed_r)
+ enddo
+ fmin = minval(f(1:npart))
+ fmax = maxval(f(1:npart))
+ pairerr = maxval(abs(f(1:npart:2) - f(2:npart:2)))
+ call check('all frot >= 0.4',merge(1.,0.,fmin >= 0.4 - 1.e-12),1.,0.,nfail)
+ call check('all frot <= 1.0',merge(1.,0.,fmax <= 1.0 + 1.e-12),1.,0.,nfail)
+ call check('lowest frot near 0.4',fmin,0.4,0.01,nfail)
+ call check('highest frot near 1.0',fmax,1.0,0.01,nfail)
+ call check('pair partners share frot',pairerr,0.,1.e-12,nfail)
+ ! sigma of the mean over 2000 pairs = 0.3/sqrt(3)/sqrt(2000) = 0.004
+ call check('mean frot',sum(f(1:npart))/npart,0.7,0.02,nfail)
+ call check('sigma of frot (uniform: 0.3/sqrt 3)',sqrt(sum((f(1:npart) - 0.7)**2)/npart),0.3/sqrt(3.),0.05,nfail)
+ feed_dfrot = 0.
+
+end subroutine test_spread
 
 end program test_cloudfeed
