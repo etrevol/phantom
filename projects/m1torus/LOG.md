@@ -1387,3 +1387,26 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   17071 (+5), B30 + kinematic stream 14227 (+6). Reading planned: a gas snapshot near
   the collisionless score means the gas physics suffices; far above it says what the
   physics must add.
+- **B40 step 1 (2026-11-19): physical gas against the NGC 613 cube.** One-beam cube
+  chi2 (prior added), 8 free geometry parameters, 40 generations each:
+
+  | gas snapshot | chi2 | logM | inc |
+  |---|---|---|---|
+  | b5 warm, t = 102 | 15058 (+18) | 7.26 | 29 |
+  | fed, t = 102 | 15327 (+1) | 7.31 | 26 |
+  | b5 warm, last | 15389 (+12) | 7.32 | 27 |
+  | fed, last | 15940 (+7) | 7.42 | 22 |
+  | b4 cool, last | 16239 (+17) | 7.88 | 12 |
+  | b4 cool, t = 102 | 17054 (+10) | 7.89 | 12 |
+
+  Warm gas beats the collisionless torus (17071) by ~2000 with no kinematic additions
+  and stays ~800 above B30 + stream (14227); cool gas needs logM at the 7.9 bound
+  (too thin a ring). Profiles of b5 early: the model lacks flux at the outer edge
+  (0.09": 0.09 vs 0.15 of moment 0), rotates too fast inside (|v1| 94 vs 76 km/s at
+  0.017") and too slowly outside (46 vs 55 at 0.09"), moment 2 ~15% low everywhere;
+  the data's central moment-2 stripe (~160 km/s along the major axis) is missing.
+  Combes et al. (2025, arXiv:2509.08635) read that stripe as the unresolved velocity
+  gradient near the BH (line wings extend the rotation; the 25 pc outflow of Audibert
+  et al. 2019 is not seen at pc scale), and the torus as a ring joined by two nascent
+  spiral arms. What the physics must add: gas inside the ring down to the BH, gas
+  beyond the ring edge (inflow arms), a flatter rotation curve, ~15% more dispersion.
