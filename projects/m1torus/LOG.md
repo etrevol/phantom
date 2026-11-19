@@ -1379,3 +1379,11 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
 - **A18 closed (2026-11-19).** Master merged `merge-upstream` (upstream phantom main of
   2026-11, number-density grad-h terms, its own unequal-mass gravity fix); master builds.
   The worktree `~/phantom-merge` is kept with its regression outputs.
+- **B40 start (2026-11-19, with the user): the gap between the physical gas and NGC 613.**
+  The gas clouds of the two-component runs (stars carry the mode, clouds trace it) are
+  fitted to the cube as they are, no kinematic additions: cool b4 (v_A 0.2), warm b5
+  (r_cl 0.0044, v_A 0.4), fed (0.3 Msun/yr), each early (t = 102, still compact) and
+  late (last dump), one-beam cube metric, priors of B33. Reference: collisionless B30
+  17071 (+5), B30 + kinematic stream 14227 (+6). Reading planned: a gas snapshot near
+  the collisionless score means the gas physics suffices; far above it says what the
+  physics must add.
