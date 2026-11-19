@@ -1419,3 +1419,13 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   criterion: success if a gas snapshot reaches cube chi2 <= 14227 (B30 + hand-made
   stream) with A1 >= 0.1 and the right phase; failure if no snapshot beats b5 early
   (15058) by >= 500 by t = 110.
+- **B40 option 1 result: inflow with an angular-momentum spread fails the criterion.**
+  Run to t = 110 (N 16384 -> 24947). Cube chi2 of the gas: t 102 15438, t 105 16598,
+  t 110 15691, none below b5 early (15058). The low-j clouds fill the centre: moment 0
+  at 0.017" is 0.145 against 0.085 of the data (the hole is lost) and |v1| there 99
+  against 65 km/s; the outer edge stays faint and slow, moment 2 still 10-50% low. Gas
+  m = 1 fades as in the old fed run (A1/S0 0.33 -> 0.09, phase 55 deg behind the
+  stars; stars 0.36 -> 0.25), the BH offset grows to 0.075. Reading: the data's inner
+  rotation is flat (|v1| 65-72 km/s out to 0.05"), which no gas placed deeper in a
+  point-mass potential gives; next the cheap kinematic test of option 2 (extended mass
+  on the snapshot speeds, f_ext and beta free) on b5 early.

@@ -466,8 +466,10 @@ def model_metrics(par, src, kind):
         else:
             if src not in _snap:
                 _snap[src] = mo.load(F.last_dump(src))
+            # phase of the snapshot's own mass; the extended mass only rescales speeds
             p = _snap[src]
             phi = mo.m1_phase(p["x"], p["m"]) + float(par["az"])
+            p = extend(dict(p), par["f_ext"], par["beta"])
         cb = fast_cube(nucleus(p, par), t, phi, noisy=False)
         return cube_samples(cb), cb, t
     if src == "eccdisc":
@@ -487,7 +489,8 @@ def model_metrics(par, src, kind):
         if src not in _snap:
             _snap[src] = mo.load(F.last_dump(src))
         p = _snap[src]
-        cb = mo.cube(nucleus(p, par), t, mo.m1_phase(p["x"], p["m"]) + float(par["az"]))
+        phi = mo.m1_phase(p["x"], p["m"]) + float(par["az"])
+        cb = mo.cube(nucleus(extend(dict(p), par["f_ext"], par["beta"]), par), t, phi)
     mom = mo.moments(cb, t, rms=cb.get("rms"))
     m = metrics(*mom, cb["xs"], cb["xs"], "basic" if kind == "basic" else "profiles")
     if kind.startswith("profiles+pv"):
@@ -709,7 +712,7 @@ def main():
                "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"],
                "eccdisc": ["a_in", "e0", "e1", "dw", "warp_i", "warp_n", "i_max", "R_pc", "inc", "logM", "az",
                            "f_ext", "beta"]
-               }.get(src, ["R_pc", "inc", "logM", "az"]) + list(GEO) + list(NUC)
+               }.get(src, ["R_pc", "inc", "logM", "az", "f_ext", "beta"]) + list(GEO) + list(NUC)
     names = a.free.split(",") if a.free else [n for n in allowed if n not in GEO + NUC]
     assert set(names) <= set(allowed), f"free parameters of this model: {allowed}"
     fixed = {k: v for k, v in DEFAULT.items()}

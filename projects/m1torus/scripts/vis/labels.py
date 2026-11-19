@@ -88,6 +88,10 @@ def model_parts(run):
         if feed > 0:
             pars["feed"] = ("inflow " + _math(r"\dot M = " + _fmt(feed) + r"\,M_c\,P_{\rm orb}^{-1}")
                             + " at " + _math(_fmt(_num(inp.get("feed_r", 2))) + r"\,R_{\rm tor}"))
+            dfrot = _num(inp.get("feed_dfrot", 0) or 0)
+            if dfrot > 0:
+                frot = _num(inp.get("feed_frot", 1) or 1)
+                pars["feed"] += ", " + _math(r"v_\phi = (" + _fmt(frot) + r" \pm " + _fmt(dfrot) + r")\,v_{\rm K}")
         nsf = int(_num(inp.get("sf_n", 0) or 0))
         if nsf > 0:
             pars["sf"] = "sinks from clumps of " + _math(f"{nsf + 1}") + " clouds"
