@@ -1441,3 +1441,18 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   100 -> 108, cube fits at t 102, 104, 108. Criterion: an optimum below 14558 (b5
   - 500) continues the cloud family; otherwise it saturates near 15000 and the next
   step is option 4 (SPH gas).
+- **B40 collision-rate scan (v_A 0.4, from canonical t = 100).** Cube chi2 of the gas:
+
+  | r_cl | t 102 | t 104 | t 108 |
+  |---|---|---|---|
+  | 0.002 | 18057 | 16341 | 15537 |
+  | 0.0044 (b5) | 15058 | 15389 (t 104) | - |
+  | 0.007 | 16076 | 15712 | 17371 |
+
+  The fit follows the collisional age (rate ~ r_cl^2): the gas relaxes from the
+  stellar torus (18927) through a best state near 15000 and degrades after it. Faster
+  collisions reach a worse minimum (~15700) and feed the sink (2000 clouds by t 108);
+  the slow run (r_cl 0.002) keeps the gas mode (A1/S0 0.32 at t 108 against ~0.1 for
+  b5) and is still improving. It is continued to t 118 with fits every 2 orbits; a
+  minimum below 14558 with a live gas mode continues the cloud family, otherwise next
+  is option 4.
