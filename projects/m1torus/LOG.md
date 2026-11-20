@@ -1469,3 +1469,10 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   on the cube (18927 against 15788 for B25 and 17071 for B30); b5 physics is restarted
   from the NGC 613-tuned tori (B25 t 225, B30 t 96), fits at +2, +4, +8 orbits, same
   criterion (below 14558).
+- **B40: b5 gas from the NGC 613-tuned tori.** Cube chi2 at +2, +4, +8 orbits: from
+  B25 (t 225, weak mode) 15933, 16145, 15567 (B25 stars alone 15788); from B30 (t 96,
+  A1 0.17) 15407, 15358, 16187 (B30 stars 17071). The starting torus moves the gas
+  little: every cloud-gas state found so far lies at 15000-16200 (about 20 fits, seven
+  runs). Diagnostic queued: b5 early plus the kinematic stream of the hybrid, to see
+  whether the gas ring itself beats the collisionless ring once the inner component
+  is supplied.
