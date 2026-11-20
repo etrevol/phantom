@@ -1502,3 +1502,12 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   collisionless emission or the choice of starting torus. Molecular gas cannot carry
   sigma 0.5 v_K (~50 km/s) thermally, so an isothermal SPH limit (option 4) cannot
   supply it physically either.
+- **B40 literature for the hot inner gas.** Wada et al. (2016, arXiv:1608.06995): around
+  a low-luminosity AGN the radiation-driven fountain does not thicken the molecular
+  gas inside ~2 pc; supernova feedback of a nuclear starburst keeps v_c/sigma_z ~ 1
+  further out (as Hicks et al. 2009 observe in hot H2). Against it for NGC 613: the
+  nuclear star formation is weak (Audibert et al. 2019). The other candidate is a
+  misaligned inner disc (gas arriving with random angular momentum, Hopkins et al.
+  2012; warps in Combes et al. 2025), close to the hybrid's tilted component but
+  untested beyond the isotropic 15 deg inflow. Both are new physics; B40 pauses here
+  for the user's choice.
