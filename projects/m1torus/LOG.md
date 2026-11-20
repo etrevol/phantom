@@ -1489,3 +1489,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   15, 0.0072 M_c per orbit at 2 R_tor) injected as collisionless particles (r_cloud 0),
   t 96 -> 106, all particles emitting, fits at +2, +4, +6, +10. Criterion: below 14558
   succeeds; above 15058 (b5) fails.
+- **B40 clump feed fails.** B30 + collisionless clumps fed with the option-1 spread,
+  t 96 -> 106 (N 16384 -> 28288): cube chi2 at +2, +4, +6, +10: 16433, 16210, 16199,
+  16253; the fitted R_tor shrinks 5.3 -> 4.1 pc as the fed material widens the ring.
+  Above b5 (15058): the hypothesis that the inner component is inflowing clumps on
+  eccentric orbits is not supported in this form (isotropic tilts up to 15 deg, rate
+  0.0072 M_c per orbit). B40 summary so far (plausible): seven physical variants and
+  ~25 cube fits sit at 15000-16500; the best self-consistent model is b5 early
+  (15058); the hybrid's hot (sigma/v_K 0.5), eccentric (e 0.5), tilted (23 deg) inner
+  component, worth ~800 (~400 after the chi2/dof scaling), has no physical
+  counterpart among cloud collisions, inflow (colliding or not), extended mass,
+  collisionless emission or the choice of starting torus. Molecular gas cannot carry
+  sigma 0.5 v_K (~50 km/s) thermally, so an isothermal SPH limit (option 4) cannot
+  supply it physically either.
