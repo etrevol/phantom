@@ -1476,3 +1476,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   runs). Diagnostic queued: b5 early plus the kinematic stream of the hybrid, to see
   whether the gas ring itself beats the collisionless ring once the inner component
   is supplied.
+- **B40 diagnostic: the gas ring with the hybrid's stream.** b5 early + kinematic
+  stream (15 free) 14780 (stream f_n 0.04, tilt 68 deg) against B30 + stream 14227 and
+  A6 + stream 14782: once an inner component is supplied, the colliding gas ring is
+  no better than a collisionless ring. The gas runs gained only by throwing some
+  material inward. What is missing is the hybrid's component itself: 25% of the gas
+  within 0.84 R_tor, sigma/v_K 0.49, e 0.48, tilted 23 deg, i.e. hot, eccentric,
+  misaligned gas. Hypothesis (plausible): dense inflowing clumps that rarely collide
+  stay on such orbits; eccentric orbits spend their time near apocentre, so they keep
+  the hole, unlike the colliding low-j clouds of option 1 that circularised into it.
+  Test: B30 (collisionless, t 96) with the option-1 inflow (frot 0.71 +- 0.4, feed_inc
+  15, 0.0072 M_c per orbit at 2 R_tor) injected as collisionless particles (r_cloud 0),
+  t 96 -> 106, all particles emitting, fits at +2, +4, +6, +10. Criterion: below 14558
+  succeeds; above 15058 (b5) fails.
