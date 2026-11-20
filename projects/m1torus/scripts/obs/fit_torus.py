@@ -61,7 +61,7 @@ MISS = 25.                      # chi2 of an annulus the model leaves empty
 SIG_PV = 20.                    # error of a PV velocity percentile [km/s] (~3 channels)
 POS = (0.1, 0.2, 0.35, 0.5, 0.7, 0.9)   # PV positions along the major axis [x outer annulus edge]
 DEFAULT = dict(R0=0.3, e_max=0.5, i_max=60., R_pc=8., inc=50., logM=np.log10(3.4e7), az=90.,
-               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5,
+               R_d=0.3, f_d=0.2, h_d=0.1, tilt_d=0., f_ext=0., beta=1.5, f_dm=0.,
                dx=0., dy=0., dv=0., pa=np.nan,
                a_in=0.3, e0=0.1, e1=0.1, dw=0., warp_i=0., warp_n=0.,
                f_n=0., R_n=0.3, h_n=0.1, tilt_n=0., node_n=0., xi_t=0., xi_n=0., e_n=0., w_n=0.)
@@ -73,7 +73,7 @@ NUC = ("f_n", "R_n", "h_n", "tilt_n", "node_n", "xi_t", "xi_n", "e_n", "w_n")   
 BOUNDS = dict(R0=(0.1, 0.8), e_max=(0.05, 0.8), i_max=(5., 89.), R_pc=(1.5, 10.),
               inc=(5., 80.), logM=(6.9, 8.0), az=(0., 360.),
               R_d=(0.05, 0.8), f_d=(0.0, 0.7), h_d=(0.02, 0.4), tilt_d=(-90., 90.),
-              f_ext=(0.0, 5.0), beta=(0.5, 3.0),
+              f_ext=(0.0, 5.0), beta=(0.5, 3.0), f_dm=(0.0, 1.0),
               dx=(-0.03, 0.03), dy=(-0.03, 0.03), dv=(-60., 60.), pa=(None, None),
               a_in=(0.05, 0.9), e0=(0., 0.7), e1=(0., 0.7), dw=(-90., 90.), warp_i=(-45., 45.),
               warp_n=(0., 180.), f_n=(0., 0.4), R_n=(0.05, 0.6), h_n=(0.02, 0.5), tilt_n=(0., 90.),
@@ -82,6 +82,28 @@ GAL = "ngc613"                  # the galaxy fitted (galaxies.py), set by --gala
 _noise = {}
 _snap = {}
 _data = {}
+LOAD_DM = False                 # snapshots keep their collisionless particles (f_dm fitted)
+
+
+def snapshot(src, par):
+    """Emitting particles of a snapshot: the collisionless particles of a two-component
+    run emit f_dm of their mass in CO (collisionless clouds), the colliding clouds all;
+    speeds rescaled by the extended mass."""
+    if src not in _snap:
+        _snap[src] = mo.load(F.last_dump(src), collisionless=LOAD_DM)
+    p = dict(_snap[src])
+    # az is measured from the phase of the colliding clouds whatever f_dm is
+    gas = ~p["dm"]
+    phi = mo.m1_phase(p["x"][gas], p["m"][gas]) + float(par["az"])
+    if np.any(p["dm"]):
+        # flux and cloud mass stay normalised to the colliding clouds, so f_dm only adds
+        p["m_tor"] = float(p["m"][gas].sum())
+        p["n_cloud"] = int(gas.sum())
+        w = np.where(p["dm"], float(par["f_dm"]), 1.)
+        keep = w > 0
+        p = {k: (v[keep] if isinstance(v, np.ndarray) and len(v) == len(w) else v) for k, v in p.items()}
+        p["m"] = p["m"] * w[keep]
+    return extend(p, par["f_ext"], par["beta"]), phi
 
 
 def extend(p, f_ext, beta):
@@ -272,7 +294,7 @@ def fast_cube(p, t, phi, noisy=True):
     size = float(np.median(p["size"]))
     sig_beam = t.beam_arcsec / mo.FWHM
     sig_p = np.hypot(size * t.R_pc / pcas, sig_beam)
-    m_msun = t.m_gas / len(p["m"])
+    m_msun = t.m_gas / p.get("n_cloud", len(p["m"]))
     sig_v = max(np.sqrt(mo.G_PC * m_msun / max(size * t.R_pc, 1e-6)), 0.5 * t.dv)
     c = gaussian_filter(h / (t.pix_arcsec ** 2 * t.dv),
                         (sig_v / t.dv, sig_p / t.pix_arcsec, sig_p / t.pix_arcsec), mode="constant")
@@ -464,12 +486,7 @@ def model_metrics(par, src, kind):
         elif src == "torus":
             p, phi = extend(torus(par["R0"], par["e_max"], par["i_max"]), par["f_ext"], par["beta"]), 0.0
         else:
-            if src not in _snap:
-                _snap[src] = mo.load(F.last_dump(src))
-            # phase of the snapshot's own mass; the extended mass only rescales speeds
-            p = _snap[src]
-            phi = mo.m1_phase(p["x"], p["m"]) + float(par["az"])
-            p = extend(dict(p), par["f_ext"], par["beta"])
+            p, phi = snapshot(src, par)
         cb = fast_cube(nucleus(p, par), t, phi, noisy=False)
         return cube_samples(cb), cb, t
     if src == "eccdisc":
@@ -486,11 +503,8 @@ def model_metrics(par, src, kind):
                 p["x"][:nd], p["v"][:nd] = xd, vd
         cb = fast_cube(nucleus(p, par), t, 0.0)
     else:
-        if src not in _snap:
-            _snap[src] = mo.load(F.last_dump(src))
-        p = _snap[src]
-        phi = mo.m1_phase(p["x"], p["m"]) + float(par["az"])
-        cb = mo.cube(nucleus(extend(dict(p), par["f_ext"], par["beta"]), par), t, phi)
+        p, phi = snapshot(src, par)
+        cb = mo.cube(nucleus(p, par), t, phi)
     mom = mo.moments(cb, t, rms=cb.get("rms"))
     m = metrics(*mom, cb["xs"], cb["xs"], "basic" if kind == "basic" else "profiles")
     if kind.startswith("profiles+pv"):
@@ -661,6 +675,8 @@ def fit_label(src, best, names, pa0):
                       rf"$\sigma/v_{{\rm K}} = {best['h_d']:.2f}$, tilt ${best['tilt_d']:.0f}^\circ$;\n")
     else:
         label = L.wrapped(L.model_label(F.last_dump(src).parent), 110) + "\n"
+    if best.get("f_dm", 0) > 0:
+        label += rf"collisionless clouds emit ${best['f_dm']:.2f}$ of their mass; "
     if best.get("f_ext", 0) > 0:
         label += rf"extended mass $f_{{\rm ext}} = {best['f_ext']:.2f}$, $\beta = {best['beta']:.1f}$; "
     label += (rf"$R_{{\rm tor}} = {best['R_pc']:.1f}$ pc, $i = {best['inc']:.0f}^\circ$, "
@@ -712,7 +728,7 @@ def main():
                "torus+disc": ["R0", "e_max", "i_max", "R_d", "f_d", "h_d", "tilt_d", "R_pc", "inc", "logM"],
                "eccdisc": ["a_in", "e0", "e1", "dw", "warp_i", "warp_n", "i_max", "R_pc", "inc", "logM", "az",
                            "f_ext", "beta"]
-               }.get(src, ["R_pc", "inc", "logM", "az", "f_ext", "beta"]) + list(GEO) + list(NUC)
+               }.get(src, ["R_pc", "inc", "logM", "az", "f_ext", "beta", "f_dm"]) + list(GEO) + list(NUC)
     names = a.free.split(",") if a.free else [n for n in allowed if n not in GEO + NUC]
     assert set(names) <= set(allowed), f"free parameters of this model: {allowed}"
     fixed = {k: v for k, v in DEFAULT.items()}
@@ -726,6 +742,8 @@ def main():
         k, v = kv.split("=")
         bnd[k] = tuple(map(float, v.split(":")))
     bounds = [bnd[n] for n in names]
+    global LOAD_DM
+    LOAD_DM = "f_dm" in names or fixed.get("f_dm", 0) > 0
     prior = {kv.split("=")[0]: tuple(map(float, kv.split("=")[1].split(":"))) for kv in a.prior}
     tag = src.replace("+", "_") if src in ("torus", "torus+disc", "eccdisc") else F.last_dump(src).parent.name + "_" + F.last_dump(src).name
     out = Path(a.out or ROOT / "results" / "m1torus" / "B" / "fit_torus" / f"{GAL}_{tag}_{a.metrics}")

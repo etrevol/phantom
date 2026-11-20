@@ -70,8 +70,10 @@ def pc_per_arcsec(t: Target) -> float:
     return t.D_Mpc * 1.0e6 * np.pi / (180.0 * 3600.0)
 
 
-def load(dump):
-    """Particles relative to the sink, in code units, with per-particle size."""
+def load(dump, collisionless=False):
+    """Particles relative to the sink, in code units, with per-particle size. In a stellar
+    torus with gas clouds only the clouds emit, unless collisionless: then the
+    collisionless particles come too, flagged by dm."""
     d = pio.read_dump(dump)
     g, s = d["gas"], d["sinks"]
     mtype = d["header_lists"]["massoftype"]
@@ -83,7 +85,7 @@ def load(dump):
         itype = np.full(len(g["x"]), 1 + int(np.argmax(nt)))
     alive = g["h"] > 0
     # a stellar torus (dark-matter type) with gas clouds (star type): only the gas emits
-    if np.any(itype == 5) and np.any(itype == ISTAR):
+    if np.any(itype == 5) and np.any(itype == ISTAR) and not collisionless:
         alive &= itype == ISTAR
     m = np.array([mtype[it - 1] for it in itype])
     x = np.c_[g["x"], g["y"], g["z"]] - [s["x"][0], s["y"][0], s["z"][0]]
@@ -91,8 +93,9 @@ def load(dump):
     hdr = d["header"]
     # clouds: their radius (softening h = 1.4 eps = 1.4 r_cloud); gas: h/2
     size = np.where(itype == IGAS, 0.5 * g["h"], np.abs(g["h"]) / 1.4)
+    dm = (itype == 5) & np.any(itype == ISTAR)
     return dict(x=x[alive], v=v[alive], m=m[alive], size=size[alive], time=hdr["time"],
-                m_tor=m[alive].sum())
+                m_tor=m[alive].sum(), dm=dm[alive])
 
 
 def m1_phase(x, m):

@@ -1456,3 +1456,16 @@ in `results/m1torus/<campaign>/` (gitignored); figures in each run's `figs/`.
   b5) and is still improving. It is continued to t 118 with fits every 2 orbits; a
   minimum below 14558 with a live gas mode continues the cloud family, otherwise next
   is option 4.
+- **B40: slow collisions to t 118, and emitting collisionless clouds.** r_cl 0.002 cube
+  chi2 at t 110-118: 15163, 16152, 15639, 16253, 15387 (scatter ~500 between neighbours,
+  partly the az multimodality of the fit); its gas keeps A1 ~0.2-0.3 but never goes
+  below ~15100. The cloud family plateaus at 15000-15500 for every collision rate
+  (plausible). Collisionless particles as emitting clumps (Bannikova's own picture),
+  `--free f_dm` (fit_torus: flux and cloud mass stay normalised to the colliding
+  clouds; az from their phase): b5 early with its geometry fixed, f_dm 0 / 0.1 / 0.3
+  gives 15055 / 15056 / 15296: no gain. Option 4 (SPH gas) is put back: B8a showed the
+  isothermal gas loses the mode in ~6 orbits and feeds 31% to the sink numerically.
+  New step instead: all gas runs started from the canonical torus, which scores worst
+  on the cube (18927 against 15788 for B25 and 17071 for B30); b5 physics is restarted
+  from the NGC 613-tuned tori (B25 t 225, B30 t 96), fits at +2, +4, +8 orbits, same
+  criterion (below 14558).
